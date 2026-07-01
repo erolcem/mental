@@ -14,13 +14,13 @@
                         <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="✦" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="title-label">
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="✦" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="TIt-LE-LAb">
                                 <rect key="frame" x="166" y="396" width="60" height="40"/>
                                 <fontDescription key="fontDescription" type="system" pointSize="32"/>
                                 <color key="textColor" red="1" green="1" blue="1" alpha="0.6" colorSpace="custom" customColorSpace="sRGB"/>
                                 <nil key="highlightedColor"/>
                             </label>
-                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="CONSTELLATION" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="subtitle-label">
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="CONSTELLATION" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="SUb-TI-TLe">
                                 <rect key="frame" x="111" y="440" width="172" height="20"/>
                                 <fontDescription key="fontDescription" name="Georgia" family="Georgia" pointSize="13"/>
                                 <color key="textColor" red="1" green="1" blue="1" alpha="0.3" colorSpace="custom" customColorSpace="sRGB"/>
@@ -30,10 +30,10 @@
                         <viewLayoutGuide key="safeArea" id="6Tk-OE-BBY"/>
                         <color key="backgroundColor" red="0.031372549019607843" green="0.043137254901960784" blue="0.070588235294117646" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <constraints>
-                            <constraint firstItem="title-label" firstAttribute="centerX" secondItem="Ze5-6b-2t3" secondAttribute="centerX" id="c1"/>
-                            <constraint firstItem="title-label" firstAttribute="centerY" secondItem="Ze5-6b-2t3" secondAttribute="centerY" constant="-20" id="c2"/>
-                            <constraint firstItem="subtitle-label" firstAttribute="top" secondItem="title-label" secondAttribute="bottom" constant="4" id="c3"/>
-                            <constraint firstItem="subtitle-label" firstAttribute="centerX" secondItem="Ze5-6b-2t3" secondAttribute="centerX" id="c4"/>
+                            <constraint firstItem="TIt-LE-LAb" firstAttribute="centerX" secondItem="Ze5-6b-2t3" secondAttribute="centerX" id="con-st-ra1"/>
+                            <constraint firstItem="TIt-LE-LAb" firstAttribute="centerY" secondItem="Ze5-6b-2t3" secondAttribute="centerY" constant="-20" id="con-st-ra2"/>
+                            <constraint firstItem="SUb-TI-TLe" firstAttribute="top" secondItem="TIt-LE-LAb" secondAttribute="bottom" constant="4" id="con-st-ra3"/>
+                            <constraint firstItem="SUb-TI-TLe" firstAttribute="centerX" secondItem="Ze5-6b-2t3" secondAttribute="centerX" id="con-st-ra4"/>
                         </constraints>
                     </view>
                 </viewController>
