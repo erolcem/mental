@@ -1,0 +1,57 @@
+# Mental — a constellation of lifetime mastery
+
+Skyrim-style skill trees for real life. The sky holds **4 stats** (Intelligence,
+Wisdom, Charisma, Dexterity) → **21 skills** → **332 mastery nodes**, each a star
+in that skill's constellation. Ignite a star by completing the work and writing a
+**mastery summary sheet**; the constellation lights up star by star until the
+crown — the skill's endgame (e.g. *"Perform Concerto with Live Orchestra"*).
+
+Native Flutter app, structured after `physical` (the sibling repo): local-first,
+Riverpod state, `shared_preferences` persistence, Codemagic → TestFlight.
+
+## Layout
+
+```
+lib/
+  data/
+    skill_data.dart            the full catalog (PROVISIONAL — curriculum review pending)
+    repository.dart            NodeProgress model + repository interface
+    persistent_repository.dart shared_preferences implementation
+  state/
+    providers.dart             Riverpod: progress notifier + mastery/XP/level derivations
+  ui/
+    galaxy_screen.dart         home sky: 4 stat clusters, skill stars
+    constellation_screen.dart  one skill as a pan/zoom constellation (CustomPainter)
+    constellation_layout.dart  deterministic organic star layout (seeded per node)
+    node_sheet.dart            node detail: prereqs, summary sheet editor, ignite/extinguish
+    starfield.dart             animated night sky (cached static layer + twinkle + meteors)
+    theme.dart                 palette + Cinzel/Raleway variable fonts
+test/                          data integrity, progress rules, layout, widget smoke
+Wisdom/                        legacy React prototype (reference only)
+```
+
+## Rules of the sky
+
+- A node unlocks only when **all** prerequisite stars are lit.
+- Igniting grants XP (tier × 10); level 1–99 on a square-root curve — full sky = 99.
+- Extinguishing a star darkens every star that depended on it (summaries are kept).
+- Progress keys are `skillId.nodeId` (node ids repeat across trees, e.g. maths/mechanics `m1`).
+
+## Roadmap
+
+1. **Stage 1 (this)** — native constellation app on TestFlight.
+2. **Stage 2** — FastAPI + Gemini backend (like physical's): an AI examiner
+   verifies the summary sheet before a star may ignite.
+3. **Stage 3** — spaced-repetition reviews with AI quizzes; overdue reviews lock the sky.
+4. **Stage 4** — daily closed-loop AI journal → 1–3 next-day actions; skipping locks the sky.
+
+## Build
+
+```
+flutter pub get
+flutter test && flutter analyze
+flutter run -d linux        # desktop dev
+```
+
+Push to GitHub → Codemagic builds a signed IPA and submits to TestFlight
+(`codemagic.yaml`; bundle id `com.cemiloglu.mental`).
