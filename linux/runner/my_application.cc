@@ -53,7 +53,7 @@ static void my_application_activate(GApplication* application) {
   }
 
   // Phone-shaped window — Mental is a portrait, phone-first sky.
-  gtk_window_set_default_size(window, 420, 900);
+  gtk_window_set_default_size(window, 390, 844);
 
   g_autoptr(FlDartProject) project = fl_dart_project_new();
   fl_dart_project_set_dart_entrypoint_arguments(

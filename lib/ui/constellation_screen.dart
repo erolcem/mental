@@ -108,7 +108,7 @@ class _ConstellationScreenState extends ConsumerState<ConstellationScreen>
       body: Stack(
         fit: StackFit.expand,
         children: [
-          Starfield(nebulae: [stat.color], starCount: 220),
+          Starfield(nebulae: [stat.color], starCount: 1400),
           LayoutBuilder(builder: (context, box) {
             _initView(Size(box.maxWidth, box.maxHeight));
             return InteractiveViewer(

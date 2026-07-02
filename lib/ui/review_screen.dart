@@ -152,7 +152,7 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
         children: [
           Starfield(
               nebulae: [if (current != null) current.stat.color else kGold],
-              starCount: 180),
+              starCount: 1200),
           SafeArea(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,

@@ -239,7 +239,7 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
       body: Stack(
         fit: StackFit.expand,
         children: [
-          const Starfield(nebulae: [kJournalViolet], starCount: 160),
+          const Starfield(nebulae: [kJournalViolet], starCount: 1200),
           SafeArea(
             child: Column(
               children: [

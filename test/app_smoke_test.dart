@@ -30,11 +30,11 @@ void main() {
     await tester.pump(const Duration(milliseconds: 400));
 
     expect(find.text('✦ MENTAL'), findsOneWidget);
-    for (final id in ['INT', 'WIS', 'CHA', 'DEX']) {
+    for (final id in ['INTELLIGENCE', 'WISDOM', 'CHARISMA', 'DEXTERITY']) {
       expect(find.text(id), findsOneWidget);
     }
-    expect(find.text('Mathematics'), findsOneWidget);
-    expect(find.text('Karate'), findsOneWidget);
+    expect(find.text('MATHEMATICS'), findsOneWidget);
+    expect(find.text('KARATE'), findsOneWidget);
   });
 
   testWidgets('tapping a skill star opens its constellation', (tester) async {
@@ -43,7 +43,7 @@ void main() {
         .pumpWidget(app(InMemoryProgressRepository(), const GalaxyScreen()));
     await tester.pump(const Duration(milliseconds: 400));
 
-    await tester.tap(find.text('Mathematics'));
+    await tester.tap(find.text('MATHEMATICS'));
     // Two pumps: one to insert the pushed route, one to run its transition.
     // (pumpAndSettle would never settle — the starfield animates forever.)
     await tester.pump();

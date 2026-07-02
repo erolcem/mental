@@ -3,6 +3,7 @@
 // skill stars. Tapping a skill star dives into that constellation.
 import 'dart:async';
 import 'dart:math' as math;
+import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -15,16 +16,17 @@ import 'journal_screen.dart';
 import 'review_screen.dart';
 import 'starfield.dart';
 import 'theme.dart';
+import 'widgets/asterism.dart';
 import 'widgets/mastery_ring.dart';
 
 /// Cluster centres as fractions of the sky, ordered top→bottom. The crowded
 /// stats (CHA: 7 skills, DEX: 6) take the middle rows where they have room on
 /// both sides; the x stagger keeps the column organic.
 const List<(String, Offset)> _spine = [
-  ('INT', Offset(0.575, 0.13)),
-  ('CHA', Offset(0.425, 0.365)),
-  ('DEX', Offset(0.575, 0.60)),
-  ('WIS', Offset(0.425, 0.835)),
+  ('INT', Offset(0.575, 0.15)),
+  ('CHA', Offset(0.425, 0.38)),
+  ('DEX', Offset(0.575, 0.61)),
+  ('WIS', Offset(0.425, 0.825)),
 ];
 
 Offset _statCenter(String id) =>
@@ -144,7 +146,9 @@ class _GalaxyScreenState extends ConsumerState<GalaxyScreen> {
                     style: raleway(8,
                         color: Colors.white.withValues(alpha: 0.28),
                         spacing: 1.5)),
-                Text('$level', style: cinzel(20, weight: 700, color: kGold)),
+                // Raleway, not Cinzel: Cinzel's "1" reads as a Roman "I".
+                Text('$level',
+                    style: raleway(19, weight: 800, color: kGold)),
               ],
             ),
             const SizedBox(width: 10),
@@ -443,62 +447,45 @@ class _GalaxyScreenState extends ConsumerState<GalaxyScreen> {
     final mastery = statMastery(progress, stat);
     final nodes = <Widget>[];
 
-    // The stat orb — id + mastery % live inside it, no external label.
+    // The stat anchor: a brilliant guide star with the name engraved beneath.
     nodes.add(Positioned(
-      left: cx - 34,
+      left: cx - 70,
       top: cy - 34,
-      child: MasteryRing(
-        progress: mastery,
-        size: 68,
-        stroke: 3,
-        color: stat.color,
-        child: Container(
-          width: 54,
-          height: 54,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            gradient: RadialGradient(
-              center: const Alignment(-0.3, -0.4),
-              colors: [
-                stat.color.withValues(alpha: 0.35),
-                stat.color.withValues(alpha: 0.08)
-              ],
-            ),
-            border: Border.all(
-                color: stat.color.withValues(alpha: 0.45), width: 1.2),
-            boxShadow: [
-              BoxShadow(
-                  color: stat.color.withValues(alpha: 0.18),
-                  blurRadius: 26,
-                  spreadRadius: 5),
-            ],
-          ),
-          alignment: Alignment.center,
+      child: IgnorePointer(
+        child: SizedBox(
+          width: 140,
+          height: 84,
           child: Column(
-            mainAxisSize: MainAxisSize.min,
             children: [
-              Text(stat.id,
-                  style:
-                      cinzel(13, weight: 700, color: stat.color, spacing: 1.2)),
-              Text('${(mastery * 100).round()}%',
-                  style: raleway(7.5,
+              CustomPaint(
+                  size: const Size(64, 40),
+                  painter: _GuideStarPainter(stat.color)),
+              const SizedBox(height: 2),
+              Text(stat.label.toUpperCase(),
+                  style: cinzel(10.5,
+                      weight: 640,
+                      color: stat.color.withValues(alpha: 0.9),
+                      spacing: 4)),
+              Text('${(mastery * 100).round()}% MASTERED',
+                  style: raleway(7,
                       weight: 600,
-                      color: stat.color.withValues(alpha: 0.75))),
+                      color: Colors.white.withValues(alpha: 0.30),
+                      spacing: 2)),
             ],
           ),
         ),
       ),
     ));
 
-    // Skill stars orbiting the orb.
+    // The skills: each its own miniature constellation, lit by mastery.
     final skillPositions = clusterSkillPositions(stat, w, h);
     for (var i = 0; i < stat.skills.length; i++) {
       final skill = stat.skills[i];
       final p = skillPositions[i];
       final m = skillMastery(progress, skill);
       nodes.add(Positioned(
-        left: p.dx - 37,
-        top: p.dy - 26,
+        left: p.dx - 47,
+        top: p.dy - 30,
         child: GestureDetector(
           behavior: HitTestBehavior.opaque,
           onTap: () => Navigator.of(context).push(
@@ -521,39 +508,35 @@ class _GalaxyScreenState extends ConsumerState<GalaxyScreen> {
             ),
           ),
           child: SizedBox(
-            width: 74,
-            height: 64,
+            width: 94,
+            height: 62,
             child: Column(
               children: [
-                MasteryRing(
-                  progress: m,
-                  size: 38,
-                  stroke: 2,
-                  color: stat.color,
-                  child: Container(
-                    width: 30,
-                    height: 30,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: m > 0
-                          ? stat.color.withValues(alpha: 0.14)
-                          : Colors.white.withValues(alpha: 0.04),
-                      border: Border.all(
-                          color: stat.color
-                              .withValues(alpha: m > 0.15 ? 0.4 : 0.18)),
+                Asterism(
+                    skillId: skill.id,
+                    color: stat.color,
+                    mastery: m,
+                    size: const Size(60, 40)),
+                const SizedBox(height: 2),
+                // FittedBox: long names (PHYSICS & CHEM · 6%) shrink to fit
+                // rather than ellipsize.
+                SizedBox(
+                  height: 12,
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      m > 0
+                          ? '${skill.label.toUpperCase()} · ${(m * 100).round()}%'
+                          : skill.label.toUpperCase(),
+                      maxLines: 1,
+                      style: raleway(7.5,
+                          weight: m > 0 ? 600 : 400,
+                          spacing: 1.2,
+                          color: Colors.white
+                              .withValues(alpha: m > 0 ? 0.72 : 0.42)),
                     ),
-                    alignment: Alignment.center,
-                    child:
-                        Text(skill.icon, style: const TextStyle(fontSize: 13)),
                   ),
                 ),
-                const SizedBox(height: 3),
-                Text(skill.label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    textAlign: TextAlign.center,
-                    style: raleway(8.5,
-                        color: Colors.white.withValues(alpha: 0.65))),
               ],
             ),
           ),
@@ -564,13 +547,63 @@ class _GalaxyScreenState extends ConsumerState<GalaxyScreen> {
   }
 }
 
+/// The stat's guide star: a brilliant four-point diffraction star.
+class _GuideStarPainter extends CustomPainter {
+  final Color color;
+  _GuideStarPainter(this.color);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final p = size.center(Offset.zero);
+    canvas.drawCircle(
+      p,
+      20,
+      Paint()
+        ..shader = RadialGradient(colors: [
+          color.withValues(alpha: 0.45),
+          color.withValues(alpha: 0.0)
+        ]).createShader(Rect.fromCircle(center: p, radius: 20)),
+    );
+    // Long horizontal / shorter vertical spikes, fading outward.
+    for (final (dir, len) in [(const Offset(1, 0), 30.0), (const Offset(0, 1), 15.0)]) {
+      final a = p - dir * len, b = p + dir * len;
+      canvas.drawLine(
+          a,
+          b,
+          Paint()
+            ..shader = ui.Gradient.linear(a, b, [
+              Colors.white.withValues(alpha: 0),
+              Colors.white.withValues(alpha: 0.9),
+              Colors.white.withValues(alpha: 0),
+            ], [
+              0.0,
+              0.5,
+              1.0
+            ])
+            ..strokeWidth = 1.1);
+    }
+    canvas.drawCircle(
+        p,
+        3.4,
+        Paint()
+          ..color = Colors.white
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 1));
+    canvas.drawCircle(p, 2.0, Paint()..color = Colors.white);
+  }
+
+  @override
+  bool shouldRepaint(covariant _GuideStarPainter old) => old.color != color;
+}
+
 /// Positions of a stat's skill stars around its orb — shared with the spine
 /// painter so lines and stars agree.
 List<Offset> clusterSkillPositions(StatDomain stat, double w, double h) {
   final c = _statCenter(stat.id);
   final cx = c.dx * w, cy = c.dy * h;
-  final rx = math.min(w * 0.31, 130.0);
-  final ry = math.min(h * 0.075, 64.0);
+  // The far edge of the stagger must keep the whole 94px label box on
+  // screen: cx(0.575w) + rx + 47 ≤ w  →  rx ≤ 0.425w − 47.
+  final rx = math.min(w * 0.425 - 49, 136.0);
+  final ry = math.min(h * 0.078, 66.0);
   final n = stat.skills.length;
   return [
     for (var i = 0; i < n; i++)
@@ -610,10 +643,10 @@ class _SpinePainter extends CustomPainter {
       final c = _statCenter(stat.id);
       final center = Offset(c.dx * size.width, c.dy * size.height);
       final paint = Paint()
-        ..color = stat.color.withValues(alpha: 0.16)
-        ..strokeWidth = 1;
+        ..color = stat.color.withValues(alpha: 0.09)
+        ..strokeWidth = 0.8;
       for (final p in clusterSkillPositions(stat, size.width, size.height)) {
-        _dashedLine(canvas, center, p, paint, dash: 3, gap: 5);
+        _dashedLine(canvas, center, p, paint, dash: 3, gap: 6);
       }
     }
   }
