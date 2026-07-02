@@ -1,15 +1,19 @@
 // ui/node_sheet.dart — the ritual of igniting a star. Shows the node's place
 // in its constellation (tier, prerequisites, XP) and the MASTERY SUMMARY
-// SHEET: the user's own written account of the work. In stage 2 an AI
-// examiner will verify that sheet before the star may ignite; the editor and
-// storage are already wired for it.
+// SHEET. With a backend configured, the sheet must convince the AI Examiner
+// before the star may ignite; without one, the sky runs on the honour system.
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../data/api_client.dart';
+import '../data/repository.dart';
 import '../data/skill_data.dart';
 import '../state/providers.dart';
 import 'constellation_screen.dart' show romanNumeral;
 import 'theme.dart';
+
+/// Matches the backend's MIN_SUMMARY_CHARS floor.
+const int kMinSummaryChars = 80;
 
 /// Returns true (via the popped future) if the user ignited the star.
 Future<bool?> showNodeSheet(BuildContext context, WidgetRef ref,
@@ -38,6 +42,9 @@ class _NodeSheet extends ConsumerStatefulWidget {
 
 class _NodeSheetState extends ConsumerState<_NodeSheet> {
   late final TextEditingController _summary;
+  bool _submitting = false;
+  ExaminerVerdict? _failVerdict;
+  String? _error;
 
   @override
   void initState() {
@@ -48,6 +55,7 @@ class _NodeSheetState extends ConsumerState<_NodeSheet> {
             ?.summary ??
         '';
     _summary = TextEditingController(text: saved);
+    _summary.addListener(() => setState(() {})); // char counter + button state
   }
 
   @override
@@ -60,17 +68,60 @@ class _NodeSheetState extends ConsumerState<_NodeSheet> {
       .read(progressProvider.notifier)
       .saveSummary(widget.skill, widget.node, _summary.text);
 
+  Future<void> _submitToExaminer() async {
+    final api = ref.read(apiProvider);
+    final notifier = ref.read(progressProvider.notifier);
+    _persistSummary();
+    setState(() {
+      _submitting = true;
+      _failVerdict = null;
+      _error = null;
+    });
+    try {
+      final verdict = await api.verifySummary(
+        stat: widget.stat.label,
+        skill: widget.skill.label,
+        goal: widget.skill.goal,
+        node: widget.node.label,
+        tier: widget.node.tier,
+        prerequisites: [
+          for (final r in widget.node.requires)
+            widget.skill.nodeById(r).label
+        ],
+        summary: _summary.text,
+      );
+      if (!mounted) return;
+      if (verdict.passed) {
+        notifier.ignite(widget.skill, widget.node,
+            summary: _summary.text,
+            examinerNote: verdict.feedback,
+            verified: true);
+        Navigator.of(context).pop(true);
+      } else {
+        setState(() {
+          _submitting = false;
+          _failVerdict = verdict;
+        });
+      }
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _submitting = false;
+        _error = e.message;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final color = widget.stat.color;
     final progress = ref.watch(progressProvider);
     final notifier = ref.read(progressProvider.notifier);
-    final complete =
-        nodeComplete(progress, widget.skill.id, widget.node.id);
+    final api = ref.watch(apiProvider);
+    final key = progressKey(widget.skill.id, widget.node.id);
+    final np = progress[key];
+    final complete = np?.complete ?? false;
     final unlocked = nodeUnlocked(progress, widget.skill, widget.node);
-    final completedAt = progress[
-            progressKey(widget.skill.id, widget.node.id)]
-        ?.completedAt;
 
     return Padding(
       padding:
@@ -101,7 +152,8 @@ class _NodeSheetState extends ConsumerState<_NodeSheet> {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _StarGlyph(color: color, complete: complete, unlocked: unlocked),
+                  _StarGlyph(
+                      color: color, complete: complete, unlocked: unlocked),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(
@@ -112,7 +164,8 @@ class _NodeSheetState extends ConsumerState<_NodeSheet> {
                         Text(
                           '${widget.skill.label}  ·  TIER ${romanNumeral(widget.node.tier)}  ·  +${xpForNode(widget.node)} XP',
                           style: raleway(9.5,
-                              color: color.withValues(alpha: 0.8), spacing: 1.2),
+                              color: color.withValues(alpha: 0.8),
+                              spacing: 1.2),
                         ),
                       ],
                     ),
@@ -137,10 +190,10 @@ class _NodeSheetState extends ConsumerState<_NodeSheet> {
                               : '○',
                           style: TextStyle(
                             fontSize: 12,
-                            color: nodeComplete(
-                                    progress, widget.skill.id, reqId)
-                                ? color
-                                : Colors.white.withValues(alpha: 0.3),
+                            color:
+                                nodeComplete(progress, widget.skill.id, reqId)
+                                    ? color
+                                    : Colors.white.withValues(alpha: 0.3),
                           ),
                         ),
                         const SizedBox(width: 8),
@@ -159,14 +212,33 @@ class _NodeSheetState extends ConsumerState<_NodeSheet> {
                   ),
               ],
               const SizedBox(height: 16),
-              Text('MASTERY SUMMARY SHEET',
-                  style: raleway(8.5,
-                      color: Colors.white.withValues(alpha: 0.3), spacing: 2)),
+              Row(
+                children: [
+                  Text('MASTERY SUMMARY SHEET',
+                      style: raleway(8.5,
+                          color: Colors.white.withValues(alpha: 0.3),
+                          spacing: 2)),
+                  const Spacer(),
+                  if (!complete && unlocked && api.configured)
+                    Text(
+                      '${_summary.text.trim().length} / $kMinSummaryChars',
+                      style: raleway(8.5,
+                          color: _summary.text.trim().length >=
+                                  kMinSummaryChars
+                              ? color.withValues(alpha: 0.7)
+                              : Colors.white.withValues(alpha: 0.3)),
+                    ),
+                ],
+              ),
               const SizedBox(height: 4),
               Text(
-                'Write what you did and what you now understand. Your summary is '
-                'kept with this star — soon an AI examiner will read it to verify '
-                'mastery before the star can ignite.',
+                api.configured
+                    ? 'Write what you did and what you now understand. The '
+                        'Examiner reads your sheet and must be convinced before '
+                        'this star can ignite.'
+                    : 'Write what you did and what you now understand. Your '
+                        'summary is kept with this star. (Examiner offline — '
+                        'igniting on the honour system.)',
                 style: raleway(10,
                     color: Colors.white.withValues(alpha: 0.42), height: 1.5),
               ),
@@ -174,13 +246,13 @@ class _NodeSheetState extends ConsumerState<_NodeSheet> {
               TextField(
                 controller: _summary,
                 onChanged: (_) => _persistSummary(),
-                maxLines: 5,
+                maxLines: 6,
                 minLines: 3,
                 style: raleway(12.5, height: 1.5),
                 cursorColor: color,
                 decoration: InputDecoration(
                   hintText: unlocked
-                      ? 'e.g. Worked through every chapter; can now derive…'
+                      ? 'e.g. Worked through every chapter; the hardest part was…'
                       : 'Unlock this star first.',
                   hintStyle: raleway(11.5,
                       color: Colors.white.withValues(alpha: 0.25)),
@@ -197,61 +269,29 @@ class _NodeSheetState extends ConsumerState<_NodeSheet> {
                         BorderSide(color: color.withValues(alpha: 0.5)),
                   ),
                 ),
-                enabled: unlocked || complete,
+                enabled: (unlocked || complete) && !_submitting,
               ),
+              if (_failVerdict != null) ...[
+                const SizedBox(height: 12),
+                _VerdictPanel(
+                  color: const Color(0xFFFF8A7A),
+                  title: 'THE EXAMINER IS NOT CONVINCED',
+                  body: _failVerdict!.feedback,
+                ),
+              ],
+              if (_error != null) ...[
+                const SizedBox(height: 12),
+                _VerdictPanel(
+                  color: const Color(0xFFFFC46B),
+                  title: 'THE EXAMINER COULD NOT BE REACHED',
+                  body: _error!,
+                ),
+              ],
               const SizedBox(height: 18),
-              if (complete) ...[
-                Center(
-                  child: Text(
-                    '✦ Ignited ${_fmtDate(completedAt)}',
-                    style: raleway(11, color: color.withValues(alpha: 0.85)),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Center(
-                  child: OutlinedButton(
-                    style: OutlinedButton.styleFrom(
-                      side: BorderSide(
-                          color: Colors.white.withValues(alpha: 0.18)),
-                      foregroundColor: Colors.white54,
-                    ),
-                    onPressed: () => _confirmExtinguish(context, notifier),
-                    child: Text('Extinguish star', style: raleway(11.5)),
-                  ),
-                ),
-              ] else
-                SizedBox(
-                  width: double.infinity,
-                  height: 48,
-                  child: FilledButton(
-                    style: FilledButton.styleFrom(
-                      backgroundColor: unlocked
-                          ? color.withValues(alpha: 0.9)
-                          : Colors.white.withValues(alpha: 0.06),
-                      foregroundColor:
-                          unlocked ? kSpaceBlack : Colors.white38,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14)),
-                    ),
-                    onPressed: unlocked
-                        ? () {
-                            _persistSummary();
-                            notifier.ignite(widget.skill, widget.node,
-                                summary: _summary.text);
-                            Navigator.of(context).pop(true);
-                          }
-                        : null,
-                    child: Text(
-                      unlocked
-                          ? '✦  IGNITE STAR'
-                          : '🔒  COMPLETE PREREQUISITES TO UNLOCK',
-                      style: unlocked
-                          ? cinzel(13, weight: 700, color: kSpaceBlack)
-                          : raleway(11,
-                              weight: 600, color: Colors.white38, spacing: 1),
-                    ),
-                  ),
-                ),
+              if (complete)
+                _completedFooter(np, color, notifier)
+              else
+                _actionButton(color, unlocked, api),
             ],
           ),
         ),
@@ -259,9 +299,110 @@ class _NodeSheetState extends ConsumerState<_NodeSheet> {
     );
   }
 
+  Widget _actionButton(Color color, bool unlocked, MentalApi api) {
+    final examined = api.configured;
+    final longEnough = _summary.text.trim().length >= kMinSummaryChars;
+    final canSubmit =
+        unlocked && !_submitting && (!examined || longEnough);
+    final label = !unlocked
+        ? '🔒  COMPLETE PREREQUISITES TO UNLOCK'
+        : _submitting
+            ? 'THE EXAMINER IS READING YOUR SHEET…'
+            : examined
+                ? (_failVerdict == null
+                    ? '⚖  SUBMIT TO THE EXAMINER'
+                    : '⚖  RESUBMIT TO THE EXAMINER')
+                : '✦  IGNITE STAR';
+    return SizedBox(
+      width: double.infinity,
+      height: 48,
+      child: FilledButton(
+        style: FilledButton.styleFrom(
+          backgroundColor: canSubmit
+              ? color.withValues(alpha: 0.9)
+              : Colors.white.withValues(alpha: 0.06),
+          foregroundColor: canSubmit ? kSpaceBlack : Colors.white38,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        ),
+        onPressed: canSubmit
+            ? () {
+                if (examined) {
+                  _submitToExaminer();
+                } else {
+                  _persistSummary();
+                  ref.read(progressProvider.notifier).ignite(
+                      widget.skill, widget.node,
+                      summary: _summary.text);
+                  Navigator.of(context).pop(true);
+                }
+              }
+            : null,
+        child: _submitting
+            ? Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  SizedBox(
+                    width: 14,
+                    height: 14,
+                    child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white.withValues(alpha: 0.5)),
+                  ),
+                  const SizedBox(width: 10),
+                  Text(label,
+                      style: raleway(10.5,
+                          weight: 600, color: Colors.white54, spacing: 1)),
+                ],
+              )
+            : Text(
+                label,
+                style: canSubmit
+                    ? cinzel(12.5, weight: 700, color: kSpaceBlack)
+                    : raleway(10.5,
+                        weight: 600, color: Colors.white38, spacing: 1),
+              ),
+      ),
+    );
+  }
+
+  Widget _completedFooter(
+      NodeProgress? np, Color color, ProgressNotifier notifier) {
+    return Column(
+      children: [
+        Center(
+          child: Text(
+            '✦ Ignited ${_fmtDate(np?.completedAt)}'
+            '${(np?.verified ?? false) ? '  ·  VERIFIED BY THE EXAMINER' : ''}',
+            textAlign: TextAlign.center,
+            style: raleway(10.5, color: color.withValues(alpha: 0.85)),
+          ),
+        ),
+        if ((np?.examinerNote ?? '').isNotEmpty) ...[
+          const SizedBox(height: 10),
+          _VerdictPanel(
+            color: color,
+            title: "THE EXAMINER'S NOTE",
+            body: np!.examinerNote,
+          ),
+        ],
+        const SizedBox(height: 10),
+        Center(
+          child: OutlinedButton(
+            style: OutlinedButton.styleFrom(
+              side: BorderSide(color: Colors.white.withValues(alpha: 0.18)),
+              foregroundColor: Colors.white54,
+            ),
+            onPressed: () => _confirmExtinguish(context, notifier),
+            child: Text('Extinguish star', style: raleway(11.5)),
+          ),
+        ),
+      ],
+    );
+  }
+
   void _confirmExtinguish(BuildContext context, ProgressNotifier notifier) {
-    final impact =
-        notifier.extinguishImpact(widget.skill, widget.node);
+    final impact = notifier.extinguishImpact(widget.skill, widget.node);
     showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -298,6 +439,41 @@ class _NodeSheetState extends ConsumerState<_NodeSheet> {
       'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
     ];
     return '${d.day} ${months[d.month - 1]} ${d.year}';
+  }
+}
+
+class _VerdictPanel extends StatelessWidget {
+  final Color color;
+  final String title;
+  final String body;
+  const _VerdictPanel(
+      {required this.color, required this.title, required this.body});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.07),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withValues(alpha: 0.35)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title,
+              style: raleway(8.5,
+                  weight: 700,
+                  color: color.withValues(alpha: 0.9),
+                  spacing: 2)),
+          const SizedBox(height: 5),
+          Text(body,
+              style: raleway(11.5,
+                  color: Colors.white.withValues(alpha: 0.85), height: 1.5)),
+        ],
+      ),
+    );
   }
 }
 

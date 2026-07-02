@@ -37,11 +37,20 @@ Wisdom/                        legacy React prototype (reference only)
 - Extinguishing a star darkens every star that depended on it (summaries are kept).
 - Progress keys are `skillId.nodeId` (node ids repeat across trees, e.g. maths/mechanics `m1`).
 
+## The Examiner (stage 2)
+
+`backend/` is a stateless FastAPI + Gemini service (`POST /verify`): the app
+sends a node's context + your summary sheet; the Examiner passes or fails it
+with feedback. Pass → the star ignites **verified**, with the Examiner's note
+kept on the node. Fail → the feedback appears in the sheet and you revise and
+resubmit. No backend configured → honour-system ignition (stage-1 behaviour).
+Deploy: `backend/DEPLOY.md`; wire the app via `BACKEND_URL`/`APP_TOKEN` in
+`codemagic.yaml`.
+
 ## Roadmap
 
-1. **Stage 1 (this)** — native constellation app on TestFlight.
-2. **Stage 2** — FastAPI + Gemini backend (like physical's): an AI examiner
-   verifies the summary sheet before a star may ignite.
+1. **Stage 1 (done)** — native constellation app on TestFlight.
+2. **Stage 2 (this)** — the AI Examiner verifies summary sheets before a star may ignite.
 3. **Stage 3** — spaced-repetition reviews with AI quizzes; overdue reviews lock the sky.
 4. **Stage 4** — daily closed-loop AI journal → 1–3 next-day actions; skipping locks the sky.
 

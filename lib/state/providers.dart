@@ -4,12 +4,17 @@ import 'dart:math' as math;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../data/api_client.dart';
 import '../data/repository.dart';
 import '../data/skill_data.dart';
 
 /// Overridden in main() with the persistent repository.
 final repositoryProvider =
     Provider<ProgressRepository>((ref) => InMemoryProgressRepository());
+
+/// The Examiner backend. Reads BACKEND_URL/APP_TOKEN dart-defines by default;
+/// overridden in tests and previews with fakes.
+final apiProvider = Provider<MentalApi>((ref) => MentalApi());
 
 final progressProvider =
     StateNotifierProvider<ProgressNotifier, Map<String, NodeProgress>>(
@@ -29,15 +34,20 @@ class ProgressNotifier extends StateNotifier<Map<String, NodeProgress>> {
       node.requires.every((r) => isComplete(skill.id, r));
 
   /// Complete a node ("ignite its star"). No-op if locked or already lit.
-  /// Stage 2 will gate this behind AI verification of [summary].
-  void ignite(Skill skill, SkillNode node, {String? summary}) {
+  /// When the Examiner passed the sheet, [verified] carries its note; without
+  /// a backend the star ignites unverified (honour system).
+  void ignite(Skill skill, SkillNode node,
+      {String? summary, String? examinerNote, bool verified = false}) {
     if (!isUnlocked(skill, node)) return;
     final key = progressKey(skill.id, node.id);
     if (_get(key).complete) return;
     _write(
         key,
         _get(key).copyWith(
-            completedAt: DateTime.now(), summary: summary));
+            completedAt: DateTime.now(),
+            summary: summary,
+            verifiedAt: verified ? DateTime.now() : null,
+            examinerNote: examinerNote));
   }
 
   /// Undo a completion. Any completed descendants that depended on it go dark

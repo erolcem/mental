@@ -16,6 +16,11 @@ workflows:
       vars:
         BUNDLE_ID: "com.cemiloglu.mental"
         APP_STORE_APPLE_ID: 6786270013 # numeric Apple ID from App Store Connect
+        # The Examiner backend (see backend/DEPLOY.md). Leave empty until the
+        # Railway service is up — the app then ignites stars on the honour
+        # system. Fill both to enforce AI verification of summary sheets.
+        BACKEND_URL: ""
+        APP_TOKEN: ""
       flutter: stable
       xcode: latest
       cocoapods: default
@@ -39,8 +44,10 @@ workflows:
         script: |
           # $BUILD_NUMBER is Codemagic's auto-incrementing counter.
           flutter build ipa --release \
-            --build-name=0.1.0 \
+            --build-name=0.2.0 \
             --build-number=$BUILD_NUMBER \
+            --dart-define=BACKEND_URL=$BACKEND_URL \
+            --dart-define=APP_TOKEN=$APP_TOKEN \
             --export-options-plist=/Users/builder/export_options.plist
     artifacts:
       - build/ios/ipa/*.ipa
