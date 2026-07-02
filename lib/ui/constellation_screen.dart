@@ -398,7 +398,7 @@ class ConstellationPainter extends CustomPainter {
         : 0.92 + 0.08 * math.sin(breath * 2 * math.pi * 2 + p.dx);
     final haloColor = fading ? const Color(0xFFF2B24A) : color;
     final coreAlpha = fading ? 0.75 : 1.0;
-    final haloR = 17.0 * mag * tw;
+    final haloR = 14.0 * mag * tw;
     canvas.drawCircle(
       p,
       haloR,
@@ -409,7 +409,7 @@ class ConstellationPainter extends CustomPainter {
         ]),
     );
     // Diffraction spikes — vertical/horizontal, fading outward.
-    final spikeLen = 15.0 * mag * tw;
+    final spikeLen = 13.0 * mag * tw;
     for (final dir in const [Offset(1, 0), Offset(0, 1)]) {
       final aEnd = p + dir * spikeLen;
       final bEnd = p - dir * spikeLen;
@@ -430,12 +430,12 @@ class ConstellationPainter extends CustomPainter {
     }
     canvas.drawCircle(
         p,
-        3.4 * mag,
+        3.0 * mag,
         Paint()
           ..color = Colors.white.withValues(alpha: coreAlpha)
           ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 1));
     canvas.drawCircle(
-        p, 1.8 * mag, Paint()..color = Colors.white.withValues(alpha: coreAlpha));
+        p, 1.6 * mag, Paint()..color = Colors.white.withValues(alpha: coreAlpha));
   }
 
   /// The frontier: unlocked but unlit — a breathing ember inviting a tap.

@@ -27,7 +27,7 @@ class Starfield extends StatefulWidget {
   /// 0–1 dims everything (used behind sheets).
   final double dim;
   const Starfield(
-      {super.key, this.nebulae = const [], this.starCount = 1600, this.dim = 0});
+      {super.key, this.nebulae = const [], this.starCount = 2200, this.dim = 0});
 
   @override
   State<Starfield> createState() => _StarfieldState();
@@ -228,34 +228,44 @@ class _StarfieldPainter extends CustomPainter {
                 .withValues(alpha: 0.05 + rnd.nextDouble() * 0.20));
     }
 
-    // ---- General field stars: power-law magnitudes ----
+    // ---- Sub-pixel dust: thousands of barely-there points give the sky its
+    // velvet depth without ever competing with foreground content ----
+    for (var i = 0; i < (starCount * 0.8).round(); i++) {
+      final p = randInField();
+      c.drawCircle(
+          p,
+          0.18 + rnd.nextDouble() * 0.25,
+          Paint()
+            ..color = Colors.white
+                .withValues(alpha: 0.03 + rnd.nextDouble() * 0.09));
+    }
+
+    // ---- General field stars: power-law magnitudes.
+    // Background stars stay SMALL — brightness reads through subtle bloom,
+    // never size. Diffraction glints are reserved for meaningful objects
+    // (guide stars, ignited nodes), so the background can never upstage them
+    // or sit over text.
     for (var i = 0; i < starCount; i++) {
       final p = randInField();
-      final m = math.pow(rnd.nextDouble(), 2.6).toDouble(); // most stars faint
-      final r = 0.3 + m * 1.9;
-      final alpha = 0.10 + m * 0.75;
-      final color = _stellarColor(rnd);
+      final m = math.pow(rnd.nextDouble(), 3.1).toDouble(); // most stars faint
+      final r = 0.28 + m * 1.15; // max ~1.4 px
+      final alpha = 0.08 + m * 0.60;
+      // Faint stars read white to the eye; colour only shows on brighter ones.
+      final color = m > 0.45 ? _stellarColor(rnd) : Colors.white;
       final star =
           _Star(p, r, alpha, color, rnd.nextDouble() * 2 * math.pi, 0.4 + rnd.nextDouble());
-      if (r > 1.0 && _twinklers.length < 60 && rnd.nextDouble() < 0.25) {
+      if (r > 0.9 && _twinklers.length < 60 && rnd.nextDouble() < 0.22) {
         _twinklers.add(star); // drawn live, not baked
         continue;
       }
       c.drawCircle(p, r, Paint()..color = color.withValues(alpha: alpha));
-      if (r > 1.5) {
-        // Bloom + 4-point glint on the brightest.
+      if (r > 1.15) {
         c.drawCircle(
             p,
-            r * 3.2,
+            r * 2.4,
             Paint()
-              ..color = color.withValues(alpha: alpha * 0.20)
-              ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3));
-        final spike = r * 4.4;
-        final glint = Paint()
-          ..color = color.withValues(alpha: alpha * 0.5)
-          ..strokeWidth = 0.7;
-        c.drawLine(p - Offset(spike, 0), p + Offset(spike, 0), glint);
-        c.drawLine(p - Offset(0, spike), p + Offset(0, spike), glint);
+              ..color = color.withValues(alpha: alpha * 0.13)
+              ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2.5));
       }
     }
 
@@ -311,16 +321,8 @@ class _StarfieldPainter extends CustomPainter {
     for (final s in _twinklers) {
       final tw = 0.5 + 0.5 * math.sin(_time * s.speed * 2 * math.pi / 6 + s.phase);
       final a = (s.a * (0.30 + 0.9 * tw)).clamp(0.0, 1.0);
-      canvas.drawCircle(s.p, s.r * (0.85 + 0.35 * tw),
+      canvas.drawCircle(s.p, s.r * (0.85 + 0.3 * tw),
           Paint()..color = s.color.withValues(alpha: a));
-      if (s.r > 1.5) {
-        canvas.drawCircle(
-            s.p,
-            s.r * 3.0 * tw,
-            Paint()
-              ..color = s.color.withValues(alpha: a * 0.18)
-              ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3));
-      }
     }
     canvas.restore();
 
