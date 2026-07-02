@@ -12,17 +12,29 @@ import '../data/skill_data.dart';
 final repositoryProvider =
     Provider<ProgressRepository>((ref) => InMemoryProgressRepository());
 
+/// Overridden in main() with the persistent journal repository.
+final journalRepositoryProvider =
+    Provider<JournalRepository>((ref) => InMemoryJournalRepository());
+
 /// The Examiner backend. Reads BACKEND_URL/APP_TOKEN dart-defines by default;
 /// overridden in tests and previews with fakes.
 final apiProvider = Provider<MentalApi>((ref) => MentalApi());
 
 final progressProvider =
-    StateNotifierProvider<ProgressNotifier, Map<String, NodeProgress>>(
-        (ref) => ProgressNotifier(ref.watch(repositoryProvider)));
+    StateNotifierProvider<ProgressNotifier, Map<String, NodeProgress>>((ref) =>
+        ProgressNotifier(ref.watch(repositoryProvider),
+            extraLock: () => journalOverdue(
+                ref.read(journalProvider), DateTime.now())));
 
 class ProgressNotifier extends StateNotifier<Map<String, NodeProgress>> {
   final ProgressRepository repo;
-  ProgressNotifier(this.repo) : super(repo.load());
+
+  /// Additional lock source beyond overdue reviews (the journal). Injected so
+  /// this notifier stays testable without the journal wired up.
+  final bool Function() extraLock;
+  ProgressNotifier(this.repo, {bool Function()? extraLock})
+      : extraLock = extraLock ?? (() => false),
+        super(repo.load());
 
   NodeProgress _get(String key) => state[key] ?? const NodeProgress();
 
@@ -40,7 +52,7 @@ class ProgressNotifier extends StateNotifier<Map<String, NodeProgress>> {
   void ignite(Skill skill, SkillNode node,
       {String? summary, String? examinerNote, bool verified = false}) {
     if (!isUnlocked(skill, node)) return;
-    if (skyLocked(state, DateTime.now())) return;
+    if (skyLocked(state, DateTime.now()) || extraLock()) return;
     final key = progressKey(skill.id, node.id);
     if (_get(key).complete) return;
     final now = DateTime.now();
@@ -158,9 +170,86 @@ class DueReview {
 final dueReviewsProvider = Provider<List<DueReview>>(
     (ref) => dueReviews(ref.watch(progressProvider), DateTime.now()));
 
-/// The lockout: any overdue review seals the sky against new ignitions.
-final skyLockedProvider =
-    Provider<bool>((ref) => ref.watch(dueReviewsProvider).isNotEmpty);
+/// The lockout: overdue reviews OR a missed journal seal the sky against new
+/// ignitions.
+final skyLockedProvider = Provider<bool>((ref) =>
+    ref.watch(dueReviewsProvider).isNotEmpty ||
+    ref.watch(journalOverdueProvider));
+
+// ---------------------------------------------------------------------------
+// The nightly journal (stage 4).
+
+final journalProvider =
+    StateNotifierProvider<JournalNotifier, Map<String, JournalEntry>>(
+        (ref) => JournalNotifier(ref.watch(journalRepositoryProvider)));
+
+class JournalNotifier extends StateNotifier<Map<String, JournalEntry>> {
+  final JournalRepository repo;
+  JournalNotifier(this.repo) : super(repo.loadJournal());
+
+  JournalEntry entryFor(String day) =>
+      state[day] ?? JournalEntry(day: day);
+
+  void save(JournalEntry entry) {
+    repo.saveJournalEntry(entry);
+    state = {...state, entry.day: entry};
+  }
+
+  /// Tick/untick one of the action items set by [day]'s session.
+  void toggleAction(String day, int index) {
+    final e = state[day];
+    if (e == null || index < 0 || index >= e.actions.length) return;
+    final actions = List.of(e.actions);
+    actions[index] = actions[index].toggled();
+    save(e.copyWith(actions: actions));
+  }
+
+  void wipe() {
+    repo.clearJournal();
+    state = repo.loadJournal();
+  }
+}
+
+/// Local calendar day key (yyyy-mm-dd).
+String dayKey(DateTime t) =>
+    '${t.year.toString().padLeft(4, '0')}-${t.month.toString().padLeft(2, '0')}-${t.day.toString().padLeft(2, '0')}';
+
+String yesterdayKey(DateTime t) => dayKey(t.subtract(const Duration(days: 1)));
+
+/// The journal lock: once the habit has begun (≥1 closed entry), a day
+/// without journaling locks the NEXT day until today's session is closed.
+/// Never journaled at all → unlocked (the habit starts tonight, not with a
+/// punishment).
+bool journalOverdue(Map<String, JournalEntry> entries, DateTime now) {
+  final closedDays = [
+    for (final e in entries.values)
+      if (e.closed) e.day
+  ];
+  if (closedDays.isEmpty) return false;
+  closedDays.sort();
+  return closedDays.last.compareTo(yesterdayKey(now)) < 0;
+}
+
+final journalOverdueProvider = Provider<bool>((ref) =>
+    journalOverdue(ref.watch(journalProvider), DateTime.now()));
+
+/// Whether tonight's session is already closed.
+final journaledTodayProvider = Provider<bool>((ref) =>
+    ref.watch(journalProvider)[dayKey(DateTime.now())]?.closed ?? false);
+
+/// The action items to live by today: distilled by the most recent closed
+/// session BEFORE today. (Tonight's session writes tomorrow's list.)
+final todayActionsProvider = Provider<JournalEntry?>((ref) {
+  final entries = ref.watch(journalProvider);
+  final today = dayKey(DateTime.now());
+  JournalEntry? best;
+  for (final e in entries.values) {
+    if (!e.closed || e.actions.isEmpty) continue;
+    if (e.day.compareTo(today) >= 0) continue;
+    if (best == null || e.day.compareTo(best.day) > 0) best = e;
+  }
+  return best;
+});
 
 List<DueReview> dueReviews(Map<String, NodeProgress> progress, DateTime now) {
   final due = <DueReview>[];

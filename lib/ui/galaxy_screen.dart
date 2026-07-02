@@ -11,6 +11,7 @@ import '../data/repository.dart';
 import '../data/skill_data.dart';
 import '../state/providers.dart';
 import 'constellation_screen.dart';
+import 'journal_screen.dart';
 import 'review_screen.dart';
 import 'starfield.dart';
 import 'theme.dart';
@@ -20,10 +21,10 @@ import 'widgets/mastery_ring.dart';
 /// stats (CHA: 7 skills, DEX: 6) take the middle rows where they have room on
 /// both sides; the x stagger keeps the column organic.
 const List<(String, Offset)> _spine = [
-  ('INT', Offset(0.575, 0.135)),
-  ('CHA', Offset(0.425, 0.375)),
-  ('DEX', Offset(0.575, 0.615)),
-  ('WIS', Offset(0.425, 0.855)),
+  ('INT', Offset(0.575, 0.13)),
+  ('CHA', Offset(0.425, 0.365)),
+  ('DEX', Offset(0.575, 0.60)),
+  ('WIS', Offset(0.425, 0.835)),
 ];
 
 Offset _statCenter(String id) =>
@@ -81,22 +82,14 @@ class _GalaxyScreenState extends ConsumerState<GalaxyScreen> {
                     for (final stat in catalog)
                       ..._buildCluster(context, stat, w, h, progress),
                     _header(context, ref, level, overall),
-                    if (ref.watch(skyLockedProvider))
+                    if (ref.watch(dueReviewsProvider).isNotEmpty)
                       _lockBanner(context, ref.watch(dueReviewsProvider).length),
-                    Positioned(
-                      left: 0,
-                      right: 0,
-                      bottom: 8,
-                      child: IgnorePointer(
-                        child: Text(
-                          'TAP A CONSTELLATION TO EXPLORE',
-                          textAlign: TextAlign.center,
-                          style: raleway(8.5,
-                              color: Colors.white.withValues(alpha: 0.13),
-                              spacing: 3),
-                        ),
-                      ),
-                    ),
+                    if (ref.watch(journalOverdueProvider))
+                      _journalBanner(context,
+                          top: ref.watch(dueReviewsProvider).isNotEmpty
+                              ? 112.0
+                              : 62.0),
+                    _bottomBar(context, ref),
                   ],
                 );
               },
@@ -221,6 +214,200 @@ class _GalaxyScreenState extends ConsumerState<GalaxyScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  /// Journal-overdue banner — violet twin of the review banner.
+  Widget _journalBanner(BuildContext context, {required double top}) {
+    return Positioned(
+      top: top,
+      left: 20,
+      right: 20,
+      child: GestureDetector(
+        onTap: () => Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const JournalScreen())),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          decoration: BoxDecoration(
+            color: const Color(0xF0161028),
+            borderRadius: BorderRadius.circular(12),
+            border:
+                Border.all(color: kJournalViolet.withValues(alpha: 0.5)),
+            boxShadow: [
+              BoxShadow(
+                  color: kJournalViolet.withValues(alpha: 0.15),
+                  blurRadius: 20),
+              const BoxShadow(color: Colors.black54, blurRadius: 12),
+            ],
+          ),
+          child: Row(
+            children: [
+              const Text('🌙', style: TextStyle(fontSize: 13)),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'SKY LOCKED — THE JOURNAL WENT UNWRITTEN',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: raleway(9.5,
+                      weight: 700, color: kJournalViolet, spacing: 1.5),
+                ),
+              ),
+              Text('WRITE →',
+                  style: cinzel(10, weight: 700, color: kJournalViolet)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Bottom bar: today's action checklist (left) + the journal (right).
+  Widget _bottomBar(BuildContext context, WidgetRef ref) {
+    final today = ref.watch(todayActionsProvider);
+    final journaled = ref.watch(journaledTodayProvider);
+    final doneCount =
+        today?.actions.where((a) => a.done).length ?? 0;
+    return Positioned(
+      left: 16,
+      right: 16,
+      bottom: 12,
+      child: Row(
+        children: [
+          Expanded(
+            child: GestureDetector(
+              onTap: today == null ? null : () => _showActions(context, ref),
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+                decoration: BoxDecoration(
+                  color: const Color(0xD0100D20),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                      color: kJournalViolet.withValues(
+                          alpha: today == null ? 0.15 : 0.35)),
+                ),
+                child: Row(
+                  children: [
+                    Text('◈',
+                        style: TextStyle(
+                            fontSize: 11,
+                            color: kJournalViolet.withValues(
+                                alpha: today == null ? 0.4 : 0.9))),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        today == null
+                            ? 'No actions set — the journal writes tomorrow\'s'
+                            : 'TODAY\'S ACTIONS   $doneCount / ${today.actions.length}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: raleway(9,
+                            weight: today == null ? 400 : 700,
+                            color: Colors.white.withValues(
+                                alpha: today == null ? 0.35 : 0.8),
+                            spacing: today == null ? 0.2 : 1.2),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          GestureDetector(
+            onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const JournalScreen())),
+            child: Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+              decoration: BoxDecoration(
+                color: journaled
+                    ? kJournalViolet.withValues(alpha: 0.12)
+                    : const Color(0xD0100D20),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                    color: kJournalViolet.withValues(alpha: 0.5)),
+              ),
+              child: Text(
+                journaled ? '✦ JOURNALED' : '🌙 JOURNAL',
+                style: raleway(9,
+                    weight: 700, color: kJournalViolet, spacing: 1.2),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showActions(BuildContext context, WidgetRef ref) {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (_) => Consumer(builder: (context, ref, __) {
+        final entry = ref.watch(todayActionsProvider);
+        if (entry == null) return const SizedBox.shrink();
+        return Container(
+          decoration: BoxDecoration(
+            color: const Color(0xF20B0E22),
+            borderRadius:
+                const BorderRadius.vertical(top: Radius.circular(24)),
+            border: Border(
+                top: BorderSide(
+                    color: kJournalViolet.withValues(alpha: 0.35))),
+          ),
+          padding: const EdgeInsets.fromLTRB(22, 18, 22, 30),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('TODAY\'S ACTIONS — SET BY LAST NIGHT\'S JOURNAL',
+                  style: raleway(8.5,
+                      color: Colors.white.withValues(alpha: 0.3),
+                      spacing: 2)),
+              const SizedBox(height: 10),
+              for (var i = 0; i < entry.actions.length; i++)
+                InkWell(
+                  onTap: () => ref
+                      .read(journalProvider.notifier)
+                      .toggleAction(entry.day, i),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 7),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(entry.actions[i].done ? '✦' : '○',
+                            style: TextStyle(
+                                fontSize: 15,
+                                color: entry.actions[i].done
+                                    ? kJournalViolet
+                                    : Colors.white38)),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            entry.actions[i].text,
+                            style: raleway(12.5,
+                                height: 1.45,
+                                color: Colors.white.withValues(
+                                    alpha:
+                                        entry.actions[i].done ? 0.45 : 0.9)),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              const SizedBox(height: 6),
+              Text(
+                'Tonight\'s journal will ask how these went.',
+                style: raleway(9.5,
+                    color: Colors.white.withValues(alpha: 0.3)),
+              ),
+            ],
+          ),
+        );
+      }),
     );
   }
 

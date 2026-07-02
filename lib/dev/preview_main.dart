@@ -4,11 +4,12 @@
 //   flutter build linux -t lib/dev/preview_main.dart \
 //     --dart-define=PREVIEW=constellation
 //
-// PREVIEW = galaxy | constellation | sheet | verify | locked | review
+// PREVIEW = galaxy | constellation | sheet | verify | locked | review | journal
 //   (default: galaxy)
 // verify = the node sheet against a fake Examiner that always fails.
 // locked = the galaxy with overdue reviews (lock banner).
 // review = the Review screen against a fake Reviewer (questions + pass).
+// journal = the Journal mid-conversation against a fake Confidant.
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -22,6 +23,7 @@ import '../data/skill_data.dart';
 import '../state/providers.dart';
 import '../ui/constellation_screen.dart';
 import '../ui/galaxy_screen.dart';
+import '../ui/journal_screen.dart';
 import '../ui/node_sheet.dart';
 import '../ui/review_screen.dart';
 import '../ui/theme.dart';
@@ -75,6 +77,29 @@ MentalApi _fakeReviewer() => MentalApi(
       }),
     );
 
+MentalApi _fakeConfidant() => MentalApi(
+      baseUrl: 'https://examiner.preview',
+      token: 'preview',
+      client: MockClient((req) async {
+        await Future<void>.delayed(const Duration(milliseconds: 1000));
+        final body = req.url.path.endsWith('/journal/reply')
+            ? {
+                'reply': 'Rudin held but Anki slipped for the second night — '
+                    'the pattern is the evening, not the will. What could you '
+                    'move so the reps happen before the day gets loud?'
+              }
+            : {
+                'actions': [
+                  'Do 20 Anki reps of the m4 deck before noon',
+                  'Read Rudin 7.4 and write the sup-norm summary paragraph',
+                ],
+                'reflection': 'Guard the morning before the day claims it.',
+              };
+        return http.Response(jsonEncode(body), 200,
+            headers: {'content-type': 'application/json'});
+      }),
+    );
+
 void main() {
   // Seed a believable mid-journey state: the first chunk of maths ignited,
   // a couple of roots elsewhere.
@@ -112,11 +137,41 @@ void main() {
     }
   }
 
+  // Journal state: yesterday's closed session set two actions (one done),
+  // and tonight's session has begun.
+  final journalRepo = InMemoryJournalRepository();
+  final now = DateTime.now();
+  String dk(DateTime t) =>
+      '${t.year.toString().padLeft(4, '0')}-${t.month.toString().padLeft(2, '0')}-${t.day.toString().padLeft(2, '0')}';
+  journalRepo.saveJournalEntry(JournalEntry(
+    day: dk(now.subtract(const Duration(days: 1))),
+    transcript: const [JournalTurn('user', 'yesterday')],
+    actions: const [
+      ActionItem('Do 20 Anki reps of the m4 deck', done: true),
+      ActionItem('Read Rudin 7.3 before dinner'),
+    ],
+    reflection: 'Consistency beats intensity.',
+    closedAt: now.subtract(const Duration(days: 1)),
+  ));
+  if (_preview == 'journal') {
+    journalRepo.saveJournalEntry(JournalEntry(
+      day: dk(now),
+      transcript: const [
+        JournalTurn('ai',
+            'The stars are out. How did the day go — and how did you fare with what you set for yourself?'),
+        JournalTurn('user',
+            'Anki done before breakfast for once. Rudin only got 30 minutes though — dinner ran long and I lost the evening.'),
+      ],
+    ));
+  }
+
   runApp(ProviderScope(
     overrides: [
       repositoryProvider.overrideWithValue(repo),
+      journalRepositoryProvider.overrideWithValue(journalRepo),
       if (_preview == 'verify') apiProvider.overrideWithValue(_failingExaminer()),
       if (_preview == 'review') apiProvider.overrideWithValue(_fakeReviewer()),
+      if (_preview == 'journal') apiProvider.overrideWithValue(_fakeConfidant()),
     ],
     child: MaterialApp(
       title: 'Mental (preview)',
@@ -127,6 +182,7 @@ void main() {
           const ConstellationScreen(statId: 'INT', skillId: 'maths'),
         'sheet' || 'verify' => const _SheetPreview(),
         'review' => const ReviewScreen(),
+        'journal' => const JournalScreen(),
         _ => const GalaxyScreen(),
       },
     ),

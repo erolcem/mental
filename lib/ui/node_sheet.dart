@@ -10,6 +10,7 @@ import '../data/repository.dart';
 import '../data/skill_data.dart';
 import '../state/providers.dart';
 import 'constellation_screen.dart' show romanNumeral;
+import 'journal_screen.dart';
 import 'review_screen.dart';
 import 'theme.dart';
 
@@ -302,26 +303,34 @@ class _NodeSheetState extends ConsumerState<_NodeSheet> {
     );
   }
 
-  /// Overdue reviews seal the sky: no new ignitions until they are faced.
+  /// Overdue reviews or an unwritten journal seal the sky: no new ignitions
+  /// until the debt is faced. Routes to whichever is blocking (reviews first).
   Widget _skyLockedButton(BuildContext context) {
+    final reviewsBlock = ref.watch(dueReviewsProvider).isNotEmpty;
+    final color = reviewsBlock ? kGold : kJournalViolet;
     return SizedBox(
       width: double.infinity,
       height: 48,
       child: FilledButton(
         style: FilledButton.styleFrom(
-          backgroundColor: kGold.withValues(alpha: 0.14),
-          foregroundColor: kGold,
+          backgroundColor: color.withValues(alpha: 0.14),
+          foregroundColor: color,
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-          side: BorderSide(color: kGold.withValues(alpha: 0.45)),
+          side: BorderSide(color: color.withValues(alpha: 0.45)),
         ),
         onPressed: () {
           Navigator.of(context).pop(false);
-          Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const ReviewScreen()));
+          Navigator.of(context).push(MaterialPageRoute(
+              builder: (_) => reviewsBlock
+                  ? const ReviewScreen()
+                  : const JournalScreen()));
         },
-        child: Text('🔒  THE SKY IS LOCKED — FACE YOUR REVIEWS',
-            style: raleway(10.5, weight: 700, color: kGold, spacing: 1)),
+        child: Text(
+            reviewsBlock
+                ? '🔒  THE SKY IS LOCKED — FACE YOUR REVIEWS'
+                : '🔒  THE SKY IS LOCKED — JOURNAL YOUR DAY',
+            style: raleway(10.5, weight: 700, color: color, spacing: 1)),
       ),
     );
   }

@@ -89,6 +89,100 @@ class NodeProgress {
 const List<int> kReviewIntervalDays = [3, 7, 14, 30, 60, 120, 240];
 const int kFailedReviewRetryDays = 1;
 
+// ---------------------------------------------------------------------------
+// The nightly journal (stage 4).
+
+class JournalTurn {
+  final String role; // 'user' | 'ai'
+  final String text;
+  const JournalTurn(this.role, this.text);
+  Map<String, dynamic> toJson() => {'r': role, 't': text};
+  static JournalTurn fromJson(Map<String, dynamic> j) =>
+      JournalTurn((j['r'] as String?) ?? 'user', (j['t'] as String?) ?? '');
+}
+
+class ActionItem {
+  final String text;
+  final bool done;
+  const ActionItem(this.text, {this.done = false});
+  ActionItem toggled() => ActionItem(text, done: !done);
+  Map<String, dynamic> toJson() => {'t': text, if (done) 'd': true};
+  static ActionItem fromJson(Map<String, dynamic> j) =>
+      ActionItem((j['t'] as String?) ?? '', done: j['d'] == true);
+}
+
+/// One day's journal: the conversation, and the 1–3 actions it distilled for
+/// the FOLLOWING day. An entry with [closedAt] set counts as "journaled".
+class JournalEntry {
+  final String day; // local yyyy-mm-dd
+  final List<JournalTurn> transcript;
+  final List<ActionItem> actions;
+  final String reflection;
+  final DateTime? closedAt;
+  const JournalEntry({
+    required this.day,
+    this.transcript = const [],
+    this.actions = const [],
+    this.reflection = '',
+    this.closedAt,
+  });
+
+  bool get closed => closedAt != null;
+
+  JournalEntry copyWith(
+          {List<JournalTurn>? transcript,
+          List<ActionItem>? actions,
+          String? reflection,
+          DateTime? closedAt}) =>
+      JournalEntry(
+        day: day,
+        transcript: transcript ?? this.transcript,
+        actions: actions ?? this.actions,
+        reflection: reflection ?? this.reflection,
+        closedAt: closedAt ?? this.closedAt,
+      );
+
+  Map<String, dynamic> toJson() => {
+        'day': day,
+        if (transcript.isNotEmpty)
+          'tr': [for (final t in transcript) t.toJson()],
+        if (actions.isNotEmpty) 'a': [for (final a in actions) a.toJson()],
+        if (reflection.isNotEmpty) 'rf': reflection,
+        if (closedAt != null) 'c': closedAt!.toIso8601String(),
+      };
+
+  static JournalEntry fromJson(Map<String, dynamic> j) => JournalEntry(
+        day: (j['day'] as String?) ?? '',
+        transcript: [
+          for (final t in (j['tr'] as List? ?? []))
+            JournalTurn.fromJson(t as Map<String, dynamic>)
+        ],
+        actions: [
+          for (final a in (j['a'] as List? ?? []))
+            ActionItem.fromJson(a as Map<String, dynamic>)
+        ],
+        reflection: (j['rf'] as String?) ?? '',
+        closedAt: j['c'] == null ? null : DateTime.tryParse(j['c'] as String),
+      );
+}
+
+abstract class JournalRepository {
+  /// All entries keyed by local day (yyyy-mm-dd).
+  Map<String, JournalEntry> loadJournal();
+  void saveJournalEntry(JournalEntry entry);
+  void clearJournal();
+}
+
+class InMemoryJournalRepository implements JournalRepository {
+  final Map<String, JournalEntry> _store = {};
+  @override
+  Map<String, JournalEntry> loadJournal() => Map.of(_store);
+  @override
+  void saveJournalEntry(JournalEntry entry) => _store[entry.day] = entry;
+  @override
+  void clearJournal() => _store.clear();
+}
+
 abstract class ProgressRepository {
   /// Full progress map, keyed by `skillId.nodeId`.
   Map<String, NodeProgress> load();

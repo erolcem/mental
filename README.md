@@ -58,12 +58,23 @@ falls a rung and returns tomorrow (a faced review always unlocks — lockout
 demands you show up, not that you ace it). Overdue stars gutter amber in their
 constellations; without a backend, reviews are self-attested on honour.
 
+## The Journal (stage 4)
+
+The nightly closed loop. You talk the day through with the **Confidant**
+(`/journal/reply`) — it knows yesterday's action items and asks about
+follow-through — then **close the day** (`/journal/close`): the session
+distills **1–3 concrete actions for tomorrow** plus a one-line reflection.
+Today's actions live on the galaxy's bottom bar as a checklist; tonight's
+journal asks how they went. Once the habit has begun (first closed entry),
+a day without journaling **locks the sky the next morning** until today's
+session is closed. Without a backend: freeform entry + self-written actions.
+
 ## Roadmap
 
 1. **Stage 1 (done)** — native constellation app on TestFlight.
 2. **Stage 2 (done)** — the AI Examiner verifies summary sheets before a star may ignite.
-3. **Stage 3 (this)** — spaced-repetition reviews with AI quizzes; overdue reviews lock the sky.
-4. **Stage 4** — daily closed-loop AI journal → 1–3 next-day actions; skipping locks the sky.
+3. **Stage 3 (done)** — spaced-repetition reviews with AI quizzes; overdue reviews lock the sky.
+4. **Stage 4 (this)** — daily closed-loop AI journal → 1–3 next-day actions; skipping locks the sky.
 
 ## Build
 

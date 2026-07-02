@@ -13,6 +13,7 @@ import 'ui/theme.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final repo = await PersistentProgressRepository.create();
+  final journalRepo = await PersistentJournalRepository.create();
   // Stars ignited before the review system existed get a schedule from today.
   backfillReviewSchedules(repo);
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
@@ -21,7 +22,10 @@ Future<void> main() async {
     statusBarIconBrightness: Brightness.light,
   ));
   runApp(ProviderScope(
-    overrides: [repositoryProvider.overrideWithValue(repo)],
+    overrides: [
+      repositoryProvider.overrideWithValue(repo),
+      journalRepositoryProvider.overrideWithValue(journalRepo),
+    ],
     child: const MentalApp(),
   ));
 }

@@ -52,3 +52,48 @@ class PersistentProgressRepository implements ProgressRepository {
     }
   }
 }
+
+class PersistentJournalRepository implements JournalRepository {
+  static const _key = 'mental_journal_v1';
+  final SharedPreferences _prefs;
+  final Map<String, JournalEntry> _cache;
+
+  PersistentJournalRepository._(this._prefs, this._cache);
+
+  static Future<PersistentJournalRepository> create() async {
+    final prefs = await SharedPreferences.getInstance();
+    return PersistentJournalRepository._(prefs, _decode(prefs.getString(_key)));
+  }
+
+  @override
+  Map<String, JournalEntry> loadJournal() => Map.of(_cache);
+
+  @override
+  void saveJournalEntry(JournalEntry entry) {
+    _cache[entry.day] = entry;
+    _persist();
+  }
+
+  @override
+  void clearJournal() {
+    _cache.clear();
+    _persist();
+  }
+
+  void _persist() => unawaited(_prefs.setString(
+      _key,
+      jsonEncode({for (final e in _cache.entries) e.key: e.value.toJson()})));
+
+  static Map<String, JournalEntry> _decode(String? raw) {
+    if (raw == null) return {};
+    try {
+      final j = jsonDecode(raw) as Map<String, dynamic>;
+      return {
+        for (final e in j.entries)
+          e.key: JournalEntry.fromJson(e.value as Map<String, dynamic>)
+      };
+    } catch (_) {
+      return {};
+    }
+  }
+}
