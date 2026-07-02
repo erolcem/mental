@@ -65,6 +65,7 @@ class MentalApi {
     required int tier,
     required List<String> prerequisites,
     required String summary,
+    String proof = '',
   }) async {
     final j = await _post('/verify', {
       'stat': stat,
@@ -74,6 +75,7 @@ class MentalApi {
       'tier': tier,
       'prerequisites': prerequisites,
       'summary': summary,
+      'proof': proof,
     });
     return ExaminerVerdict(
       passed: j['verdict'] == 'pass',
@@ -90,6 +92,7 @@ class MentalApi {
     required String node,
     required int tier,
     required String summary,
+    String proof = '',
   }) async {
     final j = await _post('/review/questions', {
       'stat': stat,
@@ -98,6 +101,7 @@ class MentalApi {
       'node': node,
       'tier': tier,
       'summary': summary,
+      'proof': proof,
     });
     return [for (final q in (j['questions'] as List? ?? [])) q.toString()];
   }
@@ -112,6 +116,7 @@ class MentalApi {
     required String summary,
     required List<String> questions,
     required List<String> answers,
+    String proof = '',
   }) async {
     final j = await _post('/review/grade', {
       'stat': stat,
@@ -120,6 +125,7 @@ class MentalApi {
       'node': node,
       'tier': tier,
       'summary': summary,
+      'proof': proof,
       'questions': questions,
       'answers': answers,
     });

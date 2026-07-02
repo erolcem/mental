@@ -49,7 +49,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 600));
 
-    expect(find.text('Fields Medal / Proof Mastery'), findsOneWidget);
+    expect(find.text('Prove and Publish an Original Theorem'), findsOneWidget);
     expect(find.text('MASTERY'), findsOneWidget);
   });
 
@@ -71,7 +71,7 @@ void main() {
         .ignite(maths, maths.nodeById('m1'), summary: 'precalc mastered');
     await tester.pump(const Duration(milliseconds: 900));
 
-    expect(find.text('6%'), findsOneWidget); // 1/18 nodes
+    expect(find.text('5%'), findsOneWidget); // 1/21 nodes
     final saved = repo.load()[progressKey('maths', 'm1')];
     expect(saved, isNotNull);
     expect(saved!.complete, isTrue);

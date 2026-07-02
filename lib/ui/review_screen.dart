@@ -62,6 +62,7 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
         node: r.node.label,
         tier: r.node.tier,
         summary: r.progress.summary,
+        proof: r.node.proof,
       );
       if (!mounted) return;
       setState(() {
@@ -95,6 +96,7 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
         node: r.node.label,
         tier: r.node.tier,
         summary: r.progress.summary,
+        proof: r.node.proof,
         questions: _questions,
         answers: [for (final c in _answers) c.text],
       );

@@ -18,6 +18,7 @@ class NodeContext(BaseModel):
     node: str = Field(min_length=1, max_length=160)
     tier: int = Field(ge=1, le=30)
     summary: str = Field(default="", max_length=8000)
+    proof: str = Field(default="", max_length=300)  # the node's completion standard
 
 
 class QuestionsResponse(BaseModel):
@@ -54,7 +55,7 @@ def questions(req: NodeContext, authorization: str | None = Header(default=None)
     try:
         qs = reviewer.make_questions(
             stat=req.stat, skill=req.skill, goal=req.goal, node=req.node,
-            tier=req.tier, summary=req.summary)
+            tier=req.tier, summary=req.summary, proof=req.proof)
     except GeminiError as e:
         raise HTTPException(status_code=502, detail=f"Reviewer unavailable: {e}")
     except ValueError as e:
@@ -68,7 +69,7 @@ def grade(req: GradeRequest, authorization: str | None = Header(default=None)):
     try:
         g = reviewer.grade(
             stat=req.stat, skill=req.skill, goal=req.goal, node=req.node,
-            tier=req.tier, summary=req.summary,
+            tier=req.tier, summary=req.summary, proof=req.proof,
             questions=req.questions, answers=req.answers)
     except GeminiError as e:
         raise HTTPException(status_code=502, detail=f"Reviewer unavailable: {e}")

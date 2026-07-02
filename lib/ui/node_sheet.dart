@@ -91,6 +91,7 @@ class _NodeSheetState extends ConsumerState<_NodeSheet> {
             widget.skill.nodeById(r).label
         ],
         summary: _summary.text,
+        proof: widget.node.proof,
       );
       if (!mounted) return;
       if (verdict.passed) {
@@ -174,6 +175,33 @@ class _NodeSheetState extends ConsumerState<_NodeSheet> {
                   ),
                 ],
               ),
+              if (widget.node.proof.isNotEmpty) ...[
+                const SizedBox(height: 14),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.05),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: color.withValues(alpha: 0.2)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('COMPLETION STANDARD',
+                          style: raleway(7.5,
+                              weight: 700,
+                              color: color.withValues(alpha: 0.7),
+                              spacing: 2)),
+                      const SizedBox(height: 3),
+                      Text(widget.node.proof,
+                          style: raleway(11,
+                              color: Colors.white.withValues(alpha: 0.8),
+                              height: 1.45)),
+                    ],
+                  ),
+                ),
+              ],
               if (widget.node.requires.isNotEmpty) ...[
                 const SizedBox(height: 16),
                 Text('PREREQUISITE STARS',

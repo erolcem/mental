@@ -19,6 +19,7 @@ class VerifyRequest(BaseModel):
     tier: int = Field(ge=1, le=30)
     prerequisites: list[str] = Field(default_factory=list, max_length=12)
     summary: str = Field(min_length=1, max_length=8000)
+    proof: str = Field(default="", max_length=300)  # the node's completion standard
 
 
 class VerifyResponse(BaseModel):
@@ -52,6 +53,7 @@ def verify(req: VerifyRequest, authorization: str | None = Header(default=None))
         v = examine(
             stat=req.stat, skill=req.skill, goal=req.goal, node=req.node,
             tier=req.tier, prerequisites=req.prerequisites, summary=req.summary,
+            proof=req.proof,
         )
     except GeminiError as e:
         raise HTTPException(status_code=502, detail=f"Examiner unavailable: {e}")
