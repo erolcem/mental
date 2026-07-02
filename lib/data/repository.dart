@@ -22,27 +22,46 @@ class NodeProgress {
   /// The Examiner's feedback on the passing sheet.
   final String examinerNote;
 
+  /// Spaced-repetition ladder position — index into [kReviewIntervalDays]
+  /// giving the gap that produced [nextReviewAt]. Climbs on a passed review,
+  /// falls on a failed one.
+  final int reviewStage;
+
+  /// When this star next demands review. Any star past this instant locks
+  /// the whole sky until reviewed. Null = no schedule (star unlit).
+  final DateTime? nextReviewAt;
+
   const NodeProgress(
       {this.completedAt,
       this.summary = '',
       this.verifiedAt,
-      this.examinerNote = ''});
+      this.examinerNote = '',
+      this.reviewStage = 0,
+      this.nextReviewAt});
 
   bool get complete => completedAt != null;
   bool get verified => verifiedAt != null;
+  bool reviewDue(DateTime now) =>
+      complete && nextReviewAt != null && !nextReviewAt!.isAfter(now);
 
   NodeProgress copyWith(
           {DateTime? completedAt,
           String? summary,
           DateTime? verifiedAt,
           String? examinerNote,
+          int? reviewStage,
+          DateTime? nextReviewAt,
           bool clearCompleted = false}) =>
       NodeProgress(
         completedAt: clearCompleted ? null : (completedAt ?? this.completedAt),
         summary: summary ?? this.summary,
-        // A star that goes dark loses its verification too; the sheet stays.
+        // A star that goes dark loses its verification and schedule too; the
+        // sheet stays.
         verifiedAt: clearCompleted ? null : (verifiedAt ?? this.verifiedAt),
         examinerNote: examinerNote ?? this.examinerNote,
+        reviewStage: clearCompleted ? 0 : (reviewStage ?? this.reviewStage),
+        nextReviewAt:
+            clearCompleted ? null : (nextReviewAt ?? this.nextReviewAt),
       );
 
   Map<String, dynamic> toJson() => {
@@ -50,6 +69,8 @@ class NodeProgress {
         if (summary.isNotEmpty) 's': summary,
         if (verifiedAt != null) 'v': verifiedAt!.toIso8601String(),
         if (examinerNote.isNotEmpty) 'n': examinerNote,
+        if (reviewStage != 0) 'rs': reviewStage,
+        if (nextReviewAt != null) 'nr': nextReviewAt!.toIso8601String(),
       };
 
   static NodeProgress fromJson(Map<String, dynamic> j) => NodeProgress(
@@ -57,8 +78,16 @@ class NodeProgress {
         summary: (j['s'] as String?) ?? '',
         verifiedAt: j['v'] == null ? null : DateTime.tryParse(j['v'] as String),
         examinerNote: (j['n'] as String?) ?? '',
+        reviewStage: (j['rs'] as num?)?.toInt() ?? 0,
+        nextReviewAt:
+            j['nr'] == null ? null : DateTime.tryParse(j['nr'] as String),
       );
 }
+
+/// Expanding spaced-repetition gaps (days). A passed review climbs one rung;
+/// a failed review falls one rung and comes back in [kFailedReviewRetryDays].
+const List<int> kReviewIntervalDays = [3, 7, 14, 30, 60, 120, 240];
+const int kFailedReviewRetryDays = 1;
 
 abstract class ProgressRepository {
   /// Full progress map, keyed by `skillId.nodeId`.

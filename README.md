@@ -47,11 +47,22 @@ resubmit. No backend configured → honour-system ignition (stage-1 behaviour).
 Deploy: `backend/DEPLOY.md`; wire the app via `BACKEND_URL`/`APP_TOKEN` in
 `codemagic.yaml`.
 
+## The Review (stage 3)
+
+Every ignited star carries a spaced-repetition schedule (3 → 7 → 14 → 30 → 60 →
+120 → 240 days). When any star is overdue, **the sky locks** — no new ignitions
+until every due star is faced in the Review: the Reviewer (`/review/questions` +
+`/review/grade`) asks two probing questions from your own summary sheet and
+grades your from-memory answers. Pass → the interval climbs; fail → the star
+falls a rung and returns tomorrow (a faced review always unlocks — lockout
+demands you show up, not that you ace it). Overdue stars gutter amber in their
+constellations; without a backend, reviews are self-attested on honour.
+
 ## Roadmap
 
 1. **Stage 1 (done)** — native constellation app on TestFlight.
-2. **Stage 2 (this)** — the AI Examiner verifies summary sheets before a star may ignite.
-3. **Stage 3** — spaced-repetition reviews with AI quizzes; overdue reviews lock the sky.
+2. **Stage 2 (done)** — the AI Examiner verifies summary sheets before a star may ignite.
+3. **Stage 3 (this)** — spaced-repetition reviews with AI quizzes; overdue reviews lock the sky.
 4. **Stage 4** — daily closed-loop AI journal → 1–3 next-day actions; skipping locks the sky.
 
 ## Build

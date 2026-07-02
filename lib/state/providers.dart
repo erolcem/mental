@@ -33,21 +33,56 @@ class ProgressNotifier extends StateNotifier<Map<String, NodeProgress>> {
   bool isUnlocked(Skill skill, SkillNode node) =>
       node.requires.every((r) => isComplete(skill.id, r));
 
-  /// Complete a node ("ignite its star"). No-op if locked or already lit.
-  /// When the Examiner passed the sheet, [verified] carries its note; without
-  /// a backend the star ignites unverified (honour system).
+  /// Complete a node ("ignite its star"). No-op if locked, already lit, or
+  /// while the sky is locked by overdue reviews. When the Examiner passed the
+  /// sheet, [verified] carries its note; without a backend the star ignites
+  /// unverified (honour system). Ignition starts the review clock.
   void ignite(Skill skill, SkillNode node,
       {String? summary, String? examinerNote, bool verified = false}) {
     if (!isUnlocked(skill, node)) return;
+    if (skyLocked(state, DateTime.now())) return;
     final key = progressKey(skill.id, node.id);
     if (_get(key).complete) return;
+    final now = DateTime.now();
     _write(
         key,
         _get(key).copyWith(
-            completedAt: DateTime.now(),
+            completedAt: now,
             summary: summary,
-            verifiedAt: verified ? DateTime.now() : null,
-            examinerNote: examinerNote));
+            verifiedAt: verified ? now : null,
+            examinerNote: examinerNote,
+            reviewStage: 0,
+            nextReviewAt: now.add(Duration(days: kReviewIntervalDays[0]))));
+  }
+
+  /// A passed review climbs the spaced-repetition ladder.
+  void recordReviewPass(String skillId, String nodeId, {DateTime? now}) {
+    final key = progressKey(skillId, nodeId);
+    final p = _get(key);
+    if (!p.complete) return;
+    final t = now ?? DateTime.now();
+    final stage =
+        (p.reviewStage + 1).clamp(0, kReviewIntervalDays.length - 1);
+    _write(
+        key,
+        p.copyWith(
+            reviewStage: stage,
+            nextReviewAt: t.add(Duration(days: kReviewIntervalDays[stage]))));
+  }
+
+  /// A failed review falls one rung and returns tomorrow. The attempt still
+  /// unlocks the sky — lockout demands you FACE every due review, not that
+  /// you ace it on the spot.
+  void recordReviewFail(String skillId, String nodeId, {DateTime? now}) {
+    final key = progressKey(skillId, nodeId);
+    final p = _get(key);
+    if (!p.complete) return;
+    final t = now ?? DateTime.now();
+    _write(
+        key,
+        p.copyWith(
+            reviewStage: (p.reviewStage - 1).clamp(0, kReviewIntervalDays.length - 1),
+            nextReviewAt: t.add(const Duration(days: kFailedReviewRetryDays))));
   }
 
   /// Undo a completion. Any completed descendants that depended on it go dark
@@ -104,6 +139,66 @@ class ProgressNotifier extends StateNotifier<Map<String, NodeProgress>> {
   void _write(String key, NodeProgress p) {
     repo.save(key, p);
     state = {...state, key: p};
+  }
+}
+
+/// One star demanding review.
+class DueReview {
+  final StatDomain stat;
+  final Skill skill;
+  final SkillNode node;
+  final NodeProgress progress;
+  const DueReview(this.stat, this.skill, this.node, this.progress);
+}
+
+/// Stars past their review date, oldest overdue first. "Now" is captured at
+/// (re)computation — screens that idle run a widget-owned minute timer that
+/// invalidates this provider (a provider-owned periodic stream would leak
+/// timers into widget tests).
+final dueReviewsProvider = Provider<List<DueReview>>(
+    (ref) => dueReviews(ref.watch(progressProvider), DateTime.now()));
+
+/// The lockout: any overdue review seals the sky against new ignitions.
+final skyLockedProvider =
+    Provider<bool>((ref) => ref.watch(dueReviewsProvider).isNotEmpty);
+
+List<DueReview> dueReviews(Map<String, NodeProgress> progress, DateTime now) {
+  final due = <DueReview>[];
+  for (final stat in catalog) {
+    for (final sk in stat.skills) {
+      for (final n in sk.tree) {
+        final p = progress[progressKey(sk.id, n.id)];
+        if (p != null && p.reviewDue(now)) {
+          due.add(DueReview(stat, sk, n, p));
+        }
+      }
+    }
+  }
+  due.sort((a, b) => a.progress.nextReviewAt!.compareTo(b.progress.nextReviewAt!));
+  return due;
+}
+
+bool skyLocked(Map<String, NodeProgress> progress, DateTime now) {
+  for (final e in progress.entries) {
+    if (e.value.reviewDue(now)) return true;
+  }
+  return false;
+}
+
+/// Migration: stars ignited before the review system existed get a schedule
+/// starting from now (not from their ignition date — that would greet the
+/// upgrade with an instant lockout). Called once at startup, like physical's
+/// backfills.
+void backfillReviewSchedules(ProgressRepository repo, {DateTime? now}) {
+  final t = now ?? DateTime.now();
+  for (final e in repo.load().entries) {
+    if (e.value.complete && e.value.nextReviewAt == null) {
+      repo.save(
+          e.key,
+          e.value.copyWith(
+              reviewStage: 0,
+              nextReviewAt: t.add(Duration(days: kReviewIntervalDays[0]))));
+    }
   }
 }
 

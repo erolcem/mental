@@ -10,6 +10,7 @@ import '../data/repository.dart';
 import '../data/skill_data.dart';
 import '../state/providers.dart';
 import 'constellation_screen.dart' show romanNumeral;
+import 'review_screen.dart';
 import 'theme.dart';
 
 /// Matches the backend's MIN_SUMMARY_CHARS floor.
@@ -290,11 +291,37 @@ class _NodeSheetState extends ConsumerState<_NodeSheet> {
               const SizedBox(height: 18),
               if (complete)
                 _completedFooter(np, color, notifier)
+              else if (ref.watch(skyLockedProvider))
+                _skyLockedButton(context)
               else
                 _actionButton(color, unlocked, api),
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  /// Overdue reviews seal the sky: no new ignitions until they are faced.
+  Widget _skyLockedButton(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      height: 48,
+      child: FilledButton(
+        style: FilledButton.styleFrom(
+          backgroundColor: kGold.withValues(alpha: 0.14),
+          foregroundColor: kGold,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          side: BorderSide(color: kGold.withValues(alpha: 0.45)),
+        ),
+        onPressed: () {
+          Navigator.of(context).pop(false);
+          Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const ReviewScreen()));
+        },
+        child: Text('🔒  THE SKY IS LOCKED — FACE YOUR REVIEWS',
+            style: raleway(10.5, weight: 700, color: kGold, spacing: 1)),
       ),
     );
   }

@@ -1,6 +1,7 @@
 // ui/galaxy_screen.dart — the home sky: four stat constellations stacked as a
 // staggered galactic spine (portrait-first), each a glowing orb orbited by its
 // skill stars. Tapping a skill star dives into that constellation.
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -10,6 +11,7 @@ import '../data/repository.dart';
 import '../data/skill_data.dart';
 import '../state/providers.dart';
 import 'constellation_screen.dart';
+import 'review_screen.dart';
 import 'starfield.dart';
 import 'theme.dart';
 import 'widgets/mastery_ring.dart';
@@ -27,11 +29,32 @@ const List<(String, Offset)> _spine = [
 Offset _statCenter(String id) =>
     _spine.firstWhere((e) => e.$1 == id).$2;
 
-class GalaxyScreen extends ConsumerWidget {
+class GalaxyScreen extends ConsumerStatefulWidget {
   const GalaxyScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<GalaxyScreen> createState() => _GalaxyScreenState();
+}
+
+class _GalaxyScreenState extends ConsumerState<GalaxyScreen> {
+  Timer? _dueTicker;
+
+  @override
+  void initState() {
+    super.initState();
+    // Reviews become due while the app idles here; re-check once a minute.
+    _dueTicker = Timer.periodic(const Duration(minutes: 1),
+        (_) => ref.invalidate(dueReviewsProvider));
+  }
+
+  @override
+  void dispose() {
+    _dueTicker?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final progress = ref.watch(progressProvider);
     final xp = totalXp(progress);
     final level = levelForXp(xp);
@@ -58,6 +81,8 @@ class GalaxyScreen extends ConsumerWidget {
                     for (final stat in catalog)
                       ..._buildCluster(context, stat, w, h, progress),
                     _header(context, ref, level, overall),
+                    if (ref.watch(skyLockedProvider))
+                      _lockBanner(context, ref.watch(dueReviewsProvider).length),
                     Positioned(
                       left: 0,
                       right: 0,
@@ -153,6 +178,47 @@ class GalaxyScreen extends ConsumerWidget {
               ],
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  /// The lockout banner — sits just under the header, pulls you to the Review.
+  Widget _lockBanner(BuildContext context, int count) {
+    return Positioned(
+      top: 62,
+      left: 20,
+      right: 20,
+      child: GestureDetector(
+        onTap: () => Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const ReviewScreen())),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          decoration: BoxDecoration(
+            // Solid backdrop — the banner floats over star labels.
+            color: const Color(0xF0141022),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: kGold.withValues(alpha: 0.5)),
+            boxShadow: [
+              BoxShadow(color: kGold.withValues(alpha: 0.15), blurRadius: 20),
+              const BoxShadow(color: Colors.black54, blurRadius: 12),
+            ],
+          ),
+          child: Row(
+            children: [
+              const Text('🔒', style: TextStyle(fontSize: 14, color: kGold)),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'SKY LOCKED — $count ${count == 1 ? 'REVIEW' : 'REVIEWS'} DUE',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: raleway(9.5, weight: 700, color: kGold, spacing: 1.5),
+                ),
+              ),
+              Text('BEGIN →', style: cinzel(10, weight: 700, color: kGold)),
+            ],
+          ),
         ),
       ),
     );

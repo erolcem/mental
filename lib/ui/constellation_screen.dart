@@ -2,9 +2,11 @@
 // Ignited stars burn with halos and diffraction spikes, the next unlockable
 // stars breathe softly, locked stars are barely-there points. Pan/zoom via
 // InteractiveViewer; tapping a star opens its node sheet.
+import 'dart:async';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 
+import 'package:flutter/foundation.dart' show setEquals;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -34,6 +36,7 @@ class _ConstellationScreenState extends ConsumerState<ConstellationScreen>
   String? _burstNodeId;
   final _viewCtrl = TransformationController();
   bool _viewInitialised = false;
+  Timer? _dueTicker;
 
   late final StatDomain stat = statById(widget.statId);
   late final Skill skill = skillById(widget.skillId);
@@ -47,10 +50,15 @@ class _ConstellationScreenState extends ConsumerState<ConstellationScreen>
           ..repeat();
     _burst = AnimationController(
         vsync: this, duration: const Duration(milliseconds: 900));
+    // Reviews can come due while studying a constellation; the sheet's lock
+    // gate must notice without a restart.
+    _dueTicker = Timer.periodic(const Duration(minutes: 1),
+        (_) => ref.invalidate(dueReviewsProvider));
   }
 
   @override
   void dispose() {
+    _dueTicker?.cancel();
     _breath.dispose();
     _burst.dispose();
     _viewCtrl.dispose();
@@ -127,6 +135,13 @@ class _ConstellationScreenState extends ConsumerState<ConstellationScreen>
                         breath: _breath.value,
                         burstNodeId: _burstNodeId,
                         burst: _burst.isAnimating ? _burst.value : null,
+                        dueNodeIds: {
+                          for (final n in skill.tree)
+                            if (progress[progressKey(skill.id, n.id)]
+                                    ?.reviewDue(DateTime.now()) ??
+                                false)
+                              n.id
+                        },
                       ),
                     ),
                   ),
@@ -240,6 +255,9 @@ class ConstellationPainter extends CustomPainter {
   final String? burstNodeId;
   final double? burst; // 0–1 while igniting, else null
 
+  /// Ignited stars past their review date — drawn fading amber.
+  final Set<String> dueNodeIds;
+
   ConstellationPainter({
     required this.skill,
     required this.color,
@@ -248,6 +266,7 @@ class ConstellationPainter extends CustomPainter {
     required this.breath,
     this.burstNodeId,
     this.burst,
+    this.dueNodeIds = const {},
   });
 
   bool _complete(String nodeId) =>
@@ -356,7 +375,7 @@ class ConstellationPainter extends CustomPainter {
     final unlocked = _unlocked(n);
 
     if (complete) {
-      _paintIgnitedStar(canvas, p, mag);
+      _paintIgnitedStar(canvas, p, mag, fading: dueNodeIds.contains(n.id));
     } else if (unlocked) {
       _paintAvailableStar(canvas, p, mag, n);
     } else {
@@ -368,16 +387,25 @@ class ConstellationPainter extends CustomPainter {
   }
 
   /// A lit star: hot white core, colour halo, 4-point diffraction spikes.
-  void _paintIgnitedStar(Canvas canvas, Offset p, double mag) {
-    final tw = 0.92 + 0.08 * math.sin(breath * 2 * math.pi * 2 + p.dx);
+  /// A [fading] star (review overdue) gutters amber and its light dims.
+  void _paintIgnitedStar(Canvas canvas, Offset p, double mag,
+      {bool fading = false}) {
+    // Fading stars flicker irregularly, like a candle guttering.
+    final tw = fading
+        ? 0.62 +
+            0.18 * math.sin(breath * 2 * math.pi * 5 + p.dx) +
+            0.10 * math.sin(breath * 2 * math.pi * 11 + p.dy)
+        : 0.92 + 0.08 * math.sin(breath * 2 * math.pi * 2 + p.dx);
+    final haloColor = fading ? const Color(0xFFF2B24A) : color;
+    final coreAlpha = fading ? 0.75 : 1.0;
     final haloR = 17.0 * mag * tw;
     canvas.drawCircle(
       p,
       haloR,
       Paint()
         ..shader = ui.Gradient.radial(p, haloR, [
-          color.withValues(alpha: 0.35),
-          color.withValues(alpha: 0.0),
+          haloColor.withValues(alpha: fading ? 0.28 : 0.35),
+          haloColor.withValues(alpha: 0.0),
         ]),
     );
     // Diffraction spikes — vertical/horizontal, fading outward.
@@ -391,7 +419,7 @@ class ConstellationPainter extends CustomPainter {
           Paint()
             ..shader = ui.Gradient.linear(bEnd, aEnd, [
               Colors.white.withValues(alpha: 0),
-              Colors.white.withValues(alpha: 0.8 * tw),
+              Colors.white.withValues(alpha: 0.8 * tw * coreAlpha),
               Colors.white.withValues(alpha: 0),
             ], [
               0.0,
@@ -404,9 +432,10 @@ class ConstellationPainter extends CustomPainter {
         p,
         3.4 * mag,
         Paint()
-          ..color = Colors.white
+          ..color = Colors.white.withValues(alpha: coreAlpha)
           ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 1));
-    canvas.drawCircle(p, 1.8 * mag, Paint()..color = Colors.white);
+    canvas.drawCircle(
+        p, 1.8 * mag, Paint()..color = Colors.white.withValues(alpha: coreAlpha));
   }
 
   /// The frontier: unlocked but unlit — a breathing ember inviting a tap.
@@ -503,5 +532,6 @@ class ConstellationPainter extends CustomPainter {
       old.progress != progress ||
       old.breath != breath ||
       old.burst != burst ||
-      old.burstNodeId != burstNodeId;
+      old.burstNodeId != burstNodeId ||
+      !setEquals(old.dueNodeIds, dueNodeIds);
 }

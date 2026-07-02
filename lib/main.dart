@@ -13,6 +13,8 @@ import 'ui/theme.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final repo = await PersistentProgressRepository.create();
+  // Stars ignited before the review system existed get a schedule from today.
+  backfillReviewSchedules(repo);
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
     statusBarColor: Colors.transparent,
     statusBarBrightness: Brightness.dark, // iOS: dark bg → light content

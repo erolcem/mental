@@ -4,9 +4,11 @@
 //   flutter build linux -t lib/dev/preview_main.dart \
 //     --dart-define=PREVIEW=constellation
 //
-// PREVIEW = galaxy | constellation | sheet | verify   (default: galaxy)
-// verify = the node sheet against a fake Examiner that always fails, to see
-// the verdict panel without a backend.
+// PREVIEW = galaxy | constellation | sheet | verify | locked | review
+//   (default: galaxy)
+// verify = the node sheet against a fake Examiner that always fails.
+// locked = the galaxy with overdue reviews (lock banner).
+// review = the Review screen against a fake Reviewer (questions + pass).
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -21,6 +23,7 @@ import '../state/providers.dart';
 import '../ui/constellation_screen.dart';
 import '../ui/galaxy_screen.dart';
 import '../ui/node_sheet.dart';
+import '../ui/review_screen.dart';
 import '../ui/theme.dart';
 
 const _preview = String.fromEnvironment('PREVIEW', defaultValue: 'galaxy');
@@ -41,6 +44,33 @@ MentalApi _failingExaminer() => MentalApi(
                   'proud of.',
             }),
             200,
+            headers: {'content-type': 'application/json'});
+      }),
+    );
+
+MentalApi _fakeReviewer() => MentalApi(
+      baseUrl: 'https://examiner.preview',
+      token: 'preview',
+      client: MockClient((req) async {
+        await Future<void>.delayed(const Duration(milliseconds: 1200));
+        final body = req.url.path.endsWith('/review/questions')
+            ? {
+                'questions': [
+                  'Without notes: explain why eigenvalues can be developed '
+                      'without determinants, as Axler does. What replaces them?',
+                  'Give one concrete situation where the rank-nullity theorem '
+                      'told you something non-obvious about a linear map.',
+                ]
+              }
+            : {
+                'passed': true,
+                'feedback':
+                    'The Axler viewpoint survived the gap — invariant subspaces '
+                        'came back cleanly and your rank-nullity example was your '
+                        'own. This light holds.',
+                'notes': ['Clean and specific.', 'Own example — convincing.'],
+              };
+        return http.Response(jsonEncode(body), 200,
             headers: {'content-type': 'application/json'});
       }),
     );
@@ -70,10 +100,23 @@ void main() {
               'basics. Proved all of chapter 4\'s Sylow exercises and built a '
               'cheat-sheet of the isomorphism theorems from memory.'));
 
+  // Locked/review modes: two stars overdue for review.
+  if (_preview == 'locked' || _preview == 'review') {
+    final overdue = DateTime.now().subtract(const Duration(days: 2));
+    for (final id in ['m4', 'm7']) {
+      repo.save(
+          progressKey('maths', id),
+          repo
+              .load()[progressKey('maths', id)]!
+              .copyWith(nextReviewAt: overdue));
+    }
+  }
+
   runApp(ProviderScope(
     overrides: [
       repositoryProvider.overrideWithValue(repo),
       if (_preview == 'verify') apiProvider.overrideWithValue(_failingExaminer()),
+      if (_preview == 'review') apiProvider.overrideWithValue(_fakeReviewer()),
     ],
     child: MaterialApp(
       title: 'Mental (preview)',
@@ -83,6 +126,7 @@ void main() {
         'constellation' =>
           const ConstellationScreen(statId: 'INT', skillId: 'maths'),
         'sheet' || 'verify' => const _SheetPreview(),
+        'review' => const ReviewScreen(),
         _ => const GalaxyScreen(),
       },
     ),
