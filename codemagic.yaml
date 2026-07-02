@@ -28,6 +28,10 @@ workflows:
           cd Wisdom
           npm ci
           npm run build
+          # Strip crossorigin attributes — they block loading from file:// in WKWebView
+          sed -i 's/ crossorigin//g' dist/index.html
+          # Strip type="module" — some WKWebView versions choke on ES modules from file://
+          sed -i 's/ type="module"//g' dist/index.html
 
       - name: Sync webapp into iOS bundle
         script: |

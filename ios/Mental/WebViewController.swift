@@ -16,6 +16,10 @@ class WebViewController: UIViewController, WKNavigationDelegate, WKUIDelegate {
         config.allowsInlineMediaPlayback = true
         config.preferences.javaScriptCanOpenWindowsAutomatically = false
 
+        // Allow file:// access to load local web app
+        config.preferences.setValue(true, forKey: "allowFileAccessFromFileURLs")
+        config.setValue(true, forKey: "allowUniversalAccessFromFileURLs")
+
         // Enable localStorage persistence (critical for progress saving)
         let dataStore = WKWebsiteDataStore.default()
         config.websiteDataStore = dataStore
@@ -111,6 +115,14 @@ class WebViewController: UIViewController, WKNavigationDelegate, WKUIDelegate {
         })();
         """
         webView.evaluateJavaScript(script)
+    }
+
+    func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
+        showError("Navigation failed: \(error.localizedDescription)")
+    }
+
+    func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
+        showError("Load failed: \(error.localizedDescription)")
     }
 
     func webView(
