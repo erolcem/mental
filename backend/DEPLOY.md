@@ -19,15 +19,17 @@ used for physical's backend.
 
 ## 2. Point the app at it
 
-In `codemagic.yaml`, fill the two vars (already scaffolded):
+In the **Codemagic UI** (your app → Settings → Environment variables — NOT
+the yaml; Codemagic rejects empty yaml vars, and the token shouldn't live in
+git) add, for the `ios-testflight` workflow:
 
-```yaml
-BACKEND_URL: "https://mental-production-xxxx.up.railway.app"
-APP_TOKEN: "<the same token>"
-```
+| Variable | Value | Secure |
+|---|---|---|
+| `BACKEND_URL` | `https://mental-production-xxxx.up.railway.app` | no |
+| `APP_TOKEN` | the same token as on Railway | **yes** |
 
-Push → next TestFlight build submits summary sheets to the Examiner before a
-star may ignite. **With `BACKEND_URL` empty the app still works** — stars
+Start a build → the app now submits summary sheets to the Examiner before a
+star may ignite. **Until those vars exist the build still works** — stars
 ignite on the honour system (stage-1 behaviour).
 
 ## Local dev
