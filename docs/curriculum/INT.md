@@ -139,6 +139,25 @@ rename from "Principal Architect / OS Dev" — the crown below IS the title)*
 
 ---
 
+## v2 addendum — accessibility pass (self-studyable / exam-mimicking)
+
+Applying Erol's rule that everything must be self-studyable or mimic a real
+examination:
+
+- **science**: add `sc21 NEW` — **GRE Physics subject test** (released exams
+  public; ≥900 equivalent, timed) at tier 7 requiring sc10+sc13 — physics'
+  best exam mimicry. Add `sc22 NEW` — **ACS General & Organic Chemistry
+  practice exams** ≥80% at tier 5 requiring sc5. sc16's "2+ domain experts"
+  clarified: found via forums, university office hours, or meetups — no
+  institutional standing required. sc17's peer-review crown keeps its
+  accessible paths: open-access journals and workshops accept independent
+  researchers.
+- **maths**: already fully self-studyable (public quals archives, Putnam
+  archives). No change.
+- **medicine**: already exam-mimicking by design (NBME/UWorld/MKSAP are the
+  literal instruments med students use alone at desks). No change.
+- **engineering**: already artifact-verified throughout. No change.
+
 ## Cross-cutting notes for discussion
 
 1. **Progress migration:** ids kept above preserve your existing stars.
