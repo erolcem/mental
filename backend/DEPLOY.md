@@ -21,12 +21,19 @@ used for physical's backend.
 
 In the **Codemagic UI** (your app → Settings → Environment variables — NOT
 the yaml; Codemagic rejects empty yaml vars, and the token shouldn't live in
-git) add, for the `ios-testflight` workflow:
+git) add:
 
-| Variable | Value | Secure |
-|---|---|---|
-| `BACKEND_URL` | `https://mental-production-xxxx.up.railway.app` | no |
-| `APP_TOKEN` | the same token as on Railway | **yes** |
+| Variable | Value | Group | Secure |
+|---|---|---|---|
+| `BACKEND_URL` | `https://mental-production-xxxx.up.railway.app` | **`ios_signing`** | no |
+| `APP_TOKEN` | the same token as on Railway | **`ios_signing`** | **yes** |
+
+**The group matters.** Codemagic only passes variables whose group is listed
+under `environment.groups` in `codemagic.yaml` — this workflow imports
+`ios_signing`, so put both variables there. Variables added to any other
+group, or typed in one-off when starting a single build manually, will be
+MISSING from later push-triggered builds — the app then shows "Examiner
+offline / Confidant offline" and runs on the honour system.
 
 Start a build → the app now submits summary sheets to the Examiner before a
 star may ignite. **Until those vars exist the build still works** — stars

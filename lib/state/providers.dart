@@ -251,6 +251,28 @@ final todayActionsProvider = Provider<JournalEntry?>((ref) {
   return best;
 });
 
+/// Every scheduled review — due and upcoming — soonest first. Powers the
+/// Review Ledger so the whole spaced-repetition future is transparent.
+List<DueReview> scheduledReviews(Map<String, NodeProgress> progress) {
+  final all = <DueReview>[];
+  for (final stat in catalog) {
+    for (final sk in stat.skills) {
+      for (final n in sk.tree) {
+        final p = progress[progressKey(sk.id, n.id)];
+        if (p != null && p.complete && p.nextReviewAt != null) {
+          all.add(DueReview(stat, sk, n, p));
+        }
+      }
+    }
+  }
+  all.sort(
+      (a, b) => a.progress.nextReviewAt!.compareTo(b.progress.nextReviewAt!));
+  return all;
+}
+
+final scheduledReviewsProvider = Provider<List<DueReview>>(
+    (ref) => scheduledReviews(ref.watch(progressProvider)));
+
 List<DueReview> dueReviews(Map<String, NodeProgress> progress, DateTime now) {
   final due = <DueReview>[];
   for (final stat in catalog) {

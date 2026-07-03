@@ -39,6 +39,13 @@ class MentalApp extends StatelessWidget {
       title: 'Mental',
       debugShowCheckedModeBanner: false,
       theme: buildTheme(),
+      // iOS: multiline fields have no Done key, so tapping anywhere outside
+      // a field is the way to lower the keyboard.
+      builder: (context, child) => GestureDetector(
+        behavior: HitTestBehavior.translucent,
+        onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+        child: child,
+      ),
       home: const GalaxyScreen(),
     );
   }

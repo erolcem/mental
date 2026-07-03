@@ -15,6 +15,7 @@ import '../data/skill_data.dart';
 import '../state/providers.dart';
 import 'constellation_layout.dart';
 import 'node_sheet.dart';
+import 'review_ledger.dart';
 import 'starfield.dart';
 import 'theme.dart';
 
@@ -150,7 +151,38 @@ class _ConstellationScreenState extends ConsumerState<ConstellationScreen>
             );
           }),
           _header(context, mastery),
+          if (ref.watch(skyLockedProvider)) _lockChip(context),
         ],
+      ),
+    );
+  }
+
+  /// The seal, visible where ignition would happen. Tap → the Ledger.
+  Widget _lockChip(BuildContext context) {
+    return Positioned(
+      left: 0,
+      right: 0,
+      bottom: 18,
+      child: Center(
+        child: GestureDetector(
+          onTap: () => showReviewLedger(context),
+          child: Container(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            decoration: BoxDecoration(
+              color: const Color(0xF0141022),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: kGold.withValues(alpha: 0.5)),
+              boxShadow: [
+                BoxShadow(
+                    color: kGold.withValues(alpha: 0.15), blurRadius: 16),
+              ],
+            ),
+            child: Text('🔒 THE SKY IS SEALED — VIEW THE LEDGER',
+                style: raleway(9,
+                    weight: 700, color: kGold, spacing: 1.5)),
+          ),
+        ),
       ),
     );
   }

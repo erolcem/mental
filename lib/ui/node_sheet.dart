@@ -268,7 +268,8 @@ class _NodeSheetState extends ConsumerState<_NodeSheet> {
                         'this star can ignite.'
                     : 'Write what you did and what you now understand. Your '
                         'summary is kept with this star. (Examiner offline — '
-                        'igniting on the honour system.)',
+                        'this build has no BACKEND_URL; igniting on the '
+                        'honour system.)',
                 style: raleway(10,
                     color: Colors.white.withValues(alpha: 0.42), height: 1.5),
               ),

@@ -13,6 +13,7 @@ import '../data/skill_data.dart';
 import '../state/providers.dart';
 import 'constellation_screen.dart';
 import 'journal_screen.dart';
+import 'review_ledger.dart';
 import 'review_screen.dart';
 import 'starfield.dart';
 import 'theme.dart';
@@ -158,6 +159,13 @@ class _GalaxyScreenState extends ConsumerState<GalaxyScreen> {
               color: kGold,
               child: Text('${(overall * 100).round()}%',
                   style: raleway(8.5, weight: 600, color: kGold)),
+            ),
+            IconButton(
+              visualDensity: VisualDensity.compact,
+              tooltip: 'Review ledger',
+              onPressed: () => showReviewLedger(context),
+              icon: Icon(Icons.hourglass_empty,
+                  color: kGold.withValues(alpha: 0.55), size: 16),
             ),
             PopupMenuButton<String>(
               icon: Icon(Icons.more_vert,

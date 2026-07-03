@@ -25,6 +25,7 @@ import '../ui/constellation_screen.dart';
 import '../ui/galaxy_screen.dart';
 import '../ui/journal_screen.dart';
 import '../ui/node_sheet.dart';
+import '../ui/review_ledger.dart';
 import '../ui/review_screen.dart';
 import '../ui/theme.dart';
 
@@ -126,7 +127,7 @@ void main() {
               'cheat-sheet of the isomorphism theorems from memory.'));
 
   // Locked/review modes: two stars overdue for review.
-  if (_preview == 'locked' || _preview == 'review') {
+  if (_preview == 'locked' || _preview == 'review' || _preview == 'ledger') {
     final overdue = DateTime.now().subtract(const Duration(days: 2));
     for (final id in ['m4', 'm7']) {
       repo.save(
@@ -183,10 +184,30 @@ void main() {
         'sheet' || 'verify' => const _SheetPreview(),
         'review' => const ReviewScreen(),
         'journal' => const JournalScreen(),
+        'ledger' => const _LedgerPreview(),
         _ => const GalaxyScreen(),
       },
     ),
   ));
+}
+
+/// Opens the Review Ledger over the galaxy.
+class _LedgerPreview extends StatefulWidget {
+  const _LedgerPreview();
+  @override
+  State<_LedgerPreview> createState() => _LedgerPreviewState();
+}
+
+class _LedgerPreviewState extends State<_LedgerPreview> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance
+        .addPostFrameCallback((_) => showReviewLedger(context));
+  }
+
+  @override
+  Widget build(BuildContext context) => const GalaxyScreen();
 }
 
 /// Opens the maths m8 node sheet (unlocked, unlit) over its constellation.

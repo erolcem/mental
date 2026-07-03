@@ -244,11 +244,25 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
             child: Column(
               children: [
                 _header(e),
+                if (!api.configured)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(18, 4, 18, 0),
+                    child: Text(
+                      '⚠ CONFIDANT OFFLINE — this build has no BACKEND_URL. '
+                      'In Codemagic, the variables must live in a group the '
+                      'workflow imports (see backend/DEPLOY.md).',
+                      style: raleway(8.5,
+                          color: const Color(0xFFFFC46B).withValues(alpha: 0.8),
+                          height: 1.5),
+                    ),
+                  ),
                 Expanded(
                   child: e.closed
                       ? _closedView(e)
                       : ListView(
                           controller: _scroll,
+                          keyboardDismissBehavior:
+                              ScrollViewKeyboardDismissBehavior.onDrag,
                           padding: const EdgeInsets.fromLTRB(18, 10, 18, 10),
                           children: [
                             for (final t in e.transcript) _bubble(t),
