@@ -1,10 +1,17 @@
 # Mental — a constellation of lifetime mastery
 
 Skyrim-style skill trees for real life. The sky holds **4 stats** (Intelligence,
-Wisdom, Charisma, Dexterity) → **21 skills** → **332 mastery nodes**, each a star
+Wisdom, Charisma, Dexterity) → **21 skills** → **383 mastery nodes**, each a star
 in that skill's constellation. Ignite a star by completing the work and writing a
 **mastery summary sheet**; the constellation lights up star by star until the
-crown — the skill's endgame (e.g. *"Perform Concerto with Live Orchestra"*).
+crown — the skill's endgame (e.g. *"The One-Hour Memorised Recital"*).
+
+Every constellation is built from **parallel paths** — named branches (e.g.
+Piano's *Technique*, *Reading*, *Repertoire*, *Musicianship*, *Performance*)
+that rise from their own roots, run independently, cross-link at synthesis
+stars, and converge on the crown. You can pour a season into one branch, but the
+summit always demands several. Every node is self-achievable — study, practice,
+or public/mock exam — with a concrete completion standard the Examiner judges.
 
 Native Flutter app, structured after `physical` (the sibling repo): local-first,
 Riverpod state, `shared_preferences` persistence, Codemagic → TestFlight.
@@ -14,7 +21,7 @@ Riverpod state, `shared_preferences` persistence, Codemagic → TestFlight.
 ```
 lib/
   data/
-    skill_data.dart            the full catalog (PROVISIONAL — curriculum review pending)
+    skill_data.dart            the full catalog: 21 parallel-path constellations
     repository.dart            NodeProgress model + repository interface
     persistent_repository.dart shared_preferences implementation
   state/

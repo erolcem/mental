@@ -66,6 +66,70 @@ void main() {
     }
   });
 
+  test('prerequisites always sit in a strictly lower tier (edges flow up)', () {
+    for (final stat in catalog) {
+      for (final skill in stat.skills) {
+        for (final n in skill.tree) {
+          for (final r in n.requires) {
+            expect(skill.nodeById(r).tier, lessThan(n.tier),
+                reason: '${skill.id}.${n.id} (tier ${n.tier}) requires '
+                    '$r at tier ${skill.nodeById(r).tier}');
+          }
+        }
+      }
+    }
+  });
+
+  // The parallel-path design: every skill is a constellation of named branches
+  // that converge on one crown.
+  test('every node names a branch (parallel path)', () {
+    for (final stat in catalog) {
+      for (final skill in stat.skills) {
+        for (final n in skill.tree) {
+          expect(n.branch, isNotEmpty,
+              reason: '${skill.id}.${n.id} has no branch');
+        }
+      }
+    }
+  });
+
+  test('every skill has many parallel paths (>= 4 branches)', () {
+    for (final stat in catalog) {
+      for (final skill in stat.skills) {
+        expect(skill.branches.length, greaterThanOrEqualTo(4),
+            reason: '${skill.id} has too few parallel paths');
+      }
+    }
+  });
+
+  test('exactly one crown, alone at the top tier, on the Crown path', () {
+    for (final stat in catalog) {
+      for (final skill in stat.skills) {
+        final crowns =
+            skill.tree.where((n) => n.tier == skill.maxTier).toList();
+        expect(crowns.length, 1,
+            reason: '${skill.id} must have exactly one crown star');
+        expect(crowns.single.branch, 'Crown',
+            reason: '${skill.id} crown must be on the Crown path');
+      }
+    }
+  });
+
+  test('parallel paths converge: each skill has a node fed by >= 2 branches',
+      () {
+    for (final stat in catalog) {
+      for (final skill in stat.skills) {
+        final converges = skill.tree.any((n) {
+          final branches =
+              n.requires.map((r) => skill.nodeById(r).branch).toSet();
+          return branches.length >= 2;
+        });
+        expect(converges, isTrue,
+            reason: '${skill.id} never merges two parallel paths');
+      }
+    }
+  });
+
   test('progress keys are globally unique (maths m1 vs mechanics m1)', () {
     final keys = <String>{};
     for (final stat in catalog) {
