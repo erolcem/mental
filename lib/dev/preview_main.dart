@@ -110,7 +110,7 @@ void main() {
       NodeProgress(
           completedAt: DateTime(2026, 6, 1),
           summary: 'Seeded preview progress.'));
-  for (final id in ['m1', 'm2', 'm3', 'm4', 'm5', 'm6', 'm7']) {
+  for (final id in ['m1', 'm2', 'm3', 'm4', 'm5', 'm6', 'm7', 'm23', 'm22']) {
     lit('maths', id);
   }
   lit('science', 'sc1');

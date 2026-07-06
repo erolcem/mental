@@ -1,10 +1,15 @@
 # Mental — a constellation of lifetime mastery
 
 Skyrim-style skill trees for real life. The sky holds **4 stats** (Intelligence,
-Wisdom, Charisma, Dexterity) → **21 skills** → **332 mastery nodes**, each a star
+Wisdom, Charisma, Dexterity) → **21 skills** → **431 mastery nodes**, each a star
 in that skill's constellation. Ignite a star by completing the work and writing a
 **mastery summary sheet**; the constellation lights up star by star until the
-crown — the skill's endgame (e.g. *"Perform Concerto with Live Orchestra"*).
+crown — the skill's endgame (e.g. *"The One-Hour Memorised Recital"*).
+
+Every constellation is a **braid of parallel branches** (technique / theory /
+practice / craft) that can be worked simultaneously and all converge on a
+single crown — see `docs/curriculum/PARALLEL.md` for the five laws every tree
+obeys (parallel, self-achievable, proof-bearing, convergent, safe).
 
 Native Flutter app, structured after `physical` (the sibling repo): local-first,
 Riverpod state, `shared_preferences` persistence, Codemagic → TestFlight.
@@ -14,7 +19,7 @@ Riverpod state, `shared_preferences` persistence, Codemagic → TestFlight.
 ```
 lib/
   data/
-    skill_data.dart            the full catalog (PROVISIONAL — curriculum review pending)
+    skill_data.dart            the full catalog (parallel-paths overhaul applied)
     repository.dart            NodeProgress model + repository interface
     persistent_repository.dart shared_preferences implementation
   state/
@@ -36,6 +41,9 @@ Wisdom/                        legacy React prototype (reference only)
 - Igniting grants XP (tier × 10); level 1–99 on a square-root curve — full sky = 99.
 - Extinguishing a star darkens every star that depended on it (summaries are kept).
 - Progress keys are `skillId.nodeId` (node ids repeat across trees, e.g. maths/mechanics `m1`).
+- Trees are braids, not chains: several branches stay workable at once, tiers
+  strictly increase along every edge, and every star lies on a path to its
+  tree's single crown (all enforced by `test/skill_data_test.dart`).
 
 ## The Examiner (stage 2)
 
