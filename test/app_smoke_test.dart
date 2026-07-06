@@ -71,7 +71,9 @@ void main() {
         .ignite(maths, maths.nodeById('m1'), summary: 'precalc mastered');
     await tester.pump(const Duration(milliseconds: 900));
 
-    expect(find.text('5%'), findsOneWidget); // 1/21 nodes
+    // 1 lit star out of the whole tree, as the header renders it.
+    final pct = '${(100 / maths.tree.length).round()}%';
+    expect(find.text(pct), findsOneWidget);
     final saved = repo.load()[progressKey('maths', 'm1')];
     expect(saved, isNotNull);
     expect(saved!.complete, isTrue);

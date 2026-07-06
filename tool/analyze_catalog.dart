@@ -11,7 +11,7 @@
 import 'dart:io';
 import 'dart:math' as math;
 
-import '../lib/data/skill_data.dart';
+import 'package:mental/data/skill_data.dart';
 
 int failures = 0;
 void check(bool cond, String msg) {
@@ -127,13 +127,12 @@ void verify(Skill skill) {
       (t, w) => check(w <= 5, '${skill.id} tier $t crowds the layout ($w)'));
   check(widths.values.where((w) => w >= 2).length >= 4,
       '${skill.id} is chain-shaped');
-  check(widths.values.where((w) => w >= 3).length >= 1,
+  check(widths.values.where((w) => w >= 3).isNotEmpty,
       '${skill.id} never opens 3 stars at once');
   check(skill.tree.length >= 16, '${skill.id} is too small');
 }
 
 SkillReport analyze(StatDomain stat, Skill skill) {
-  final byId = {for (final n in skill.tree) n.id: n};
   final edges = skill.tree.fold(0, (s, n) => s + n.requires.length);
 
   // Critical path: hour-weighted longest path ending at the crown (DAG DP in
