@@ -9,7 +9,12 @@ crown — the skill's endgame (e.g. *"The One-Hour Memorised Recital"*).
 Every constellation is a **braid of parallel branches** (technique / theory /
 practice / craft) that can be worked simultaneously and all converge on a
 single crown — see `docs/curriculum/PARALLEL.md` for the five laws every tree
-obeys (parallel, self-achievable, proof-bearing, convergent, safe).
+obeys (parallel, self-achievable, proof-bearing, convergent, safe). Each star
+carries a **researched effort estimate** (FSI/JLPT hour studies, CFA guidance,
+ABRSM norms): the full sky is **≈50,750 hours** of deliberate work — about 35
+years at four focused hours a day. `dart tool/analyze_catalog.dart` recomputes
+the whole analysis (critical paths, braid factors, choice breadth) without a
+Flutter toolchain → `docs/curriculum/ANALYSIS.md`.
 
 Native Flutter app, structured after `physical` (the sibling repo): local-first,
 Riverpod state, `shared_preferences` persistence, Codemagic → TestFlight.
@@ -32,6 +37,7 @@ lib/
     starfield.dart             animated night sky (cached static layer + twinkle + meteors)
     theme.dart                 palette + Cinzel/Raleway variable fonts
 test/                          data integrity, progress rules, layout, widget smoke
+tool/analyze_catalog.dart      pure-Dart catalog verifier + analytics generator
 Wisdom/                        legacy React prototype (reference only)
 ```
 

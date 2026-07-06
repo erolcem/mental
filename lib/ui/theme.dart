@@ -2,6 +2,15 @@
 // two bundled variable fonts (Cinzel for engraved titles, Raleway for body).
 import 'package:flutter/material.dart';
 
+import '../data/skill_data.dart';
+
+/// Lifts StatDomain's pure-Dart ARGB value into a paintable Color. The data
+/// layer stays dart:ui-free so `dart tool/analyze_catalog.dart` can run on
+/// the catalog without a Flutter toolchain.
+extension StatColor on StatDomain {
+  Color get color => Color(colorValue);
+}
+
 /// Deep-space backdrop — the darkest point of the sky gradient.
 const Color kSpaceBlack = Color(0xFF050712);
 const Color kSpaceDeep = Color(0xFF080B20);

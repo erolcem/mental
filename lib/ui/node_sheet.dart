@@ -165,7 +165,8 @@ class _NodeSheetState extends ConsumerState<_NodeSheet> {
                         Text(widget.node.label, style: cinzel(16, weight: 640)),
                         const SizedBox(height: 3),
                         Text(
-                          '${widget.skill.label}  ·  TIER ${romanNumeral(widget.node.tier)}  ·  +${xpForNode(widget.node)} XP',
+                          '${widget.skill.label}  ·  TIER ${romanNumeral(widget.node.tier)}  ·  +${xpForNode(widget.node)} XP'
+                          '${widget.node.hours > 0 ? '  ·  ≈${widget.node.hours} H' : ''}',
                           style: raleway(9.5,
                               color: color.withValues(alpha: 0.8),
                               spacing: 1.2),

@@ -203,4 +203,18 @@ literacy (k18, feeds the crown — a sandan who can also referee and teach).
 
 **Counts:** INT 98 · WIS 83 · CHA 139 · DEX 111 — **431 stars**.
 Verification: `flutter test test/skill_data_test.dart` (structure) and
-`test/layout_test.dart` (the sky still places every star tappably).
+`test/layout_test.dart` (the sky still places every star tappably), or
+`dart tool/analyze_catalog.dart` on any machine without Flutter.
+
+## Addendum (same day): research corrections + the effort model
+
+- **ABRSM**: Performance Grades 6–8 are video-assessed but *legally require
+  Grade 5 Music Theory (or Practical Musicianship) first* — now stated in the
+  piano Grade 8 star's proof, pointing at the Music Theory constellation.
+- **Putnam**: the real median is 0–2 points out of 120, so the timed-Putnam
+  bar became ≥20/120 self-graded (still far above almost every contestant).
+- **Hours**: every star now carries a researched deliberate-practice
+  estimate (FSI language categories, JLPT N1 hour surveys, CFA ≈300 h/level,
+  ABRSM norms, problem-set volume for textbooks). Full analytics — critical
+  paths, braid factors, frontier/choice breadth per tree — are generated
+  into `ANALYSIS.md` by `dart tool/analyze_catalog.dart --write`.

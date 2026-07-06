@@ -132,6 +132,26 @@ void main() {
     }
   });
 
+  test('every star carries a proof standard and an effort estimate', () {
+    var catalogHours = 0;
+    for (final stat in catalog) {
+      for (final skill in stat.skills) {
+        for (final n in skill.tree) {
+          expect(n.proof, isNotEmpty,
+              reason: '${skill.id}.${n.id} has no completion standard');
+          expect(n.hours, greaterThan(0),
+              reason: '${skill.id}.${n.id} has no hour estimate');
+        }
+        expect(skill.totalHours, inInclusiveRange(800, 8000),
+            reason: '${skill.id} totals ${skill.totalHours} hrs — outside '
+                'the plausible band for a lifetime mastery constellation');
+        catalogHours += skill.totalHours;
+      }
+    }
+    // The whole sky is a life's work: on the order of a five-fold Gladwell.
+    expect(catalogHours, inInclusiveRange(30000, 80000));
+  });
+
   test('trees are truly parallel and still fit the sky', () {
     for (final stat in catalog) {
       for (final skill in stat.skills) {
