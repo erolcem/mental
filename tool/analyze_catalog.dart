@@ -56,7 +56,8 @@ void verify(Skill skill) {
     check(n.tier >= 1, '${skill.id}.${n.id} tier < 1');
     check(n.hours > 0, '${skill.id}.${n.id} has no hour estimate');
     check(n.branch.isNotEmpty, '${skill.id}.${n.id} belongs to no branch');
-    check(n.proof.isNotEmpty, '${skill.id}.${n.id} has no completion standard');
+    check(n.proof.length >= 24,
+        '${skill.id}.${n.id} has a thin completion standard: "${n.proof}"');
     for (final r in n.requires) {
       check(ids.contains(r), '${skill.id}.${n.id} requires missing $r');
       if (byId[r] != null) {

@@ -137,8 +137,11 @@ void main() {
     for (final stat in catalog) {
       for (final skill in stat.skills) {
         for (final n in skill.tree) {
-          expect(n.proof, isNotEmpty,
-              reason: '${skill.id}.${n.id} has no completion standard');
+          // A choice must read like a quest, not a checkbox: the standard
+          // needs enough substance for the Examiner to judge against.
+          expect(n.proof.length, greaterThanOrEqualTo(24),
+              reason: '${skill.id}.${n.id} has a thin completion standard: '
+                  '"${n.proof}"');
           expect(n.hours, greaterThan(0),
               reason: '${skill.id}.${n.id} has no hour estimate');
           expect(n.branch, isNotEmpty,
