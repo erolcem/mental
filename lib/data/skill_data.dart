@@ -47,11 +47,17 @@ class SkillNode {
   /// braid of branches). 'Foundations' roots the tree; each tree's final
   /// branch carries it to the crown.
   final String branch;
+
+  /// The quest text: one or two sentences on what to actually do — the
+  /// resource, the work, and how you'll know it's done. [proof] remains the
+  /// formal standard the Examiner verifies against.
+  final String guide;
   const SkillNode(this.id, this.label, this.tier,
       [this.requires = const [],
       this.proof = '',
       this.hours = 0,
-      this.branch = '']);
+      this.branch = '',
+      this.guide = '']);
 }
 
 class Skill {

@@ -184,8 +184,36 @@ class _NodeSheetState extends ConsumerState<_NodeSheet> {
                   ),
                 ],
               ),
-              if (widget.node.proof.isNotEmpty) ...[
+              if (widget.node.guide.isNotEmpty) ...[
                 const SizedBox(height: 14),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.03),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.09)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('THE QUEST',
+                          style: raleway(7.5,
+                              weight: 700,
+                              color: Colors.white.withValues(alpha: 0.45),
+                              spacing: 2)),
+                      const SizedBox(height: 3),
+                      Text(widget.node.guide,
+                          style: raleway(11.5,
+                              color: Colors.white.withValues(alpha: 0.85),
+                              height: 1.5)),
+                    ],
+                  ),
+                ),
+              ],
+              if (widget.node.proof.isNotEmpty) ...[
+                SizedBox(height: widget.node.guide.isEmpty ? 14 : 8),
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(10),
@@ -197,7 +225,7 @@ class _NodeSheetState extends ConsumerState<_NodeSheet> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('COMPLETION STANDARD',
+                      Text('COMPLETION STANDARD — WHAT THE EXAMINER VERIFIES',
                           style: raleway(7.5,
                               weight: 700,
                               color: color.withValues(alpha: 0.7),

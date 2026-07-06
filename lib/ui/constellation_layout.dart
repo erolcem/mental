@@ -50,7 +50,7 @@ double _rand(String key, int salt) {
 double _randIn(String key, int salt, double lo, double hi) =>
     lo + _rand(key, salt) * (hi - lo);
 
-ConstellationLayout layoutConstellation(Skill skill, {double width = 390}) {
+ConstellationLayout layoutConstellation(Skill skill, {double? width}) {
   final maxTier = skill.maxTier;
   final height = kTopPad + (maxTier - 1) * kTierGap + kBottomPad;
 
@@ -59,9 +59,17 @@ ConstellationLayout layoutConstellation(Skill skill, {double width = 390}) {
     (byTier[n.tier] ??= []).add(n);
   }
 
+  // The canvas grows with the widest tier so dense constellations keep
+  // tappable star gaps — the screen pans (InteractiveViewer, unconstrained).
+  // `w` is the promoted non-null width (closures below capture it).
+  final widest =
+      byTier.values.fold(1, (m, l) => l.length > m ? l.length : m);
+  final w = width ??
+      math.max(390.0, 2 * kEdgeMargin + (widest - 1) * kMinStarGap + 48);
+
   final pos = <String, Offset>{};
   final magnitude = <String, double>{};
-  final usable = width - 2 * kEdgeMargin;
+  final usable = w - 2 * kEdgeMargin;
 
   for (var t = 1; t <= maxTier; t++) {
     final nodes = byTier[t] ?? const <SkillNode>[];
@@ -77,7 +85,7 @@ ConstellationLayout layoutConstellation(Skill skill, {double width = 390}) {
       ];
       if (parents.isEmpty) {
         return nodes.length == 1
-            ? width / 2
+            ? w / 2
             : kEdgeMargin + usable * (i / (nodes.length - 1));
       }
       return parents.reduce((a, b) => a + b) / parents.length;
@@ -94,11 +102,11 @@ ConstellationLayout layoutConstellation(Skill skill, {double width = 390}) {
       final n = nodes[order[rank]];
       final key = progressKey(skill.id, n.id);
       final slotX = order.length == 1
-          ? width / 2
+          ? w / 2
           : kEdgeMargin + usable * (rank / (order.length - 1));
       final pull = desired(n, order[rank]);
       var x = slotX * 0.45 + pull * 0.55 + _randIn(key, 1, -22, 22);
-      x = x.clamp(kEdgeMargin, width - kEdgeMargin);
+      x = x.clamp(kEdgeMargin, w - kEdgeMargin);
       xs.add(x);
     }
 
@@ -106,7 +114,7 @@ ConstellationLayout layoutConstellation(Skill skill, {double width = 390}) {
     for (var i = 1; i < xs.length; i++) {
       if (xs[i] - xs[i - 1] < kMinStarGap) xs[i] = xs[i - 1] + kMinStarGap;
     }
-    final overflow = xs.isEmpty ? 0.0 : xs.last - (width - kEdgeMargin);
+    final overflow = xs.isEmpty ? 0.0 : xs.last - (w - kEdgeMargin);
     if (overflow > 0) {
       for (var i = 0; i < xs.length; i++) {
         xs[i] = math.max(kEdgeMargin, xs[i] - overflow);
@@ -130,5 +138,5 @@ ConstellationLayout layoutConstellation(Skill skill, {double width = 390}) {
     }
   }
 
-  return ConstellationLayout(Size(width, height), pos, magnitude);
+  return ConstellationLayout(Size(w, height), pos, magnitude);
 }
