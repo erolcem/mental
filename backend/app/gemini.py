@@ -18,11 +18,16 @@ def configured() -> bool:
     return bool(settings.gemini_api_key)
 
 
-def _build(system: str, turns: list[dict], temperature: float, minimal: bool) -> dict:
-    gen: dict = {"temperature": temperature, "maxOutputTokens": 1024}
-    if not minimal:
-        # Disable 2.5 "thinking" so thinking tokens can't eat the output budget
-        # (which returns finishReason=MAX_TOKENS with NO text).
+def _build(system: str, turns: list[dict], temperature: float, minimal: bool,
+           model: str) -> dict:
+    pro = "pro" in model
+    gen: dict = {"temperature": temperature,
+                 "maxOutputTokens": 4096 if pro else 1024}
+    if not minimal and not pro:
+        # Disable 2.5 "thinking" on flash so thinking tokens can't eat the
+        # output budget (which returns finishReason=MAX_TOKENS with NO text).
+        # Pro models refuse thinkingBudget=0 — they think, and get a bigger
+        # output budget instead.
         gen["thinkingConfig"] = {"thinkingBudget": 0}
     return {
         "system_instruction": {"parts": [{"text": system}]},
@@ -31,18 +36,21 @@ def _build(system: str, turns: list[dict], temperature: float, minimal: bool) ->
     }
 
 
-def generate(system: str, turns: list[dict], *, temperature: float = 0.2) -> str:
+def generate(system: str, turns: list[dict], *, temperature: float = 0.2,
+             model: str | None = None) -> str:
     """`turns` is [{"role": "user"|"model", "text": "..."}]. Returns reply text.
+    `model` overrides the default (the Confidant runs a stronger one).
 
     Degrades gracefully: if the request with thinkingConfig is rejected with a
     400 (some models/regions), retries plain. Raises GeminiError otherwise.
     """
     if not configured():
         raise GeminiError("Examiner not configured (GEMINI_API_KEY unset)")
-    url = f"{BASE}/models/{settings.gemini_model}:generateContent?key={settings.gemini_api_key}"
+    mdl = model or settings.gemini_model
+    url = f"{BASE}/models/{mdl}:generateContent?key={settings.gemini_api_key}"
     last_err = "unknown"
     for minimal in (False, True):
-        body = _build(system, turns, temperature, minimal)
+        body = _build(system, turns, temperature, minimal, mdl)
         for _ in range(2):  # transient retry within a tier
             try:
                 r = httpx.post(url, json=body, timeout=60)

@@ -113,6 +113,34 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
     ];
   }
 
+  /// The habit ledger: up to the last 365 closed days (excluding tonight),
+  /// oldest first, trimmed to the backend's field caps. This is the
+  /// Confidant's long memory — what was set, what was done, what was learned.
+  List<Map<String, dynamic>> get _wireHistory {
+    final entries = ref
+        .read(journalProvider)
+        .values
+        .where((e) => e.closed && e.day.compareTo(_today) < 0)
+        .toList()
+      ..sort((a, b) => a.day.compareTo(b.day));
+    final recent = entries.length > 365
+        ? entries.sublist(entries.length - 365)
+        : entries;
+    String clip(String s, int n) => s.length > n ? s.substring(0, n) : s;
+    return [
+      for (final e in recent)
+        {
+          'day': e.day,
+          'actions': [
+            for (final a in e.actions.take(6))
+              if (a.text.trim().isNotEmpty)
+                {'text': clip(a.text, 200), 'done': a.done}
+          ],
+          'reflection': clip(e.reflection, 300),
+        }
+    ];
+  }
+
   @override
   void initState() {
     super.initState();
@@ -160,6 +188,7 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
         day: _today,
         transcript: _wireTranscript,
         yesterdayActions: _wireYesterday,
+        history: _wireHistory,
       );
       if (!mounted) return;
       final cur = notifier.entryFor(_today);
@@ -187,6 +216,7 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
           day: _today,
           transcript: _wireTranscript,
           yesterdayActions: _wireYesterday,
+          history: _wireHistory,
         );
         if (!mounted) return;
         final cur = notifier.entryFor(_today);

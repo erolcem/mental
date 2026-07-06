@@ -11,6 +11,11 @@ class Settings:
     gemini_api_key: str = os.environ.get("GEMINI_API_KEY", "")
     gemini_model: str = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")
 
+    # The Confidant runs on a stronger model: it reasons over a year of habit
+    # history nightly, and one call a day on Pro costs roughly a cent. The
+    # Examiner/Reviewer stay on the fast default (many small JSON verdicts).
+    journal_model: str = os.environ.get("JOURNAL_MODEL", "gemini-2.5-pro")
+
     # Shared bearer token. The Flutter app ships it via --dart-define and the
     # backend rejects requests without it. This keeps drive-by abuse off the
     # Gemini key; it is NOT user auth (single-user app — real accounts arrive

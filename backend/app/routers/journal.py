@@ -20,11 +20,24 @@ class YesterdayAction(BaseModel):
     done: bool = False
 
 
+class HistoryAction(BaseModel):
+    text: str = Field(min_length=1, max_length=200)
+    done: bool = False
+
+
+class HistoryEntry(BaseModel):
+    day: str = Field(min_length=8, max_length=10)  # yyyy-mm-dd
+    actions: list[HistoryAction] = Field(default_factory=list, max_length=6)
+    reflection: str = Field(default="", max_length=300)
+
+
 class JournalRequest(BaseModel):
     day: str = Field(min_length=8, max_length=10)  # yyyy-mm-dd
     transcript: list[Turn] = Field(min_length=1, max_length=40)
     yesterday_actions: list[YesterdayAction] = Field(
         default_factory=list, max_length=3)
+    # Up to a year of past days — the Confidant's habit memory.
+    history: list[HistoryEntry] = Field(default_factory=list, max_length=366)
 
 
 class ReplyResponse(BaseModel):
@@ -49,6 +62,14 @@ def _dump(req: JournalRequest) -> dict:
         "transcript": [{"role": t.role, "text": t.text} for t in req.transcript],
         "yesterday_actions": [
             {"text": a.text, "done": a.done} for a in req.yesterday_actions
+        ],
+        "history": [
+            {
+                "day": h.day,
+                "actions": [{"text": a.text, "done": a.done} for a in h.actions],
+                "reflection": h.reflection,
+            }
+            for h in req.history
         ],
     }
 

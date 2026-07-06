@@ -136,16 +136,20 @@ class MentalApi {
     );
   }
 
-  /// One conversational turn from the Confidant.
+  /// One conversational turn from the Confidant. [history] is the habit
+  /// ledger: up to a year of past days ({day, actions, reflection}) so the
+  /// advisor iterates on real trajectories instead of last night alone.
   Future<String> journalReply({
     required String day,
     required List<Map<String, String>> transcript, // {role, text}
     required List<Map<String, dynamic>> yesterdayActions, // {text, done}
+    List<Map<String, dynamic>> history = const [],
   }) async {
     final j = await _post('/journal/reply', {
       'day': day,
       'transcript': transcript,
       'yesterday_actions': yesterdayActions,
+      'history': history,
     });
     return (j['reply'] as String?) ?? '';
   }
@@ -155,11 +159,13 @@ class MentalApi {
     required String day,
     required List<Map<String, String>> transcript,
     required List<Map<String, dynamic>> yesterdayActions,
+    List<Map<String, dynamic>> history = const [],
   }) async {
     final j = await _post('/journal/close', {
       'day': day,
       'transcript': transcript,
       'yesterday_actions': yesterdayActions,
+      'history': history,
     });
     return JournalCloseResult(
       actions: [for (final a in (j['actions'] as List? ?? [])) a.toString()],

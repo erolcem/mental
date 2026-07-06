@@ -12,6 +12,8 @@ used for physical's backend.
      (same key type as physical's coach; you can reuse that key).
    - `APP_TOKEN` — any long random string, e.g. `openssl rand -hex 24`.
    - (optional) `GEMINI_MODEL` — defaults to `gemini-2.5-flash`.
+   - (optional) `JOURNAL_MODEL` — defaults to `gemini-2.5-pro`: the Confidant
+     reasons over a year of habit history nightly (~a cent/day on Pro).
 3. Settings → **Generate Domain** → note the URL,
    e.g. `https://mental-production-xxxx.up.railway.app`.
 4. Check `https://<domain>/health` →
