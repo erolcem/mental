@@ -1,0 +1,24 @@
+# The catalog gate: verifies every structural law of the mastery catalog and
+# that docs/curriculum/ANALYSIS.md was regenerated after data changes — on a
+# plain Dart container, no Flutter toolchain needed (skill_data.dart is pure
+# Dart by design).
+name: catalog
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dart-lang/setup-dart@v1
+      - name: Verify catalog invariants + analytics freshness
+        run: |
+          dart tool/analyze_catalog.dart --write > /dev/null
+          git diff --exit-code docs/curriculum/ANALYSIS.md || {
+            echo '::error::docs/curriculum/ANALYSIS.md is stale — run: dart tool/analyze_catalog.dart --write'
+            exit 1
+          }

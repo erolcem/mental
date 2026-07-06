@@ -44,7 +44,8 @@ Wisdom/                        legacy React prototype (reference only)
 ## Rules of the sky
 
 - A node unlocks only when **all** prerequisite stars are lit.
-- Igniting grants XP (tier × 10); level 1–99 on a square-root curve — full sky = 99.
+- Igniting grants **effort-weighted XP** (hours + tier × 10 — a star pays what
+  it costs); level 1–99 on a square-root curve — full sky = 99.
 - Extinguishing a star darkens every star that depended on it (summaries are kept).
 - Progress keys are `skillId.nodeId` (node ids repeat across trees, e.g. maths/mechanics `m1`).
 - Trees are braids, not chains: several branches stay workable at once, tiers

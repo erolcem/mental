@@ -218,3 +218,10 @@ Verification: `flutter test test/skill_data_test.dart` (structure) and
   ABRSM norms, problem-set volume for textbooks). Full analytics — critical
   paths, braid factors, frontier/choice breadth per tree — are generated
   into `ANALYSIS.md` by `dart tool/analyze_catalog.dart --write`.
+- **Branches are data**: each star's lane (`SkillNode.branch`) is
+  first-class — Foundations → 3–5 working lanes → a summit lane — enforced
+  by tests (≥5 named branches per tree), shown in the node sheet, and
+  analysed per branch in `ANALYSIS.md`.
+- **XP is effort-weighted**: XP = hours + tier × 10, so the level bar
+  measures life actually invested rather than counting a 700-hour thesis
+  equal to a 40-hour primer at the same tier.

@@ -347,8 +347,11 @@ double overallMastery(Map<String, NodeProgress> progress) {
   return totalNodeCount == 0 ? 0 : done / totalNodeCount;
 }
 
-/// XP: deeper stars are worth more (tier × 10).
-int xpForNode(SkillNode n) => n.tier * 10;
+/// XP: effort-weighted — a star pays what it costs. The researched hour
+/// estimate carries the weight; tier adds a small depth bonus so summit
+/// stars still outshine equal-effort foundations. (Mirrored in
+/// tool/analyze_catalog.dart, which cannot import Flutter code.)
+int xpForNode(SkillNode n) => n.hours + n.tier * 10;
 
 int totalXp(Map<String, NodeProgress> progress) {
   var xp = 0;

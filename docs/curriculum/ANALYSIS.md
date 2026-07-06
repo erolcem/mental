@@ -6,16 +6,17 @@
 
 | | nodes | edges | hours | XP |
 |---|---|---|---|---|
-| **INT Intelligence** | 98 | 143 | 20890 | 5580 |
-| **WIS Wisdom** | 83 | 109 | 7620 | 3690 |
-| **CHA Charisma** | 139 | 190 | 13135 | 7750 |
-| **DEX Dexterity** | 111 | 139 | 9105 | 6070 |
-| **TOTAL** | 431 | 581 | 50750 | 23090 |
+| **INT Intelligence** | 98 | 140 | 20890 | 26470 |
+| **WIS Wisdom** | 83 | 108 | 7620 | 11310 |
+| **CHA Charisma** | 139 | 190 | 13135 | 20885 |
+| **DEX Dexterity** | 111 | 138 | 9105 | 15175 |
+| **TOTAL** | 431 | 576 | 50750 | 73840 |
 
 **50750 hours of deliberate work** separate a dark sky from a full one —
 ≈ 35 years at four focused hours a day, a
-five-fold Gladwell. The level curve (XP = tier × 10, level = 1 + 98·√(xp/max))
-pays out fast early and slow late:
+five-fold Gladwell. XP is effort-weighted (XP = hours + tier × 10) so a star
+pays what it costs; the level curve (level = 1 + 98·√(xp/max)) pays out fast
+early and slow late:
 
 | sky completed (XP) | 1% | 5% | 10% | 25% | 50% | 75% | 100% |
 |---|---|---|---|---|---|---|---|
@@ -56,6 +57,63 @@ Reading the columns:
 | mechanics | 18 | 1235 | 680 | 1.8× | 2.8 / 1 | 83% |
 | memory | 17 | 980 | 540 | 1.8× | 2.0 / 1 | 71% |
 | karate | 17 | 1630 | 1230 | 1.3× | 2.1 / 1 | 65% |
+
+## The braid, branch by branch
+
+Branches are first-class data (`SkillNode.branch`): every constellation is
+Foundations → 3–5 working lanes → a summit lane that carries the crown.
+
+| skill | branches (nodes · hours) |
+|---|---|
+| science | Foundations 1·400h / Physics 9·2750h / Chemistry 6·1630h / Methods 2·420h / Lab Craft 5·330h / Research 4·920h |
+| maths | Foundations 3·670h / Analysis 7·1900h / Algebra 3·700h / Probability 6·1450h / Problem Craft 4·380h / Convergence 3·1050h |
+| medicine | Foundations 1·60h / Basic Science 9·2330h / Emergency 2·40h / Evidence 2·160h / Clinical 6·920h / Diagnosis 3·460h |
+| engineering | Foundations 4·500h / Software 7·1550h / Hardware 6·1200h / Electronics 2·350h / Craft 2·320h / Convergence 1·400h |
+| geography | Foundations 1·60h / World Knowledge 2·110h / Physical & Human 4·390h / Geopolitics 4·250h / Spatial Tech 7·480h / Convergence 2·270h |
+| history | Foundations 1·40h / Grand Survey 4·610h / Sources 4·190h / Thematic Depth 6·320h / Craft 5·460h |
+| business | Foundations 3·270h / Markets 1·60h / CFA Spine 10·1730h / Operations 2·110h / Venture 3·260h / Convergence 3·520h |
+| socialSci | Foundations 1·120h / Psych Core 4·400h / Methods 3·240h / Mind & Society 6·340h / Practice 3·110h / The Study 4·280h |
+| english | Foundations 3·120h / Language 2·160h / Writing 5·340h / Rhetoric 5·270h / Argument 2·100h / Convergence 2·160h |
+| turkish | Foundations 1·30h / Grammar 6·880h / Input 3·280h / Output 5·215h / Culture 2·80h / Convergence 2·100h |
+| japanese | Foundations 1·30h / Kanji 3·800h / Grammar 4·800h / Input 5·1100h / Output 4·230h / Culture 1·40h / JLPT 4·540h |
+| khmer | Foundations 1·40h / Script 4·165h / Core 5·680h / Input 1·100h / Output 4·165h / Culture 2·100h / Convergence 1·40h |
+| musicTheory | Foundations 1·40h / Written Theory 7·590h / Ear 3·200h / Rhythm 1·30h / Composition 3·200h / Analysis 2·220h / Convergence 2·400h |
+| piano | Foundations 1·40h / Technique 6·550h / Reading 2·140h / Musicianship 3·160h / Repertoire 7·1240h / Performance 2·90h / Convergence 1·400h |
+| singing | Foundations 1·20h / Technique 9·540h / Ear 2·80h / Repertoire 3·280h / Production 4·290h / Convergence 1·60h |
+| drawing | Foundations 1·100h / Construction 4·280h / Observation 6·680h / Light & Color 3·280h / Imagination 4·410h / Convergence 2·360h |
+| writing | Foundations 1·40h / Reading 2·450h / Craft 4·190h / The Novel 6·1060h / Arena 5·220h / Convergence 1·150h |
+| cooking | Foundations 1·10h / Technique 8·350h / Science 3·140h / Baking 2·160h / World & Plate 3·180h / Convergence 3·200h |
+| mechanics | Foundations 1·20h / Auto 4·250h / Home 6·370h / Machines 3·235h / Making 3·160h / Convergence 1·200h |
+| memory | Foundations 1·60h / Systems 5·220h / Learning Science 1·30h / Applied 2·120h / Competition 7·450h / Convergence 1·100h |
+| karate | Foundations 1·40h / Kata 5·420h / Kumite 3·240h / Conditioning 1·80h / The Way 3·80h / Dan Chain 4·770h |
+
+## Pacing: what the hours mean in calendar time
+
+For one person the braid buys **choice, not speed** — you still live every
+hour. Parallel branches mean a plateau in one lane never idles you; the
+braid factor above is how much simultaneous progress the structure offers,
+not a discount on the work. At sustained deliberate-practice rates the
+whole sky takes:
+
+| pace | 10 h/wk | 20 h/wk | 28 h/wk | 40 h/wk |
+|---|---|---|---|---|
+| full sky | 97.6 yrs | 48.8 yrs | 34.9 yrs | 24.4 yrs |
+
+Single-constellation crowns at a focused 10 h/week:
+
+| skill | hours | years solo | skill | hours | years solo |
+|---|---|---|---|---|---|
+| science | 6450 | 12.4 | maths | 6150 | 11.8 |
+| medicine | 3970 | 7.6 | engineering | 4320 | 8.3 |
+| geography | 1560 | 3.0 | history | 1620 | 3.1 |
+| business | 2950 | 5.7 | socialSci | 1490 | 2.9 |
+| english | 1150 | 2.2 | turkish | 1585 | 3.0 |
+| japanese | 3540 | 6.8 | khmer | 1290 | 2.5 |
+| musicTheory | 1680 | 3.2 | piano | 2620 | 5.0 |
+| singing | 1270 | 2.4 | drawing | 2110 | 4.1 |
+| writing | 2110 | 4.1 | cooking | 1040 | 2.0 |
+| mechanics | 1235 | 2.4 | memory | 980 | 1.9 |
+| karate | 1630 | 3.1 |  |  |  |
 
 ## Critical paths (the spine of each constellation)
 

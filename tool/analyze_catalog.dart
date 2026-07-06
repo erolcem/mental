@@ -23,7 +23,7 @@ void check(bool cond, String msg) {
 
 /// XP mirror of state/providers.dart (which imports Flutter, so it cannot be
 /// imported here). Keep in sync with xpForNode/levelForXp.
-int xpForNode(SkillNode n) => n.tier * 10;
+int xpForNode(SkillNode n) => n.hours + n.tier * 10;
 int levelForXp(int xp, int maxXp) =>
     maxXp == 0 ? 1 : 1 + (98 * math.sqrt((xp / maxXp).clamp(0.0, 1.0))).floor();
 
@@ -50,9 +50,12 @@ void verify(Skill skill) {
   final ids = skill.tree.map((n) => n.id).toSet();
   check(ids.length == skill.tree.length, 'duplicate node id in ${skill.id}');
   final byId = {for (final n in skill.tree) n.id: n};
+  check(skill.branches.length >= 5,
+      '${skill.id} names only ${skill.branches.length} branches — not a braid');
   for (final n in skill.tree) {
     check(n.tier >= 1, '${skill.id}.${n.id} tier < 1');
     check(n.hours > 0, '${skill.id}.${n.id} has no hour estimate');
+    check(n.branch.isNotEmpty, '${skill.id}.${n.id} belongs to no branch');
     check(n.proof.isNotEmpty, '${skill.id}.${n.id} has no completion standard');
     for (final r in n.requires) {
       check(ids.contains(r), '${skill.id}.${n.id} requires missing $r');
@@ -89,6 +92,29 @@ void verify(Skill skill) {
     }
     for (final n in skill.tree) {
       check(anc.contains(n.id), '${skill.id}.${n.id} is an orphan star');
+    }
+  }
+
+  // No redundant edges: a prerequisite already implied by another
+  // prerequisite's ancestry adds a false constraint line to the sky.
+  final ancestorsOf = <String, Set<String>>{};
+  Set<String> ancestors(String id) => ancestorsOf.putIfAbsent(id, () {
+        final out = <String>{};
+        for (final r in byId[id]!.requires) {
+          out
+            ..add(r)
+            ..addAll(ancestors(r));
+        }
+        return out;
+      });
+  for (final n in skill.tree) {
+    for (final r in n.requires) {
+      final implied = n.requires
+          .where((o) => o != r && ancestors(o).contains(r))
+          .toList();
+      check(implied.isEmpty,
+          '${skill.id}.${n.id}: requiring $r is redundant — already implied '
+          'via ${implied.join(', ')}');
     }
   }
 
@@ -227,8 +253,9 @@ void main(List<String> args) {
 
 **$totalHours hours of deliberate work** separate a dark sky from a full one —
 ≈ ${fmt(totalHours / (4 * 365), 0)} years at four focused hours a day, a
-five-fold Gladwell. The level curve (XP = tier × 10, level = 1 + 98·√(xp/max))
-pays out fast early and slow late:
+five-fold Gladwell. XP is effort-weighted (XP = hours + tier × 10) so a star
+pays what it costs; the level curve (level = 1 + 98·√(xp/max)) pays out fast
+early and slow late:
 
 | sky completed (XP) | 1% | 5% | 10% | 25% | 50% | 75% | 100% |
 |---|---|---|---|---|---|---|---|
@@ -254,6 +281,52 @@ Reading the columns:
         '| ${r.skill.totalHours} | ${r.criticalPathHours} '
         '| ${fmt(r.braid)}× | ${fmt(r.meanFrontier)} / ${r.minFrontier} '
         '| ${pct(r.choiceShare)} |');
+  }
+
+  buf.write('''
+
+## The braid, branch by branch
+
+Branches are first-class data (`SkillNode.branch`): every constellation is
+Foundations → 3–5 working lanes → a summit lane that carries the crown.
+
+| skill | branches (nodes · hours) |
+|---|---|
+''');
+  for (final r in reports) {
+    final parts = r.skill.branches.map((b) {
+      final ns = r.skill.tree.where((n) => n.branch == b);
+      final h = ns.fold(0, (s, n) => s + n.hours);
+      return '$b ${ns.length}·${h}h';
+    }).join(' / ');
+    buf.writeln('| ${r.skill.id} | $parts |');
+  }
+
+  buf.write('''
+
+## Pacing: what the hours mean in calendar time
+
+For one person the braid buys **choice, not speed** — you still live every
+hour. Parallel branches mean a plateau in one lane never idles you; the
+braid factor above is how much simultaneous progress the structure offers,
+not a discount on the work. At sustained deliberate-practice rates the
+whole sky takes:
+
+| pace | 10 h/wk | 20 h/wk | 28 h/wk | 40 h/wk |
+|---|---|---|---|---|
+| full sky | ${[10, 20, 28, 40].map((w) => '${fmt(totalHours / (w * 52), 1)} yrs').join(' | ')} |
+
+Single-constellation crowns at a focused 10 h/week:
+
+| skill | hours | years solo | skill | hours | years solo |
+|---|---|---|---|---|---|
+''');
+  for (var i = 0; i < reports.length; i += 2) {
+    final a = reports[i];
+    final b = i + 1 < reports.length ? reports[i + 1] : null;
+    buf.writeln('| ${a.skill.id} | ${a.skill.totalHours} '
+        '| ${fmt(a.skill.totalHours / 520, 1)} '
+        '| ${b == null ? ' |  | ' : '${b.skill.id} | ${b.skill.totalHours} | ${fmt(b.skill.totalHours / 520, 1)}'} |');
   }
 
   buf.write('''

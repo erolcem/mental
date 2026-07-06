@@ -141,7 +141,14 @@ void main() {
               reason: '${skill.id}.${n.id} has no completion standard');
           expect(n.hours, greaterThan(0),
               reason: '${skill.id}.${n.id} has no hour estimate');
+          expect(n.branch, isNotEmpty,
+              reason: '${skill.id}.${n.id} belongs to no branch');
         }
+        // A braid needs real lanes: Foundations + ≥3 working branches +
+        // the summit lane at minimum.
+        expect(skill.branches.length, greaterThanOrEqualTo(5),
+            reason: '${skill.id} names only ${skill.branches} — '
+                'not a braid of parallel branches');
         expect(skill.totalHours, inInclusiveRange(800, 8000),
             reason: '${skill.id} totals ${skill.totalHours} hrs — outside '
                 'the plausible band for a lifetime mastery constellation');
@@ -150,6 +157,33 @@ void main() {
     }
     // The whole sky is a life's work: on the order of a five-fold Gladwell.
     expect(catalogHours, inInclusiveRange(30000, 80000));
+  });
+
+  test('no redundant prerequisite edges (transitive reduction holds)', () {
+    for (final stat in catalog) {
+      for (final skill in stat.skills) {
+        final byId = {for (final n in skill.tree) n.id: n};
+        final memo = <String, Set<String>>{};
+        Set<String> ancestors(String id) => memo.putIfAbsent(id, () {
+              final out = <String>{};
+              for (final r in byId[id]!.requires) {
+                out
+                  ..add(r)
+                  ..addAll(ancestors(r));
+              }
+              return out;
+            });
+        for (final n in skill.tree) {
+          for (final r in n.requires) {
+            final implied =
+                n.requires.any((o) => o != r && ancestors(o).contains(r));
+            expect(implied, isFalse,
+                reason: '${skill.id}.${n.id}: requiring $r is redundant — '
+                    'already implied by another prerequisite');
+          }
+        }
+      }
+    }
   });
 
   test('trees are truly parallel and still fit the sky', () {
