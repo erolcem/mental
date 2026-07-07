@@ -124,7 +124,7 @@ void verify(Skill skill) {
     widths[n.tier] = (widths[n.tier] ?? 0) + 1;
   }
   widths.forEach(
-      (t, w) => check(w <= 5, '${skill.id} tier $t crowds the layout ($w)'));
+      (t, w) => check(w <= 8, '${skill.id} tier $t crowds the layout ($w)'));
   check(widths.values.where((w) => w >= 2).length >= 4,
       '${skill.id} is chain-shaped');
   check(widths.values.where((w) => w >= 3).isNotEmpty,

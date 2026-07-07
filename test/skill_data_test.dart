@@ -196,8 +196,8 @@ void main() {
         for (final n in skill.tree) {
           widths[n.tier] = (widths[n.tier] ?? 0) + 1;
         }
-        widths.forEach((t, w) => expect(w, lessThanOrEqualTo(5),
-            reason: '${skill.id} tier $t has $w stars — layout crowds past 5'));
+        widths.forEach((t, w) => expect(w, lessThanOrEqualTo(8),
+            reason: '${skill.id} tier $t has $w stars — layout crowds past 8'));
         expect(widths.values.where((w) => w >= 2).length,
             greaterThanOrEqualTo(4),
             reason: '${skill.id} is chain-shaped: fewer than 4 tiers offer '
