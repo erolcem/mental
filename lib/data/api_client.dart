@@ -41,8 +41,10 @@ class ReviewGrade {
 /// The Confidant's distillation of a closed journal session.
 class JournalCloseResult {
   final List<String> actions; // 1–3 next-day items
+  final List<String> whys; // index-aligned evidence for each action
   final String reflection;
-  const JournalCloseResult({required this.actions, required this.reflection});
+  const JournalCloseResult(
+      {required this.actions, this.whys = const [], required this.reflection});
 }
 
 class MentalApi {
@@ -136,33 +138,40 @@ class MentalApi {
     );
   }
 
-  /// One conversational turn from the Confidant.
+  /// One conversational turn from the Confidant. [history] is the advisor's
+  /// memory: up to a year of closed days ({day, actions, reflection}).
   Future<String> journalReply({
     required String day,
     required List<Map<String, String>> transcript, // {role, text}
     required List<Map<String, dynamic>> yesterdayActions, // {text, done}
+    List<Map<String, dynamic>> history = const [],
   }) async {
     final j = await _post('/journal/reply', {
       'day': day,
       'transcript': transcript,
       'yesterday_actions': yesterdayActions,
+      'history': history,
     });
     return (j['reply'] as String?) ?? '';
   }
 
-  /// Close tonight's session → 1–3 next-day actions + a reflection.
+  /// Close tonight's session → 1–3 next-day actions (each with the advisor's
+  /// why) + a reflection.
   Future<JournalCloseResult> journalClose({
     required String day,
     required List<Map<String, String>> transcript,
     required List<Map<String, dynamic>> yesterdayActions,
+    List<Map<String, dynamic>> history = const [],
   }) async {
     final j = await _post('/journal/close', {
       'day': day,
       'transcript': transcript,
       'yesterday_actions': yesterdayActions,
+      'history': history,
     });
     return JournalCloseResult(
       actions: [for (final a in (j['actions'] as List? ?? [])) a.toString()],
+      whys: [for (final w in (j['whys'] as List? ?? [])) w.toString()],
       reflection: (j['reflection'] as String?) ?? '',
     );
   }

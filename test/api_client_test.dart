@@ -73,4 +73,51 @@ void main() {
     final a = api((_) async => throw Exception('connection refused'));
     expect(callVerify(a), throwsA(isA<ApiException>()));
   });
+
+  test('journalClose ships the habit history and parses whys', () async {
+    late http.Request seen;
+    final a = api((req) async {
+      seen = req;
+      return http.Response(
+          jsonEncode({
+            'actions': ['10 reps after breakfast'],
+            'whys': ['0/3 evenings — shrink and move the trigger'],
+            'reflection': 'Mornings are yours.',
+          }),
+          200,
+          headers: {'content-type': 'application/json'});
+    });
+    final res = await a.journalClose(
+      day: '2026-07-02',
+      transcript: [
+        {'role': 'user', 'text': 'skipped again'}
+      ],
+      yesterdayActions: [
+        {'text': 'Do 20 reps', 'done': false}
+      ],
+      history: [
+        {
+          'day': '2026-07-01',
+          'actions': [
+            {'text': 'Do 20 reps', 'done': false}
+          ],
+          'reflection': 'Try mornings.'
+        }
+      ],
+    );
+    expect(res.actions, ['10 reps after breakfast']);
+    expect(res.whys.single, contains('shrink'));
+    final body = jsonDecode(seen.body) as Map<String, dynamic>;
+    expect((body['history'] as List).single['day'], '2026-07-01');
+  });
+
+  test('journalClose tolerates a whys-less (older) backend', () async {
+    final a = api((_) async => http.Response(
+        jsonEncode({'actions': ['A'], 'reflection': 'r'}), 200,
+        headers: {'content-type': 'application/json'}));
+    final res = await a.journalClose(
+        day: '2026-07-02', transcript: const [], yesterdayActions: const []);
+    expect(res.actions, ['A']);
+    expect(res.whys, isEmpty);
+  });
 }

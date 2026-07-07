@@ -113,6 +113,11 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
     ];
   }
 
+  /// The advisor's memory: up to a year of closed days (actions + outcomes +
+  /// reflections), so tonight's prescription iterates on the record.
+  List<Map<String, dynamic>> get _wireHistory =>
+      advisorHistory(ref.read(journalProvider), _today);
+
   @override
   void initState() {
     super.initState();
@@ -160,6 +165,7 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
         day: _today,
         transcript: _wireTranscript,
         yesterdayActions: _wireYesterday,
+        history: _wireHistory,
       );
       if (!mounted) return;
       final cur = notifier.entryFor(_today);
@@ -187,11 +193,16 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
           day: _today,
           transcript: _wireTranscript,
           yesterdayActions: _wireYesterday,
+          history: _wireHistory,
         );
         if (!mounted) return;
         final cur = notifier.entryFor(_today);
         notifier.save(cur.copyWith(
-          actions: [for (final a in res.actions) ActionItem(a)],
+          actions: [
+            for (var i = 0; i < res.actions.length; i++)
+              ActionItem(res.actions[i],
+                  why: i < res.whys.length ? res.whys[i] : '')
+          ],
           reflection: res.reflection,
           closedAt: DateTime.now(),
         ));
@@ -506,7 +517,22 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
                         color: kJournalViolet.withValues(alpha: 0.8))),
                 const SizedBox(width: 10),
                 Expanded(
-                    child: Text(a.text, style: raleway(12.5, height: 1.5))),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(a.text, style: raleway(12.5, height: 1.5)),
+                      if (a.why.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 1),
+                          child: Text(a.why,
+                              style: raleway(10,
+                                  height: 1.4,
+                                  color: kJournalViolet.withValues(
+                                      alpha: 0.65))),
+                        ),
+                    ],
+                  ),
+                ),
               ],
             ),
           ),

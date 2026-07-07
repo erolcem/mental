@@ -107,7 +107,8 @@ def make_questions(*, stat: str, skill: str, goal: str, node: str, tier: int,
     turn = _node_block(stat=stat, skill=skill, goal=goal, node=node, tier=tier,
                        summary=summary, proof=proof)
     reply = gen(QUESTIONS_SYSTEM.format(n=QUESTIONS_PER_REVIEW),
-                [{"role": "user", "text": turn}], temperature=0.6)
+                [{"role": "user", "text": turn}], temperature=0.6,
+                effort="deep")
     return parse_questions(reply)
 
 
@@ -120,5 +121,5 @@ def grade(*, stat: str, skill: str, goal: str, node: str, tier: int, summary: st
         for i, (q, a) in enumerate(zip(questions, answers)))
     turn = (f"{_node_block(stat=stat, skill=skill, goal=goal, node=node, tier=tier, summary=summary, proof=proof)}"
             f"\n\nREVIEW TRANSCRIPT:\n{qa}")
-    reply = gen(GRADING_SYSTEM, [{"role": "user", "text": turn}])
+    reply = gen(GRADING_SYSTEM, [{"role": "user", "text": turn}], effort="deep")
     return parse_grade(reply, n_answers=len(answers))

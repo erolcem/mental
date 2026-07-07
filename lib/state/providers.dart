@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/api_client.dart';
 import '../data/repository.dart';
 import '../data/skill_data.dart';
+import '../data/transfer.dart';
 
 /// Overridden in main() with the persistent repository.
 final repositoryProvider =
@@ -143,6 +144,16 @@ class ProgressNotifier extends StateNotifier<Map<String, NodeProgress>> {
       _write(progressKey(skill.id, node.id),
           _get(progressKey(skill.id, node.id)).copyWith(summary: text));
 
+  /// Cross-device import: merge an exported sky into this one (see
+  /// data/transfer.dart for the newer-record-wins rules) and persist it all.
+  void importMerged(Map<String, NodeProgress> incoming) {
+    final merged = mergeProgress(state, incoming);
+    for (final e in merged.entries) {
+      repo.save(e.key, e.value);
+    }
+    state = merged;
+  }
+
   void wipe() {
     repo.clear();
     state = repo.load();
@@ -204,6 +215,15 @@ class JournalNotifier extends StateNotifier<Map<String, JournalEntry>> {
     save(e.copyWith(actions: actions));
   }
 
+  /// Cross-device import: merge exported journal days into this device.
+  void importMerged(Map<String, JournalEntry> incoming) {
+    final merged = mergeJournal(state, incoming);
+    for (final e in merged.entries) {
+      repo.saveJournalEntry(e.value);
+    }
+    state = merged;
+  }
+
   void wipe() {
     repo.clearJournal();
     state = repo.loadJournal();
@@ -250,6 +270,33 @@ final todayActionsProvider = Provider<JournalEntry?>((ref) {
   }
   return best;
 });
+
+/// The advisor's memory: every closed day BEFORE [today], oldest first,
+/// capped to the most recent [days]. Wire-shaped for /journal/reply|close —
+/// only actions + done-state + reflection travel (never transcripts).
+List<Map<String, dynamic>> advisorHistory(
+    Map<String, JournalEntry> entries, String today,
+    {int days = 365}) {
+  final closed = [
+    for (final e in entries.values)
+      if (e.closed && e.day.compareTo(today) < 0) e
+  ]..sort((a, b) => a.day.compareTo(b.day));
+  final recent =
+      closed.length > days ? closed.sublist(closed.length - days) : closed;
+  return [
+    for (final e in recent)
+      {
+        'day': e.day,
+        'actions': [
+          for (final a in e.actions) {'text': a.text, 'done': a.done}
+        ],
+        'reflection':
+            e.reflection.length > 380 // wire cap (backend rejects >400)
+                ? e.reflection.substring(0, 380)
+                : e.reflection,
+      }
+  ];
+}
 
 /// Every scheduled review — due and upcoming — soonest first. Powers the
 /// Review Ledger so the whole spaced-repetition future is transparent.

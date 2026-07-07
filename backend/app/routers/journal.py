@@ -1,5 +1,7 @@
 """POST /journal/reply + /journal/close — the nightly Confidant. Stateless:
-the app owns the transcript and yesterday's action items."""
+the app owns the transcript, today's action items, and up to a year of habit
+history (day + actions + done-state + reflection) that powers the advisor's
+incremental progressions."""
 from fastapi import APIRouter, Header, HTTPException
 from pydantic import BaseModel, Field
 
@@ -20,11 +22,21 @@ class YesterdayAction(BaseModel):
     done: bool = False
 
 
+class HistoryDay(BaseModel):
+    """One past journaled day, as the advisor's memory sees it."""
+    day: str = Field(min_length=8, max_length=10)  # yyyy-mm-dd
+    actions: list[YesterdayAction] = Field(default_factory=list, max_length=4)
+    reflection: str = Field(default="", max_length=400)
+
+
 class JournalRequest(BaseModel):
     day: str = Field(min_length=8, max_length=10)  # yyyy-mm-dd
     transcript: list[Turn] = Field(min_length=1, max_length=40)
     yesterday_actions: list[YesterdayAction] = Field(
         default_factory=list, max_length=3)
+    # Up to a year of closed days, oldest→newest. Optional so older app
+    # builds keep working.
+    history: list[HistoryDay] = Field(default_factory=list, max_length=366)
 
 
 class ReplyResponse(BaseModel):
@@ -32,7 +44,10 @@ class ReplyResponse(BaseModel):
 
 
 class CloseResponse(BaseModel):
+    # `actions` stays a plain string list so pre-advisor app builds parse it;
+    # `whys` is index-aligned evidence for each action.
     actions: list[str]
+    whys: list[str]
     reflection: str
 
 
@@ -49,6 +64,16 @@ def _dump(req: JournalRequest) -> dict:
         "transcript": [{"role": t.role, "text": t.text} for t in req.transcript],
         "yesterday_actions": [
             {"text": a.text, "done": a.done} for a in req.yesterday_actions
+        ],
+        "history": [
+            {
+                "day": h.day,
+                "actions": [
+                    {"text": a.text, "done": a.done} for a in h.actions
+                ],
+                "reflection": h.reflection,
+            }
+            for h in req.history
         ],
     }
 
@@ -72,4 +97,6 @@ def close(req: JournalRequest, authorization: str | None = Header(default=None))
         raise HTTPException(status_code=502, detail=f"Confidant unavailable: {e}")
     except ValueError as e:
         raise HTTPException(status_code=502, detail=f"Confidant reply unreadable: {e}")
-    return CloseResponse(actions=c.actions, reflection=c.reflection)
+    return CloseResponse(actions=[a.text for a in c.actions],
+                         whys=[a.why for a in c.actions],
+                         reflection=c.reflection)

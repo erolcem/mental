@@ -3,6 +3,13 @@
 // crown, organic jitter instead of rigid rows, children drifting toward their
 // prerequisites. Fully deterministic (seeded by skill+node id) so every
 // launch shows the same sky.
+//
+// PARALLEL PATHS rendering: every branch of the braid gets its own lane of
+// sky. A node's resting x blends its branch lane with the mean of its
+// prerequisites, so branches run beside each other as visible strands, drift
+// together where they braid, and converge on the summit lane — which is
+// always the CENTRE of the sky, with the working branches fanned around it.
+// The canvas is as wide as the tree's densest tier demands; the screen pans.
 import 'dart:math' as math;
 import 'dart:ui';
 
@@ -20,11 +27,15 @@ class ConstellationLayout {
   const ConstellationLayout(this.size, this.pos, this.magnitude);
 }
 
-const double kTierGap = 104;
-const double kEdgeMargin = 56;
+const double kTierGap = 108;
+const double kEdgeMargin = 58;
 const double kTopPad = 96;
 const double kBottomPad = 110;
-const double kMinStarGap = 62;
+const double kMinStarGap = 74;
+
+/// Narrowest canvas a constellation may occupy (phone-width-ish so small
+/// trees don't stretch).
+const double kMinCanvasWidth = 400;
 
 /// Stable 32-bit FNV-1a — Dart's String.hashCode is not guaranteed stable
 /// across platforms, and the sky must not rearrange between phone and CI.
@@ -50,63 +61,98 @@ double _rand(String key, int salt) {
 double _randIn(String key, int salt, double lo, double hi) =>
     lo + _rand(key, salt) * (hi - lo);
 
-ConstellationLayout layoutConstellation(Skill skill, {double width = 390}) {
+/// Left→right lane order: the summit branch (the one carrying the crown)
+/// holds the centre; the other branches alternate outward around it, keeping
+/// catalog order roughly intact (first branches nearest the centre).
+List<String> _laneOrder(Skill skill) {
+  final branches = skill.branches;
+  if (branches.isEmpty) return const [''];
+  final crown = skill.tree.firstWhere((n) => n.tier == skill.maxTier);
+  final summit =
+      branches.contains(crown.branch) ? crown.branch : branches.last;
+  final others = [
+    for (final b in branches)
+      if (b != summit) b
+  ];
+  final left = <String>[], right = <String>[];
+  for (var i = 0; i < others.length; i++) {
+    (i.isEven ? left : right).add(others[i]);
+  }
+  return [...left.reversed, summit, ...right];
+}
+
+ConstellationLayout layoutConstellation(Skill skill, {double? width}) {
   final maxTier = skill.maxTier;
   final height = kTopPad + (maxTier - 1) * kTierGap + kBottomPad;
 
   final byTier = <int, List<SkillNode>>{};
+  var maxOccupancy = 1;
   for (final n in skill.tree) {
-    (byTier[n.tier] ??= []).add(n);
+    final row = byTier[n.tier] ??= [];
+    row.add(n);
+    maxOccupancy = math.max(maxOccupancy, row.length);
+  }
+
+  // The canvas grows with the densest tier; the screen pans over it.
+  final w = width ??
+      math.max(kMinCanvasWidth,
+          2 * kEdgeMargin + (maxOccupancy - 1) * (kMinStarGap + 14) + 20);
+
+  final lanes = _laneOrder(skill);
+  final usable = w - 2 * kEdgeMargin;
+  double laneCenter(String branch) {
+    final i = lanes.indexOf(branch);
+    if (i < 0 || lanes.length == 1) return w / 2;
+    return kEdgeMargin + usable * ((i + 0.5) / lanes.length);
   }
 
   final pos = <String, Offset>{};
   final magnitude = <String, double>{};
-  final usable = width - 2 * kEdgeMargin;
 
   for (var t = 1; t <= maxTier; t++) {
     final nodes = byTier[t] ?? const <SkillNode>[];
     if (nodes.isEmpty) continue;
     final baseY = height - kBottomPad - (t - 1) * kTierGap;
 
-    // Children gravitate toward the mean x of their prerequisites so chains
-    // flow visually; roots spread across the base.
+    // A node rests where its branch lane and its prerequisites agree:
+    // lane keeps strands apart, parent-pull makes them flow and braid.
     double desired(SkillNode n, int i) {
       final parents = [
         for (final r in n.requires)
           if (pos.containsKey(r)) pos[r]!.dx
       ];
+      final lane = laneCenter(n.branch);
       if (parents.isEmpty) {
-        return nodes.length == 1
-            ? width / 2
-            : kEdgeMargin + usable * (i / (nodes.length - 1));
+        // Rootless base nodes spread across the sky like the tree's roots —
+        // unless they have a working branch, in which case they seed it.
+        if (t == 1 && nodes.length > 1) {
+          return kEdgeMargin + usable * (i / (nodes.length - 1));
+        }
+        return lane;
       }
-      return parents.reduce((a, b) => a + b) / parents.length;
+      final pull = parents.reduce((a, b) => a + b) / parents.length;
+      return lane * 0.52 + pull * 0.48;
     }
 
     final order = List.generate(nodes.length, (i) => i)
-      ..sort((a, b) =>
-          desired(nodes[a], a).compareTo(desired(nodes[b], b)));
+      ..sort(
+          (a, b) => desired(nodes[a], a).compareTo(desired(nodes[b], b)));
 
-    // Blend prerequisite pull with an even spread, then add seeded jitter —
-    // enough irregularity to feel like a constellation, not a flowchart.
     final xs = <double>[];
     for (var rank = 0; rank < order.length; rank++) {
       final n = nodes[order[rank]];
       final key = progressKey(skill.id, n.id);
-      final slotX = order.length == 1
-          ? width / 2
-          : kEdgeMargin + usable * (rank / (order.length - 1));
-      final pull = desired(n, order[rank]);
-      var x = slotX * 0.45 + pull * 0.55 + _randIn(key, 1, -22, 22);
-      x = x.clamp(kEdgeMargin, width - kEdgeMargin);
+      var x = desired(n, order[rank]) + _randIn(key, 1, -20, 20);
+      x = x.clamp(kEdgeMargin, w - kEdgeMargin);
       xs.add(x);
     }
 
-    // Resolve same-tier collisions with a left-to-right sweep, then re-center.
+    // Resolve same-tier collisions with a left-to-right sweep, then pull
+    // back any overflow past the right margin.
     for (var i = 1; i < xs.length; i++) {
       if (xs[i] - xs[i - 1] < kMinStarGap) xs[i] = xs[i - 1] + kMinStarGap;
     }
-    final overflow = xs.isEmpty ? 0.0 : xs.last - (width - kEdgeMargin);
+    final overflow = xs.isEmpty ? 0.0 : xs.last - (w - kEdgeMargin);
     if (overflow > 0) {
       for (var i = 0; i < xs.length; i++) {
         xs[i] = math.max(kEdgeMargin, xs[i] - overflow);
@@ -125,10 +171,9 @@ ConstellationLayout layoutConstellation(Skill skill, {double width = 390}) {
       pos[n.id] = Offset(xs[rank], y);
       // The crown (final tier) burns brightest; everything else varies like a
       // real star field.
-      magnitude[n.id] =
-          t == maxTier ? 1.5 : _randIn(key, 3, 0.85, 1.3);
+      magnitude[n.id] = t == maxTier ? 1.5 : _randIn(key, 3, 0.85, 1.3);
     }
   }
 
-  return ConstellationLayout(Size(width, height), pos, magnitude);
+  return ConstellationLayout(Size(w, height), pos, magnitude);
 }

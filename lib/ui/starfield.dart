@@ -343,6 +343,23 @@ class _StarfieldPainter extends CustomPainter {
         ),
     );
 
+    // Photographic vignette: edges fall away, the centre breathes. This one
+    // touch does the most to move the frame from "graphic" to "night".
+    canvas.drawRect(
+      Offset.zero & size,
+      Paint()
+        ..shader = ui.Gradient.radial(
+          Offset(size.width * 0.5, size.height * 0.42),
+          size.longestSide * 0.78,
+          [
+            Colors.black.withValues(alpha: 0.0),
+            Colors.black.withValues(alpha: 0.0),
+            Colors.black.withValues(alpha: 0.26),
+          ],
+          [0.0, 0.62, 1.0],
+        ),
+    );
+
     if (dim > 0) {
       canvas.drawRect(Offset.zero & size,
           Paint()..color = Colors.black.withValues(alpha: dim * 0.6));

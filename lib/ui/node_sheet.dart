@@ -70,6 +70,12 @@ class _NodeSheetState extends ConsumerState<_NodeSheet> {
       .read(progressProvider.notifier)
       .saveSummary(widget.skill, widget.node, _summary.text);
 
+  /// The stars this one is a prerequisite of — the road ahead.
+  List<String> _unlocksLabels() => [
+        for (final n in widget.skill.tree)
+          if (n.requires.contains(widget.node.id)) n.label
+      ];
+
   Future<void> _submitToExaminer() async {
     final api = ref.read(apiProvider);
     final notifier = ref.read(progressProvider.notifier);
@@ -184,11 +190,39 @@ class _NodeSheetState extends ConsumerState<_NodeSheet> {
                   ),
                 ],
               ),
-              if (widget.node.proof.isNotEmpty) ...[
+              if (widget.node.guide.isNotEmpty) ...[
                 const SizedBox(height: 14),
                 Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.all(10),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.035),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.10)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('THE QUEST — WHAT TO DO',
+                          style: raleway(7.5,
+                              weight: 700,
+                              color: Colors.white.withValues(alpha: 0.45),
+                              spacing: 2)),
+                      const SizedBox(height: 4),
+                      Text(widget.node.guide,
+                          style: raleway(11.5,
+                              color: Colors.white.withValues(alpha: 0.85),
+                              height: 1.55)),
+                    ],
+                  ),
+                ),
+              ],
+              if (widget.node.proof.isNotEmpty) ...[
+                const SizedBox(height: 10),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     color: color.withValues(alpha: 0.05),
                     borderRadius: BorderRadius.circular(10),
@@ -197,16 +231,16 @@ class _NodeSheetState extends ConsumerState<_NodeSheet> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('COMPLETION STANDARD',
+                      Text('COMPLETION STANDARD — HOW IT IS CONFIRMED',
                           style: raleway(7.5,
                               weight: 700,
                               color: color.withValues(alpha: 0.7),
                               spacing: 2)),
-                      const SizedBox(height: 3),
+                      const SizedBox(height: 4),
                       Text(widget.node.proof,
-                          style: raleway(11,
-                              color: Colors.white.withValues(alpha: 0.8),
-                              height: 1.45)),
+                          style: raleway(11.5,
+                              color: Colors.white.withValues(alpha: 0.85),
+                              height: 1.5)),
                     ],
                   ),
                 ),
@@ -249,6 +283,20 @@ class _NodeSheetState extends ConsumerState<_NodeSheet> {
                       ],
                     ),
                   ),
+              ],
+              if (_unlocksLabels().isNotEmpty) ...[
+                const SizedBox(height: 12),
+                Text('THIS STAR HELPS OPEN',
+                    style: raleway(8.5,
+                        color: Colors.white.withValues(alpha: 0.3),
+                        spacing: 2)),
+                const SizedBox(height: 5),
+                Text(
+                  _unlocksLabels().join('  ·  '),
+                  style: raleway(10.5,
+                      color: Colors.white.withValues(alpha: 0.55),
+                      height: 1.6),
+                ),
               ],
               const SizedBox(height: 16),
               Row(

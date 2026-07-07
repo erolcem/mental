@@ -1,15 +1,19 @@
-// ui/galaxy_screen.dart — the home sky: four stat constellations stacked as a
-// staggered galactic spine (portrait-first), each a glowing orb orbited by its
-// skill stars. Tapping a skill star dives into that constellation.
+// ui/galaxy_screen.dart — the home sky: four stat constellations strung down
+// a galactic spine TALLER than the screen. The sky pans (drag) and breathes
+// (pinch out to take in the whole galaxy, pinch in to walk among the stars);
+// each stat is a brilliant guide star orbited by its skill asterisms.
+// Tapping a skill star dives into that constellation.
 import 'dart:async';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/repository.dart';
 import '../data/skill_data.dart';
+import '../data/transfer.dart';
 import '../state/providers.dart';
 import 'constellation_screen.dart';
 import 'journal_screen.dart';
@@ -20,14 +24,17 @@ import 'theme.dart';
 import 'widgets/asterism.dart';
 import 'widgets/mastery_ring.dart';
 
-/// Cluster centres as fractions of the sky, ordered top→bottom. The crowded
-/// stats (CHA: 7 skills, DEX: 6) take the middle rows where they have room on
-/// both sides; the x stagger keeps the column organic.
+/// How much taller the galaxy is than the viewport — the room that lets each
+/// cluster spread out instead of being squeezed into one screen.
+const double kSkyHeightFactor = 1.85;
+
+/// Cluster centres as fractions of the TALL sky, ordered top→bottom. The
+/// x stagger keeps the column organic.
 const List<(String, Offset)> _spine = [
-  ('INT', Offset(0.575, 0.15)),
-  ('CHA', Offset(0.425, 0.38)),
-  ('DEX', Offset(0.575, 0.61)),
-  ('WIS', Offset(0.425, 0.825)),
+  ('INT', Offset(0.565, 0.115)),
+  ('CHA', Offset(0.435, 0.375)),
+  ('DEX', Offset(0.565, 0.625)),
+  ('WIS', Offset(0.435, 0.875)),
 ];
 
 Offset _statCenter(String id) =>
@@ -42,6 +49,8 @@ class GalaxyScreen extends ConsumerStatefulWidget {
 
 class _GalaxyScreenState extends ConsumerState<GalaxyScreen> {
   Timer? _dueTicker;
+  final _skyCtrl = TransformationController();
+  bool _skyInitialised = false;
 
   @override
   void initState() {
@@ -54,6 +63,7 @@ class _GalaxyScreenState extends ConsumerState<GalaxyScreen> {
   @override
   void dispose() {
     _dueTicker?.cancel();
+    _skyCtrl.dispose();
     super.dispose();
   }
 
@@ -73,17 +83,42 @@ class _GalaxyScreenState extends ConsumerState<GalaxyScreen> {
             child: LayoutBuilder(
               builder: (context, box) {
                 final w = box.maxWidth, h = box.maxHeight;
+                final skyH = h * kSkyHeightFactor;
+                // Pinch all the way out and the whole galaxy just fits.
+                final minScale = (h / skyH) + 0.005;
+                if (!_skyInitialised) {
+                  _skyInitialised = true;
+                  _skyCtrl.value = Matrix4.identity();
+                }
                 return Stack(
                   children: [
-                    // Spine glow + dashed spokes behind everything.
-                    IgnorePointer(
-                      child: CustomPaint(
-                        size: Size(w, h),
-                        painter: _SpinePainter(),
+                    // The pannable sky: spine + clusters live on a canvas
+                    // taller than the screen. Drag to drift between stats,
+                    // pinch out to survey everything at once.
+                    InteractiveViewer(
+                      transformationController: _skyCtrl,
+                      constrained: false,
+                      boundaryMargin: EdgeInsets.zero,
+                      minScale: minScale,
+                      maxScale: 1.0,
+                      child: SizedBox(
+                        width: w,
+                        height: skyH,
+                        child: Stack(
+                          children: [
+                            IgnorePointer(
+                              child: CustomPaint(
+                                size: Size(w, skyH),
+                                painter: _SpinePainter(),
+                              ),
+                            ),
+                            for (final stat in catalog)
+                              ..._buildCluster(
+                                  context, stat, w, skyH, progress),
+                          ],
+                        ),
                       ),
                     ),
-                    for (final stat in catalog)
-                      ..._buildCluster(context, stat, w, h, progress),
                     _header(context, ref, level, overall),
                     if (ref.watch(dueReviewsProvider).isNotEmpty)
                       _lockBanner(context, ref.watch(dueReviewsProvider).length),
@@ -173,8 +208,20 @@ class _GalaxyScreenState extends ConsumerState<GalaxyScreen> {
               color: const Color(0xEE0D0F1A),
               onSelected: (v) {
                 if (v == 'wipe') _confirmWipe(context, ref);
+                if (v == 'export') _exportSky(context, ref);
+                if (v == 'import') _importSky(context, ref);
               },
               itemBuilder: (_) => [
+                PopupMenuItem(
+                  value: 'export',
+                  child: Text('Export sky to clipboard',
+                      style: raleway(12, color: Colors.white70)),
+                ),
+                PopupMenuItem(
+                  value: 'import',
+                  child: Text('Import sky from clipboard',
+                      style: raleway(12, color: Colors.white70)),
+                ),
                 PopupMenuItem(
                   value: 'wipe',
                   child: Text('Reset all progress',
@@ -397,13 +444,29 @@ class _GalaxyScreenState extends ConsumerState<GalaxyScreen> {
                                     : Colors.white38)),
                         const SizedBox(width: 12),
                         Expanded(
-                          child: Text(
-                            entry.actions[i].text,
-                            style: raleway(12.5,
-                                height: 1.45,
-                                color: Colors.white.withValues(
-                                    alpha:
-                                        entry.actions[i].done ? 0.45 : 0.9)),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                entry.actions[i].text,
+                                style: raleway(12.5,
+                                    height: 1.45,
+                                    color: Colors.white.withValues(
+                                        alpha: entry.actions[i].done
+                                            ? 0.45
+                                            : 0.9)),
+                              ),
+                              if (entry.actions[i].why.isNotEmpty)
+                                Text(
+                                  entry.actions[i].why,
+                                  style: raleway(9.5,
+                                      height: 1.4,
+                                      color: kJournalViolet.withValues(
+                                          alpha: entry.actions[i].done
+                                              ? 0.4
+                                              : 0.65)),
+                                ),
+                            ],
                           ),
                         ),
                       ],
@@ -420,6 +483,76 @@ class _GalaxyScreenState extends ConsumerState<GalaxyScreen> {
           ),
         );
       }),
+    );
+  }
+
+  /// Cross-device carry, no account needed: the whole sky (progress +
+  /// journal) as one JSON blob on the clipboard — message it to yourself,
+  /// paste it on the other device.
+  Future<void> _exportSky(BuildContext context, WidgetRef ref) async {
+    final blob = exportBlob(
+        ref.read(progressProvider), ref.read(journalProvider));
+    await Clipboard.setData(ClipboardData(text: blob));
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      backgroundColor: const Color(0xF0141022),
+      content: Text(
+          'Sky copied to clipboard — paste it into Mental on your other device.',
+          style: raleway(12, color: Colors.white)),
+    ));
+  }
+
+  Future<void> _importSky(BuildContext context, WidgetRef ref) async {
+    final data = await Clipboard.getData(Clipboard.kTextPlain);
+    if (!context.mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
+    void toast(String msg, {Color color = Colors.white}) =>
+        messenger.showSnackBar(SnackBar(
+          backgroundColor: const Color(0xF0141022),
+          content: Text(msg, style: raleway(12, color: color)),
+        ));
+    final raw = data?.text ?? '';
+    if (raw.trim().isEmpty) {
+      toast('The clipboard is empty — export from your other device first.',
+          color: const Color(0xFFFFC46B));
+      return;
+    }
+    final TransferPayload payload;
+    try {
+      payload = parseBlob(raw);
+    } on FormatException catch (e) {
+      toast(e.message, color: const Color(0xFFFFC46B));
+      return;
+    }
+    final lit = payload.progress.values.where((p) => p.complete).length;
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF0D0F1A),
+        title: Text('Merge this sky?', style: cinzel(16)),
+        content: Text(
+          'The import holds $lit ignited stars and '
+          '${payload.journal.length} journal days. Merging keeps whichever '
+          'record is newer on each star — nothing on this device goes dark.',
+          style: raleway(13, color: Colors.white70, height: 1.5),
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text('Cancel', style: raleway(13))),
+          TextButton(
+            onPressed: () {
+              ref
+                  .read(progressProvider.notifier)
+                  .importMerged(payload.progress);
+              ref.read(journalProvider.notifier).importMerged(payload.journal);
+              Navigator.pop(ctx);
+              toast('Skies merged — every newer star and journal day landed.');
+            },
+            child: Text('Merge', style: raleway(13, color: kGold)),
+          ),
+        ],
+      ),
     );
   }
 
@@ -449,36 +582,56 @@ class _GalaxyScreenState extends ConsumerState<GalaxyScreen> {
   }
 
   List<Widget> _buildCluster(BuildContext context, StatDomain stat, double w,
-      double h, Map<String, NodeProgress> progress) {
+      double skyH, Map<String, NodeProgress> progress) {
     final c = _statCenter(stat.id);
-    final cx = c.dx * w, cy = c.dy * h;
+    final cx = c.dx * w, cy = c.dy * skyH;
     final mastery = statMastery(progress, stat);
     final nodes = <Widget>[];
+
+    // A breath of the stat's colour behind the whole cluster — depth, not
+    // decoration.
+    nodes.add(Positioned(
+      left: cx - 230,
+      top: cy - 190,
+      child: IgnorePointer(
+        child: Container(
+          width: 460,
+          height: 380,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: RadialGradient(colors: [
+              stat.color.withValues(alpha: 0.045),
+              stat.color.withValues(alpha: 0.0),
+            ]),
+          ),
+        ),
+      ),
+    ));
 
     // The stat anchor: a brilliant guide star with the name engraved beneath.
     nodes.add(Positioned(
       left: cx - 70,
-      top: cy - 34,
+      top: cy - 36,
       child: IgnorePointer(
         child: SizedBox(
           width: 140,
-          height: 84,
+          height: 92,
           child: Column(
             children: [
               CustomPaint(
-                  size: const Size(64, 40),
+                  size: const Size(72, 44),
                   painter: _GuideStarPainter(stat.color)),
-              const SizedBox(height: 2),
+              const SizedBox(height: 3),
               Text(stat.label.toUpperCase(),
-                  style: cinzel(10.5,
+                  style: cinzel(11.5,
                       weight: 640,
-                      color: stat.color.withValues(alpha: 0.9),
-                      spacing: 4)),
+                      color: stat.color.withValues(alpha: 0.92),
+                      spacing: 4.5)),
               Text('${(mastery * 100).round()}% MASTERED',
-                  style: raleway(7,
+                  style: raleway(6.5,
                       weight: 600,
-                      color: Colors.white.withValues(alpha: 0.30),
-                      spacing: 2)),
+                      color: Colors.white.withValues(alpha: 0.26),
+                      spacing: 2.5)),
             ],
           ),
         ),
@@ -486,14 +639,14 @@ class _GalaxyScreenState extends ConsumerState<GalaxyScreen> {
     ));
 
     // The skills: each its own miniature constellation, lit by mastery.
-    final skillPositions = clusterSkillPositions(stat, w, h);
+    final skillPositions = clusterSkillPositions(stat, w, skyH);
     for (var i = 0; i < stat.skills.length; i++) {
       final skill = stat.skills[i];
       final p = skillPositions[i];
       final m = skillMastery(progress, skill);
       nodes.add(Positioned(
-        left: p.dx - 47,
-        top: p.dy - 30,
+        left: p.dx - 52,
+        top: p.dy - 34,
         child: GestureDetector(
           behavior: HitTestBehavior.opaque,
           onTap: () => Navigator.of(context).push(
@@ -516,20 +669,20 @@ class _GalaxyScreenState extends ConsumerState<GalaxyScreen> {
             ),
           ),
           child: SizedBox(
-            width: 94,
-            height: 62,
+            width: 104,
+            height: 68,
             child: Column(
               children: [
                 Asterism(
                     skillId: skill.id,
                     color: stat.color,
                     mastery: m,
-                    size: const Size(60, 40)),
+                    size: const Size(66, 44)),
                 const SizedBox(height: 2),
                 // FittedBox: long names (PHYSICS & CHEM · 6%) shrink to fit
                 // rather than ellipsize.
                 SizedBox(
-                  height: 12,
+                  height: 13,
                   child: FittedBox(
                     fit: BoxFit.scaleDown,
                     child: Text(
@@ -537,11 +690,11 @@ class _GalaxyScreenState extends ConsumerState<GalaxyScreen> {
                           ? '${skill.label.toUpperCase()} · ${(m * 100).round()}%'
                           : skill.label.toUpperCase(),
                       maxLines: 1,
-                      style: raleway(7.5,
+                      style: raleway(8,
                           weight: m > 0 ? 600 : 400,
-                          spacing: 1.2,
+                          spacing: 1.3,
                           color: Colors.white
-                              .withValues(alpha: m > 0 ? 0.72 : 0.42)),
+                              .withValues(alpha: m > 0 ? 0.75 : 0.45)),
                     ),
                   ),
                 ),
@@ -555,7 +708,9 @@ class _GalaxyScreenState extends ConsumerState<GalaxyScreen> {
   }
 }
 
-/// The stat's guide star: a brilliant four-point diffraction star.
+/// The stat's guide star, painted like a bright star in an astrophoto:
+/// layered bloom, hot white core, fine four-point diffraction with a faint
+/// 45° secondary cross — luminous, not iconographic.
 class _GuideStarPainter extends CustomPainter {
   final Color color;
   _GuideStarPainter(this.color);
@@ -563,17 +718,30 @@ class _GuideStarPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final p = size.center(Offset.zero);
+    // Outer bloom in the stat colour, inner bloom nearly white.
     canvas.drawCircle(
       p,
-      20,
+      24,
       Paint()
         ..shader = RadialGradient(colors: [
-          color.withValues(alpha: 0.45),
+          color.withValues(alpha: 0.34),
           color.withValues(alpha: 0.0)
-        ]).createShader(Rect.fromCircle(center: p, radius: 20)),
+        ]).createShader(Rect.fromCircle(center: p, radius: 24)),
     );
-    // Long horizontal / shorter vertical spikes, fading outward.
-    for (final (dir, len) in [(const Offset(1, 0), 30.0), (const Offset(0, 1), 15.0)]) {
+    canvas.drawCircle(
+      p,
+      9,
+      Paint()
+        ..shader = RadialGradient(colors: [
+          Color.lerp(color, Colors.white, 0.75)!.withValues(alpha: 0.55),
+          color.withValues(alpha: 0.0)
+        ]).createShader(Rect.fromCircle(center: p, radius: 9)),
+    );
+    // Primary spikes: long horizontal, shorter vertical, hair-fine.
+    for (final (dir, len, aMax) in [
+      (const Offset(1, 0), 34.0, 0.85),
+      (const Offset(0, 1), 17.0, 0.8),
+    ]) {
       final a = p - dir * len, b = p + dir * len;
       canvas.drawLine(
           a,
@@ -581,43 +749,83 @@ class _GuideStarPainter extends CustomPainter {
           Paint()
             ..shader = ui.Gradient.linear(a, b, [
               Colors.white.withValues(alpha: 0),
-              Colors.white.withValues(alpha: 0.9),
+              Colors.white.withValues(alpha: aMax),
               Colors.white.withValues(alpha: 0),
             ], [
               0.0,
               0.5,
               1.0
             ])
-            ..strokeWidth = 1.1);
+            ..strokeWidth = 0.9);
+    }
+    // Whisper of a 45° secondary cross — the JWST signature.
+    const inv = 0.7071;
+    for (final dir in const [Offset(inv, inv), Offset(inv, -inv)]) {
+      final a = p - dir * 10.0, b = p + dir * 10.0;
+      canvas.drawLine(
+          a,
+          b,
+          Paint()
+            ..shader = ui.Gradient.linear(a, b, [
+              Colors.white.withValues(alpha: 0),
+              Colors.white.withValues(alpha: 0.30),
+              Colors.white.withValues(alpha: 0),
+            ], [
+              0.0,
+              0.5,
+              1.0
+            ])
+            ..strokeWidth = 0.7);
     }
     canvas.drawCircle(
         p,
-        3.4,
+        3.2,
         Paint()
           ..color = Colors.white
-          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 1));
-    canvas.drawCircle(p, 2.0, Paint()..color = Colors.white);
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 1.2));
+    canvas.drawCircle(p, 1.9, Paint()..color = Colors.white);
   }
 
   @override
   bool shouldRepaint(covariant _GuideStarPainter old) => old.color != color;
 }
 
-/// Positions of a stat's skill stars around its orb — shared with the spine
-/// painter so lines and stars agree.
-List<Offset> clusterSkillPositions(StatDomain stat, double w, double h) {
+/// Stable seeded random in [0,1) — cluster shapes must not shuffle between
+/// launches.
+double _clusterRand(String key, int salt) {
+  var x = 0x811c9dc5;
+  for (final c in '$key#$salt'.codeUnits) {
+    x ^= c;
+    x = (x * 0x01000193) & 0xFFFFFFFF;
+  }
+  x ^= x << 13 & 0xFFFFFFFF;
+  x ^= x >> 17;
+  x ^= x << 5 & 0xFFFFFFFF;
+  return (x & 0xFFFFFF) / 0x1000000;
+}
+
+/// Positions of a stat's skill stars around its guide star — shared with the
+/// spine painter so lines and stars agree. On the tall sky each cluster gets
+/// real room: a wide ellipse with seeded radial variance, so the ring reads
+/// as a loose asterism rather than a diagram.
+List<Offset> clusterSkillPositions(StatDomain stat, double w, double skyH) {
   final c = _statCenter(stat.id);
-  final cx = c.dx * w, cy = c.dy * h;
-  // The far edge of the stagger must keep the whole 94px label box on
-  // screen: cx(0.575w) + rx + 47 ≤ w  →  rx ≤ 0.425w − 47.
-  final rx = math.min(w * 0.425 - 49, 136.0);
-  final ry = math.min(h * 0.078, 66.0);
+  final cx = c.dx * w, cy = c.dy * skyH;
+  // The far edge of the stagger must keep the whole ~104px label box on
+  // screen: cx(0.565w) + rx + 52 ≤ w  →  rx ≤ 0.435w − 52.
+  final rx = math.min(w * 0.435 - 54, 168.0);
+  final ry = math.min(skyH * 0.062, 132.0);
   final n = stat.skills.length;
   return [
     for (var i = 0; i < n; i++)
       () {
-        final a = (i / n) * 2 * math.pi - math.pi / 2;
-        return Offset(cx + math.cos(a) * rx, cy + math.sin(a) * ry);
+        final id = stat.skills[i].id;
+        final a = (i / n) * 2 * math.pi -
+            math.pi / 2 +
+            (_clusterRand(id, 1) - 0.5) * (math.pi / n) * 0.7;
+        final r = 0.86 + _clusterRand(id, 2) * 0.26;
+        return Offset(
+            cx + math.cos(a) * rx * r, cy + math.sin(a) * ry * r);
       }()
   ];
 }
@@ -646,15 +854,18 @@ class _SpinePainter extends CustomPainter {
           ..color = Colors.white.withValues(alpha: 0.028)
           ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 18));
 
-    // Dashed spokes orb → skill stars.
+    // Whisper-faint dashed spokes, guide star → skill asterisms. They stop
+    // short of both ends so they read as sightlines, not wiring.
     for (final stat in catalog) {
       final c = _statCenter(stat.id);
       final center = Offset(c.dx * size.width, c.dy * size.height);
       final paint = Paint()
-        ..color = stat.color.withValues(alpha: 0.09)
-        ..strokeWidth = 0.8;
+        ..color = stat.color.withValues(alpha: 0.055)
+        ..strokeWidth = 0.7;
       for (final p in clusterSkillPositions(stat, size.width, size.height)) {
-        _dashedLine(canvas, center, p, paint, dash: 3, gap: 6);
+        final dir = (p - center) / (p - center).distance;
+        _dashedLine(canvas, center + dir * 34, p - dir * 30, paint,
+            dash: 2.5, gap: 7);
       }
     }
   }

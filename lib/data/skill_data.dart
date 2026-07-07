@@ -47,11 +47,18 @@ class SkillNode {
   /// braid of branches). 'Foundations' roots the tree; each tree's final
   /// branch carries it to the crown.
   final String branch;
+
+  /// THE QUEST: what to actually do — the materials, the method, the route.
+  /// Where [proof] is the evidence the Examiner demands, [guide] is the
+  /// walkthrough that makes the node self-contained: which book/course/tool,
+  /// how to work it, what to produce along the way.
+  final String guide;
   const SkillNode(this.id, this.label, this.tier,
       [this.requires = const [],
       this.proof = '',
       this.hours = 0,
-      this.branch = '']);
+      this.branch = '',
+      this.guide = '']);
 }
 
 class Skill {
@@ -92,6 +99,24 @@ class StatDomain {
 
 /// Globally unique progress key for a node.
 String progressKey(String skillId, String nodeId) => '$skillId.$nodeId';
+
+/// Node-building shorthand shared by the per-stat catalog files:
+/// `req` may be null (root), a single id, or a list of ids.
+SkillNode sn(String id, String label, int tier, Object? req, String branch,
+        int hours, String guide, String proof) =>
+    SkillNode(
+        id,
+        label,
+        tier,
+        req == null
+            ? const []
+            : req is String
+                ? [req]
+                : List<String>.from(req as List),
+        proof,
+        hours,
+        branch,
+        guide);
 
 SkillNode _n(String id, String label, int tier,
         [Object? req, String proof = '', int hours = 0, String branch = '']) =>

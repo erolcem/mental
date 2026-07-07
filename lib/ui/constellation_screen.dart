@@ -67,13 +67,18 @@ class _ConstellationScreenState extends ConsumerState<ConstellationScreen>
   }
 
   /// Start looking at the base of the constellation (tier 1) — that is where
-  /// the journey begins — unless everything fits on screen.
+  /// the journey begins. Wide skies (dense parallel tiers) open zoomed out
+  /// just enough to fit their full breadth.
   void _initView(Size viewport) {
     if (_viewInitialised) return;
     _viewInitialised = true;
-    final dx = (viewport.width - layout.size.width) / 2;
-    final dy = viewport.height - layout.size.height;
-    _viewCtrl.value = Matrix4.translationValues(dx, dy < 0 ? dy : dy / 2, 0);
+    final scale =
+        (viewport.width / layout.size.width).clamp(0.58, 1.0).toDouble();
+    final dx = (viewport.width - layout.size.width * scale) / 2;
+    final dy = viewport.height - layout.size.height * scale;
+    _viewCtrl.value = Matrix4.identity()
+      ..translateByDouble(dx, dy < 0 ? dy : dy / 2, 0, 1)
+      ..scaleByDouble(scale, scale, 1, 1);
   }
 
   void _onTapUp(TapUpDetails d) {
@@ -117,7 +122,7 @@ class _ConstellationScreenState extends ConsumerState<ConstellationScreen>
               constrained: false,
               boundaryMargin: const EdgeInsets.symmetric(
                   horizontal: 120, vertical: 160),
-              minScale: 0.5,
+              minScale: 0.35,
               maxScale: 2.5,
               child: SizedBox(
                 width: layout.size.width,
