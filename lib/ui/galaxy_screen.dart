@@ -24,18 +24,19 @@ import 'widgets/asterism.dart';
 import 'widgets/mastery_ring.dart';
 
 /// The sky is TALLER than the screen — a canvas you drift through, not a
-/// poster squeezed onto one phone height. The viewer starts at the top and
-/// pans down the spine (pinch zooms in on a cluster).
-const double kSkyHeightFactor = 1.55;
+/// poster squeezed onto one phone height. Each stat cluster gets most of a
+/// screenful; the rail (right edge) and the guide stars fly you between
+/// them, drag drifts, pinch zooms.
+const double kSkyHeightFactor = 2.15;
 
 /// Cluster centres as fractions of the (tall) sky, ordered top→bottom. The
 /// crowded stats (CHA: 7 skills, DEX: 6) take the middle rows where they have
 /// room on both sides; the x stagger keeps the column organic.
 const List<(String, Offset)> _spine = [
-  ('INT', Offset(0.575, 0.13)),
-  ('CHA', Offset(0.425, 0.375)),
-  ('DEX', Offset(0.575, 0.625)),
-  ('WIS', Offset(0.425, 0.87)),
+  ('INT', Offset(0.575, 0.115)),
+  ('CHA', Offset(0.425, 0.37)),
+  ('DEX', Offset(0.575, 0.635)),
+  ('WIS', Offset(0.425, 0.885)),
 ];
 
 Offset _statCenter(String id) =>
@@ -48,17 +49,23 @@ class GalaxyScreen extends ConsumerStatefulWidget {
   ConsumerState<GalaxyScreen> createState() => _GalaxyScreenState();
 }
 
-class _GalaxyScreenState extends ConsumerState<GalaxyScreen> {
+class _GalaxyScreenState extends ConsumerState<GalaxyScreen>
+    with SingleTickerProviderStateMixin {
   Timer? _dueTicker;
 
   /// Drives the pannable sky; watched to fade the drift hint once the user
-  /// has moved off the top.
+  /// has moved off the top and to light the rail's current stat.
   final TransformationController _viewCtrl = TransformationController();
+  late final AnimationController _fly;
   bool _atTop = true;
+  int _railIndex = 0; // index into _spine of the cluster nearest the centre
+  double _viewportH = 0; // set during build; used by the view listener
 
   @override
   void initState() {
     super.initState();
+    _fly = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 520));
     // Reviews become due — and midnight can make the journal overdue — while
     // the app idles here; re-check both lock sources once a minute.
     _dueTicker = Timer.periodic(const Duration(minutes: 1), (_) {
@@ -68,7 +75,27 @@ class _GalaxyScreenState extends ConsumerState<GalaxyScreen> {
     _viewCtrl.addListener(() {
       final atTop = _viewCtrl.value.getTranslation().y > -24 &&
           _viewCtrl.value.getMaxScaleOnAxis() <= 1.05;
-      if (atTop != _atTop) setState(() => _atTop = atTop);
+      var rail = _railIndex;
+      if (_viewportH > 0) {
+        final skyH = _viewportH * kSkyHeightFactor;
+        final scale = _viewCtrl.value.getMaxScaleOnAxis();
+        final centre =
+            (-_viewCtrl.value.getTranslation().y + _viewportH / 2) / scale;
+        var best = double.infinity;
+        for (var i = 0; i < _spine.length; i++) {
+          final d = (_spine[i].$2.dy * skyH - centre).abs();
+          if (d < best) {
+            best = d;
+            rail = i;
+          }
+        }
+      }
+      if (atTop != _atTop || rail != _railIndex) {
+        setState(() {
+          _atTop = atTop;
+          _railIndex = rail;
+        });
+      }
     });
     // Sky Link: converge with the other devices at startup, then coalesce
     // every local change into a debounced pull→merge→push.
@@ -83,8 +110,23 @@ class _GalaxyScreenState extends ConsumerState<GalaxyScreen> {
   @override
   void dispose() {
     _dueTicker?.cancel();
+    _fly.dispose();
     _viewCtrl.dispose();
     super.dispose();
+  }
+
+  /// Glide the viewer so [statId]'s cluster rests at the viewport's centre
+  /// (scale resets to 1 — the rail is for orientation, not zoom).
+  void _flyTo(String statId, double h) {
+    final skyH = h * kSkyHeightFactor;
+    final cy = _statCenter(statId).dy * skyH;
+    final ty = (h / 2 - cy).clamp(h - skyH, 0.0);
+    final target = Matrix4.identity()..setTranslationRaw(0, ty, 0);
+    final anim = Matrix4Tween(begin: _viewCtrl.value, end: target).animate(
+        CurvedAnimation(parent: _fly, curve: Curves.easeInOutCubic));
+    void tick() => _viewCtrl.value = anim.value;
+    anim.addListener(tick);
+    _fly.forward(from: 0).whenCompleteOrCancel(() => anim.removeListener(tick));
   }
 
   @override
@@ -106,6 +148,7 @@ class _GalaxyScreenState extends ConsumerState<GalaxyScreen> {
               builder: (context, box) {
                 final w = box.maxWidth, h = box.maxHeight;
                 final skyH = h * kSkyHeightFactor;
+                _viewportH = h; // for the rail-highlight listener
                 return Stack(
                   children: [
                     Positioned.fill(
@@ -143,6 +186,7 @@ class _GalaxyScreenState extends ConsumerState<GalaxyScreen> {
                           top: ref.watch(dueReviewsProvider).isNotEmpty
                               ? 112.0
                               : 62.0),
+                    _statRail(h),
                     _driftHint(),
                     _bottomBar(context, ref),
                   ],
@@ -151,6 +195,72 @@ class _GalaxyScreenState extends ConsumerState<GalaxyScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  /// The constellation rail: four stat glyphs riding the right edge. Tap one
+  /// and the sky glides to that cluster; the glyph nearest the viewport's
+  /// centre burns brightest, so you always know where in the sky you are.
+  Widget _statRail(double h) {
+    return Positioned(
+      right: 5,
+      top: 0,
+      bottom: 0,
+      child: Center(
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 10),
+          decoration: BoxDecoration(
+            color: const Color(0x66080A16),
+            borderRadius: BorderRadius.circular(14),
+            border:
+                Border.all(color: Colors.white.withValues(alpha: 0.07)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              for (var i = 0; i < _spine.length; i++) ...[
+                if (i > 0) const SizedBox(height: 14),
+                () {
+                  final stat = statById(_spine[i].$1);
+                  final active = i == _railIndex;
+                  return GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () => _flyTo(stat.id, h),
+                    child: AnimatedOpacity(
+                      duration: const Duration(milliseconds: 250),
+                      opacity: active ? 1 : 0.42,
+                      child: Column(
+                        children: [
+                          Text('✦',
+                              style: TextStyle(
+                                  fontSize: active ? 15 : 11,
+                                  height: 1.2,
+                                  color: stat.color,
+                                  shadows: active
+                                      ? [
+                                          Shadow(
+                                              color: stat.color,
+                                              blurRadius: 9)
+                                        ]
+                                      : null)),
+                          Text(stat.id,
+                              style: raleway(6.5,
+                                  weight: active ? 800 : 500,
+                                  color: active
+                                      ? stat.color
+                                      : Colors.white
+                                          .withValues(alpha: 0.5),
+                                  spacing: 1)),
+                        ],
+                      ),
+                    ),
+                  );
+                }(),
+              ],
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -582,10 +692,13 @@ class _GalaxyScreenState extends ConsumerState<GalaxyScreen> {
     final nodes = <Widget>[];
 
     // The stat anchor: a brilliant guide star with the name engraved beneath.
+    // Tapping it glides the viewer to centre this cluster (deferToChild so
+    // the box's empty corners never steal a neighbouring skill star's tap).
     nodes.add(Positioned(
       left: cx - 70,
       top: cy - 34,
-      child: IgnorePointer(
+      child: GestureDetector(
+        onTap: () => _flyTo(stat.id, h / kSkyHeightFactor),
         child: SizedBox(
           width: 140,
           height: 84,
@@ -739,7 +852,7 @@ List<Offset> clusterSkillPositions(StatDomain stat, double w, double h) {
   final rx = math.min(w * 0.425 - 49, 150.0);
   // h is the TALL sky canvas (kSkyHeightFactor × viewport) — the ellipses
   // finally get vertical room to breathe.
-  final ry = math.min(h * 0.075, 96.0);
+  final ry = math.min(h * 0.062, 120.0);
   final n = stat.skills.length;
   return [
     for (var i = 0; i < n; i++)
