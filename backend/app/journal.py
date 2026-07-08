@@ -13,6 +13,7 @@ import re
 from dataclasses import dataclass, field
 
 from . import gemini
+from .config import settings
 
 MAX_ACTIONS = 3
 
@@ -76,12 +77,18 @@ def _context_turn(*, day: str, transcript: list[dict],
     )
 
 
+def _journal_model() -> str:
+    """The Confidant may run a stronger model than the graders."""
+    return settings.gemini_journal_model or ""
+
+
 def reply(*, day: str, transcript: list[dict], yesterday_actions: list[dict],
           generate=None) -> str:
     gen = generate if generate is not None else gemini.generate
     turn = _context_turn(day=day, transcript=transcript,
                          yesterday_actions=yesterday_actions)
-    text = gen(REPLY_SYSTEM, [{"role": "user", "text": turn}], temperature=0.7)
+    text = gen(REPLY_SYSTEM, [{"role": "user", "text": turn}],
+               temperature=0.7, model=_journal_model())
     return text.strip()
 
 
@@ -111,4 +118,8 @@ def close(*, day: str, transcript: list[dict], yesterday_actions: list[dict],
     gen = generate if generate is not None else gemini.generate
     turn = _context_turn(day=day, transcript=transcript,
                          yesterday_actions=yesterday_actions)
-    return parse_close(gen(CLOSE_SYSTEM, [{"role": "user", "text": turn}]))
+    # Closing the day is the one decision worth real thought: the advisor
+    # weighs the whole session before prescribing tomorrow.
+    return parse_close(gen(CLOSE_SYSTEM, [{"role": "user", "text": turn}],
+                           effort="deliberate", max_tokens=8192,
+                           model=_journal_model()))

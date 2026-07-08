@@ -11,7 +11,12 @@ used for physical's backend.
    - `GEMINI_API_KEY` — from [aistudio.google.com](https://aistudio.google.com)
      (same key type as physical's coach; you can reuse that key).
    - `APP_TOKEN` — any long random string, e.g. `openssl rand -hex 24`.
-   - (optional) `GEMINI_MODEL` — defaults to `gemini-2.5-flash`.
+   - (optional) `GEMINI_MODEL` — the graders (Examiner/Reviewer); defaults
+     to `gemini-3.5-flash`, the paid-tier price/strength sweet spot.
+   - (optional) `GEMINI_JOURNAL_MODEL` — a bigger brain for the nightly
+     advisor only (it reasons over a year of habit history), e.g.
+     `gemini-3.1-pro`. Empty = use `GEMINI_MODEL`. Grader traffic stays on
+     the cheap model either way.
 3. Settings → **Generate Domain** → note the URL,
    e.g. `https://mental-production-xxxx.up.railway.app`.
 4. Check `https://<domain>/health` →
