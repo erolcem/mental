@@ -148,6 +148,15 @@ class ProgressNotifier extends StateNotifier<Map<String, NodeProgress>> {
     state = repo.load();
   }
 
+  /// Adopt a Sky-Link-merged progress map wholesale: persist every record
+  /// and swap state in one step.
+  void adoptMerged(Map<String, NodeProgress> merged) {
+    for (final e in merged.entries) {
+      repo.save(e.key, e.value);
+    }
+    state = Map.of(merged);
+  }
+
   void _write(String key, NodeProgress p) {
     repo.save(key, p);
     state = {...state, key: p};
@@ -202,6 +211,14 @@ class JournalNotifier extends StateNotifier<Map<String, JournalEntry>> {
     final actions = List.of(e.actions);
     actions[index] = actions[index].toggled();
     save(e.copyWith(actions: actions));
+  }
+
+  /// Adopt a Sky-Link-merged journal wholesale.
+  void adoptMerged(Map<String, JournalEntry> merged) {
+    for (final e in merged.entries) {
+      repo.saveJournalEntry(e.value);
+    }
+    state = Map.of(merged);
   }
 
   void wipe() {

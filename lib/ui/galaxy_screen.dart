@@ -11,11 +11,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/repository.dart';
 import '../data/skill_data.dart';
 import '../state/providers.dart';
+import '../state/sync_controller.dart';
 import 'constellation_screen.dart';
 import 'habit_ledger_sheet.dart';
 import 'journal_screen.dart';
 import 'review_ledger.dart';
 import 'review_screen.dart';
+import 'sky_link_sheet.dart';
 import 'starfield.dart';
 import 'theme.dart';
 import 'widgets/asterism.dart';
@@ -68,6 +70,14 @@ class _GalaxyScreenState extends ConsumerState<GalaxyScreen> {
           _viewCtrl.value.getMaxScaleOnAxis() <= 1.05;
       if (atTop != _atTop) setState(() => _atTop = atTop);
     });
+    // Sky Link: converge with the other devices at startup, then coalesce
+    // every local change into a debounced pull→merge→push.
+    WidgetsBinding.instance.addPostFrameCallback(
+        (_) => ref.read(syncControllerProvider.notifier).syncNow());
+    ref.listenManual(progressProvider,
+        (_, __) => ref.read(syncControllerProvider.notifier).scheduleSync());
+    ref.listenManual(journalProvider,
+        (_, __) => ref.read(syncControllerProvider.notifier).scheduleSync());
   }
 
   @override
@@ -246,8 +256,22 @@ class _GalaxyScreenState extends ConsumerState<GalaxyScreen> {
               color: const Color(0xEE0D0F1A),
               onSelected: (v) {
                 if (v == 'wipe') _confirmWipe(context, ref);
+                if (v == 'sync') showSkyLinkSheet(context);
+                if (v == 'ledger') showHabitLedger(context);
               },
               itemBuilder: (_) => [
+                PopupMenuItem(
+                  value: 'sync',
+                  child: Text(
+                      ref.read(syncControllerProvider).linked
+                          ? 'Sky Link — synced across devices'
+                          : 'Sky Link — sync across devices',
+                      style: raleway(12, color: const Color(0xFF7FE7D2))),
+                ),
+                PopupMenuItem(
+                  value: 'ledger',
+                  child: Text('The Habit Ledger', style: raleway(12)),
+                ),
                 PopupMenuItem(
                   value: 'wipe',
                   child: Text('Reset all progress',

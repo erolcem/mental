@@ -44,6 +44,19 @@ Start a build → the app now submits summary sheets to the Examiner before a
 star may ignite. **Until those vars exist the build still works** — stars
 ignite on the honour system (stage-1 behaviour).
 
+## Sky Link (cross-device sync)
+
+`/sync/push` + `/sync/pull` store one opaque snapshot per **Sky Key** (the
+app forges the key; the server only ever sees its SHA-256, and the bearer
+`APP_TOKEN` still guards the route). Storage is a single SQLite file:
+
+- On Railway: service → **Volumes** → mount at `/data`, then set
+  `SYNC_DB=/data/mental_sync.db`. Without a volume sync still works but
+  the store resets on redeploy (devices simply re-push their skies).
+- Snapshots are stored as-is on your private instance. The journal is
+  personal writing — keep `APP_TOKEN` set and the instance private;
+  end-to-end encryption is a sensible future hardening.
+
 ## Local dev
 
 ```bash

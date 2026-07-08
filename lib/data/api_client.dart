@@ -176,6 +176,32 @@ class MentalApi {
     );
   }
 
+  /// Sky Link: store this device's snapshot under the (hashed) key.
+  /// Returns the server's updated_at stamp.
+  Future<String> syncPush({
+    required String key,
+    required String data,
+    String device = '',
+  }) async {
+    final j = await _post('/sync/push', {
+      'key': key,
+      'data': data,
+      'device': device,
+    });
+    return (j['updated_at'] as String?) ?? '';
+  }
+
+  /// Sky Link: fetch the stored snapshot. `data` is null for a fresh key.
+  Future<({String? data, String? updatedAt, String? device})> syncPull(
+      {required String key}) async {
+    final j = await _post('/sync/pull', {'key': key});
+    return (
+      data: j['data'] as String?,
+      updatedAt: j['updated_at'] as String?,
+      device: j['device'] as String?,
+    );
+  }
+
   Future<Map<String, dynamic>> _post(String path, Map<String, dynamic> body) async {
     final http.Response r;
     try {
