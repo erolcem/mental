@@ -51,10 +51,13 @@ class _ConstellationScreenState extends ConsumerState<ConstellationScreen>
           ..repeat();
     _burst = AnimationController(
         vsync: this, duration: const Duration(milliseconds: 900));
-    // Reviews can come due while studying a constellation; the sheet's lock
-    // gate must notice without a restart.
-    _dueTicker = Timer.periodic(const Duration(minutes: 1),
-        (_) => ref.invalidate(dueReviewsProvider));
+    // Reviews can come due — and midnight can make the journal overdue —
+    // while studying a constellation; the sheet's lock gate must notice
+    // without a restart.
+    _dueTicker = Timer.periodic(const Duration(minutes: 1), (_) {
+      ref.invalidate(dueReviewsProvider);
+      ref.invalidate(journalOverdueProvider);
+    });
   }
 
   @override
@@ -560,10 +563,10 @@ class ConstellationPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant ConstellationPainter old) =>
-      old.progress != progress ||
-      old.breath != breath ||
-      old.burst != burst ||
-      old.burstNodeId != burstNodeId ||
-      !setEquals(old.dueNodeIds, dueNodeIds);
+  bool shouldRepaint(covariant ConstellationPainter oldDelegate) =>
+      oldDelegate.progress != progress ||
+      oldDelegate.breath != breath ||
+      oldDelegate.burst != burst ||
+      oldDelegate.burstNodeId != burstNodeId ||
+      !setEquals(oldDelegate.dueNodeIds, dueNodeIds);
 }

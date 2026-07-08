@@ -46,9 +46,12 @@ class _GalaxyScreenState extends ConsumerState<GalaxyScreen> {
   @override
   void initState() {
     super.initState();
-    // Reviews become due while the app idles here; re-check once a minute.
-    _dueTicker = Timer.periodic(const Duration(minutes: 1),
-        (_) => ref.invalidate(dueReviewsProvider));
+    // Reviews become due — and midnight can make the journal overdue — while
+    // the app idles here; re-check both lock sources once a minute.
+    _dueTicker = Timer.periodic(const Duration(minutes: 1), (_) {
+      ref.invalidate(dueReviewsProvider);
+      ref.invalidate(journalOverdueProvider);
+    });
   }
 
   @override
