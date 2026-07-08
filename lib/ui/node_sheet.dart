@@ -228,8 +228,36 @@ class _NodeSheetState extends ConsumerState<_NodeSheet> {
                 style: raleway(10.5,
                     color: Colors.white.withValues(alpha: 0.6), height: 1.55),
               ),
-              if (widget.node.proof.isNotEmpty) ...[
+              if (widget.node.guide.isNotEmpty) ...[
                 const SizedBox(height: 14),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.04),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.12)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('THE WORK — DO EXACTLY THIS',
+                          style: raleway(7.5,
+                              weight: 700,
+                              color: Colors.white.withValues(alpha: 0.55),
+                              spacing: 2)),
+                      const SizedBox(height: 3),
+                      Text(widget.node.guide,
+                          style: raleway(11,
+                              color: Colors.white.withValues(alpha: 0.82),
+                              height: 1.5)),
+                    ],
+                  ),
+                ),
+              ],
+              if (widget.node.proof.isNotEmpty) ...[
+                const SizedBox(height: 10),
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(10),
