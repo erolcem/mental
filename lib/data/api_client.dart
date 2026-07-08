@@ -42,7 +42,9 @@ class ReviewGrade {
 class JournalCloseResult {
   final List<String> actions; // 1–3 next-day items
   final String reflection;
-  const JournalCloseResult({required this.actions, required this.reflection});
+  final String rationale; // the advisor's evidence-citing reasoning
+  const JournalCloseResult(
+      {required this.actions, required this.reflection, this.rationale = ''});
 }
 
 class MentalApi {
@@ -136,34 +138,41 @@ class MentalApi {
     );
   }
 
-  /// One conversational turn from the Confidant.
+  /// One conversational turn from the Confidant. [history] is the habit
+  /// ledger digest — the advisor's memory of what was actually done.
   Future<String> journalReply({
     required String day,
     required List<Map<String, String>> transcript, // {role, text}
     required List<Map<String, dynamic>> yesterdayActions, // {text, done}
+    String history = '',
   }) async {
     final j = await _post('/journal/reply', {
       'day': day,
       'transcript': transcript,
       'yesterday_actions': yesterdayActions,
+      'history': history,
     });
     return (j['reply'] as String?) ?? '';
   }
 
-  /// Close tonight's session → 1–3 next-day actions + a reflection.
+  /// Close tonight's session → 1–3 next-day actions + reflection + the
+  /// advisor's rationale (kept as its memory for future iterations).
   Future<JournalCloseResult> journalClose({
     required String day,
     required List<Map<String, String>> transcript,
     required List<Map<String, dynamic>> yesterdayActions,
+    String history = '',
   }) async {
     final j = await _post('/journal/close', {
       'day': day,
       'transcript': transcript,
       'yesterday_actions': yesterdayActions,
+      'history': history,
     });
     return JournalCloseResult(
       actions: [for (final a in (j['actions'] as List? ?? [])) a.toString()],
       reflection: (j['reflection'] as String?) ?? '',
+      rationale: (j['rationale'] as String?) ?? '',
     );
   }
 

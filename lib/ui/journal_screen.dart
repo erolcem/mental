@@ -7,8 +7,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/api_client.dart';
+import '../data/habit_ledger.dart';
 import '../data/repository.dart';
 import '../state/providers.dart';
+import 'habit_ledger_sheet.dart';
 import 'starfield.dart';
 import 'theme.dart';
 
@@ -113,6 +115,10 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
     ];
   }
 
+  /// The advisor's memory: up to a year of kept/missed evidence.
+  String get _wireHistory =>
+      buildHabitLedger(ref.read(journalProvider), DateTime.now());
+
   @override
   void initState() {
     super.initState();
@@ -160,6 +166,7 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
         day: _today,
         transcript: _wireTranscript,
         yesterdayActions: _wireYesterday,
+        history: _wireHistory,
       );
       if (!mounted) return;
       final cur = notifier.entryFor(_today);
@@ -187,12 +194,14 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
           day: _today,
           transcript: _wireTranscript,
           yesterdayActions: _wireYesterday,
+          history: _wireHistory,
         );
         if (!mounted) return;
         final cur = notifier.entryFor(_today);
         notifier.save(cur.copyWith(
           actions: [for (final a in res.actions) ActionItem(a)],
           reflection: res.reflection,
+          rationale: res.rationale,
           closedAt: DateTime.now(),
         ));
       } else {
@@ -335,6 +344,27 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
                   style: raleway(9.5, color: Colors.white.withValues(alpha: 0.5)),
                 ),
               ],
+            ),
+          ),
+          InkWell(
+            onTap: () => showHabitLedger(context),
+            borderRadius: BorderRadius.circular(8),
+            child: Padding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+              child: Column(
+                children: [
+                  Icon(Icons.receipt_long,
+                      size: 16,
+                      color: kJournalViolet.withValues(alpha: 0.7)),
+                  const SizedBox(height: 1),
+                  Text('LEDGER',
+                      style: raleway(6.5,
+                          weight: 700,
+                          color: kJournalViolet.withValues(alpha: 0.7),
+                          spacing: 1)),
+                ],
+              ),
             ),
           ),
         ],
@@ -510,6 +540,34 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
               ],
             ),
           ),
+        if (e.rationale.isNotEmpty) ...[
+          const SizedBox(height: 14),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: kJournalViolet.withValues(alpha: 0.06),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                  color: kJournalViolet.withValues(alpha: 0.25)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('WHY THESE — THE ADVISOR\'S REASONING',
+                    style: raleway(8,
+                        weight: 700,
+                        color: kJournalViolet.withValues(alpha: 0.8),
+                        spacing: 1.5)),
+                const SizedBox(height: 5),
+                Text(e.rationale,
+                    style: raleway(11,
+                        height: 1.5,
+                        color: Colors.white.withValues(alpha: 0.75))),
+              ],
+            ),
+          ),
+        ],
         const SizedBox(height: 24),
         Center(
           child: FilledButton(

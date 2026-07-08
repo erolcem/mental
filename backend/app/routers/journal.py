@@ -25,6 +25,9 @@ class JournalRequest(BaseModel):
     transcript: list[Turn] = Field(min_length=1, max_length=40)
     yesterday_actions: list[YesterdayAction] = Field(
         default_factory=list, max_length=3)
+    # The habit ledger digest (client-built): up to a year of what was
+    # actually done and not done, plus the advisor's past reasoning.
+    history: str = Field(default="", max_length=journal.MAX_HISTORY_CHARS)
 
 
 class ReplyResponse(BaseModel):
@@ -34,6 +37,7 @@ class ReplyResponse(BaseModel):
 class CloseResponse(BaseModel):
     actions: list[str]
     reflection: str
+    rationale: str
 
 
 def _check_token(authorization: str | None) -> None:
@@ -50,6 +54,7 @@ def _dump(req: JournalRequest) -> dict:
         "yesterday_actions": [
             {"text": a.text, "done": a.done} for a in req.yesterday_actions
         ],
+        "history": req.history,
     }
 
 
@@ -72,4 +77,5 @@ def close(req: JournalRequest, authorization: str | None = Header(default=None))
         raise HTTPException(status_code=502, detail=f"Confidant unavailable: {e}")
     except ValueError as e:
         raise HTTPException(status_code=502, detail=f"Confidant reply unreadable: {e}")
-    return CloseResponse(actions=c.actions, reflection=c.reflection)
+    return CloseResponse(actions=c.actions, reflection=c.reflection,
+                         rationale=c.rationale)

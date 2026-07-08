@@ -12,6 +12,7 @@ import '../data/repository.dart';
 import '../data/skill_data.dart';
 import '../state/providers.dart';
 import 'constellation_screen.dart';
+import 'habit_ledger_sheet.dart';
 import 'journal_screen.dart';
 import 'review_ledger.dart';
 import 'review_screen.dart';
@@ -413,11 +414,40 @@ class _GalaxyScreenState extends ConsumerState<GalaxyScreen> {
                     ),
                   ),
                 ),
+              if (entry.rationale.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                Text('WHY · ${entry.rationale}',
+                    style: raleway(9,
+                        height: 1.45,
+                        color: kJournalViolet.withValues(alpha: 0.55))),
+              ],
               const SizedBox(height: 6),
-              Text(
-                'Tonight\'s journal will ask how these went.',
-                style: raleway(9.5,
-                    color: Colors.white.withValues(alpha: 0.3)),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Tonight\'s journal will ask how these went.',
+                      style: raleway(9.5,
+                          color: Colors.white.withValues(alpha: 0.3)),
+                    ),
+                  ),
+                  InkWell(
+                    onTap: () {
+                      Navigator.pop(context);
+                      showHabitLedger(this.context);
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 6, vertical: 4),
+                      child: Text('THE LEDGER →',
+                          style: raleway(8.5,
+                              weight: 700,
+                              color:
+                                  kJournalViolet.withValues(alpha: 0.7),
+                              spacing: 1)),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),

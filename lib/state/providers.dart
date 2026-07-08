@@ -210,12 +210,6 @@ class JournalNotifier extends StateNotifier<Map<String, JournalEntry>> {
   }
 }
 
-/// Local calendar day key (yyyy-mm-dd).
-String dayKey(DateTime t) =>
-    '${t.year.toString().padLeft(4, '0')}-${t.month.toString().padLeft(2, '0')}-${t.day.toString().padLeft(2, '0')}';
-
-String yesterdayKey(DateTime t) => dayKey(t.subtract(const Duration(days: 1)));
-
 /// The journal lock: once the habit has begun (≥1 closed entry), a day
 /// without journaling locks the NEXT day until today's session is closed.
 /// Never journaled at all → unlocked (the habit starts tonight, not with a
