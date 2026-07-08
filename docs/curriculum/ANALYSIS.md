@@ -7,13 +7,13 @@
 | | nodes | edges | hours | XP |
 |---|---|---|---|---|
 | **INT Intelligence** | 118 | 175 | 23580 | 30200 |
-| **WIS Wisdom** | 83 | 108 | 7620 | 11310 |
+| **WIS Wisdom** | 103 | 142 | 8950 | 13440 |
 | **CHA Charisma** | 139 | 190 | 13135 | 20885 |
 | **DEX Dexterity** | 111 | 138 | 9105 | 15175 |
-| **TOTAL** | 451 | 611 | 53440 | 77570 |
+| **TOTAL** | 471 | 645 | 54770 | 79700 |
 
-**53440 hours of deliberate work** separate a dark sky from a full one —
-≈ 37 years at four focused hours a day, a
+**54770 hours of deliberate work** separate a dark sky from a full one —
+≈ 38 years at four focused hours a day, a
 five-fold Gladwell. XP is effort-weighted (XP = hours + tier × 10) so a star
 pays what it costs; the level curve (level = 1 + 98·√(xp/max)) pays out fast
 early and slow late:
@@ -40,10 +40,10 @@ Reading the columns:
 | maths | 31 | 7050 | 3020 | 2.3× | 4.4 / 1 | 87% |
 | medicine | 28 | 4580 | 2880 | 1.6× | 2.8 / 1 | 68% |
 | engineering | 27 | 5070 | 2090 | 2.4× | 4.7 / 1 | 89% |
-| geography | 20 | 1560 | 780 | 2.0× | 3.5 / 1 | 85% |
-| history | 20 | 1620 | 950 | 1.7× | 3.0 / 1 | 80% |
-| business | 22 | 2950 | 1940 | 1.5× | 2.4 / 1 | 82% |
-| socialSci | 21 | 1490 | 620 | 2.4× | 3.3 / 1 | 76% |
+| geography | 25 | 1860 | 780 | 2.4× | 4.0 / 1 | 88% |
+| history | 25 | 1940 | 950 | 2.0× | 4.0 / 1 | 84% |
+| business | 27 | 3340 | 1940 | 1.7× | 3.5 / 1 | 85% |
+| socialSci | 26 | 1810 | 620 | 2.9× | 4.8 / 1 | 81% |
 | english | 19 | 1150 | 460 | 2.5× | 2.6 / 1 | 89% |
 | turkish | 19 | 1585 | 1070 | 1.5× | 2.0 / 1 | 58% |
 | japanese | 22 | 3540 | 1790 | 2.0× | 2.5 / 1 | 82% |
@@ -69,10 +69,10 @@ Foundations → 3–5 working lanes → a summit lane that carries the crown.
 | maths | Foundations 4·820h / Analysis 8·2020h / Algebra 5·1150h / Probability 7·1630h / Problem Craft 4·380h / Convergence 3·1050h |
 | medicine | Foundations 1·60h / Basic Science 9·2330h / Emergency 3·190h / Evidence 4·300h / Clinical 8·1240h / Diagnosis 3·460h |
 | engineering | Foundations 4·500h / Software 8·1750h / Hardware 6·1200h / Electronics 5·800h / Craft 3·420h / Convergence 1·400h |
-| geography | Foundations 1·60h / World Knowledge 2·110h / Physical & Human 4·390h / Geopolitics 4·250h / Spatial Tech 7·480h / Convergence 2·270h |
-| history | Foundations 1·40h / Grand Survey 4·610h / Sources 4·190h / Thematic Depth 6·320h / Craft 5·460h |
-| business | Foundations 3·270h / Markets 1·60h / CFA Spine 10·1730h / Operations 2·110h / Venture 3·260h / Convergence 3·520h |
-| socialSci | Foundations 1·120h / Psych Core 4·400h / Methods 3·240h / Mind & Society 6·340h / Practice 3·110h / The Study 4·280h |
+| geography | Foundations 1·60h / World Knowledge 3·150h / Physical & Human 5·450h / Geopolitics 6·400h / Spatial Tech 8·530h / Convergence 2·270h |
+| history | Foundations 1·40h / Grand Survey 5·660h / Sources 4·190h / Thematic Depth 10·590h / Craft 5·460h |
+| business | Foundations 3·270h / CFA Spine 12·1870h / Markets 2·120h / Operations 3·150h / Venture 4·410h / Convergence 3·520h |
+| socialSci | Foundations 1·120h / Psych Core 4·400h / Methods 5·350h / Mind & Society 9·550h / Practice 3·110h / The Study 4·280h |
 | english | Foundations 3·120h / Language 2·160h / Writing 5·340h / Rhetoric 5·270h / Argument 2·100h / Convergence 2·160h |
 | turkish | Foundations 1·30h / Grammar 6·880h / Input 3·280h / Output 5·215h / Culture 2·80h / Convergence 2·100h |
 | japanese | Foundations 1·30h / Kanji 3·800h / Grammar 4·800h / Input 5·1100h / Output 4·230h / Culture 1·40h / JLPT 4·540h |
@@ -97,7 +97,7 @@ whole sky takes:
 
 | pace | 10 h/wk | 20 h/wk | 28 h/wk | 40 h/wk |
 |---|---|---|---|---|
-| full sky | 102.8 yrs | 51.4 yrs | 36.7 yrs | 25.7 yrs |
+| full sky | 105.3 yrs | 52.7 yrs | 37.6 yrs | 26.3 yrs |
 
 Single-constellation crowns at a focused 10 h/week:
 
@@ -105,8 +105,8 @@ Single-constellation crowns at a focused 10 h/week:
 |---|---|---|---|---|---|
 | science | 6880 | 13.2 | maths | 7050 | 13.6 |
 | medicine | 4580 | 8.8 | engineering | 5070 | 9.8 |
-| geography | 1560 | 3.0 | history | 1620 | 3.1 |
-| business | 2950 | 5.7 | socialSci | 1490 | 2.9 |
+| geography | 1860 | 3.6 | history | 1940 | 3.7 |
+| business | 3340 | 6.4 | socialSci | 1810 | 3.5 |
 | english | 1150 | 2.2 | turkish | 1585 | 3.0 |
 | japanese | 3540 | 6.8 | khmer | 1290 | 2.5 |
 | musicTheory | 1680 | 3.2 | piano | 2620 | 5.0 |
@@ -145,18 +145,18 @@ The one chain in each tree you cannot parallelise away:
 
 | star | hours | what it is |
 |---|---|---|
-| maths.m17 | 700 | Dissertation-grade monograph |
 | science.sc15 | 700 | Thesis: original research monograph |
-| medicine.md9 | 400 | UWorld Step 1 complete |
+| maths.m17 | 700 | Dissertation-grade monograph |
 | japanese.j8 | 400 | Kanji III: all 2,136 jōyō |
 | science.sc13 | 400 | Classical Electrodynamics (Jackson) |
-| writing.w7 | 400 | The novel: 90,000-word complete draft |
-| piano.p16 | 400 | Crown: 60-minute memorised recital |
-| karate.k12 | 400 | Nidan → Sandan gradings |
 | science.sc5 | 400 | Organic Chemistry I–II (Clayden) |
-| science.sc1 | 400 | Foundations: AP Physics C & AP Chemistry |
-| engineering.eg18 | 400 | Crown: 3-node cluster of your kernel + KV store |
+| karate.k12 | 400 | Nidan → Sandan gradings |
 | maths.m3 | 400 | Calculus I–III (Stewart) |
+| medicine.md9 | 400 | UWorld Step 1 complete |
+| engineering.eg18 | 400 | Crown: 3-node cluster of your kernel + KV store |
+| piano.p16 | 400 | Crown: 60-minute memorised recital |
+| science.sc1 | 400 | Foundations: AP Physics C & AP Chemistry |
+| writing.w7 | 400 | The novel: 90,000-word complete draft |
 
 ## Methodology: where the hours come from
 
