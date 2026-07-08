@@ -21,14 +21,19 @@ import 'theme.dart';
 import 'widgets/asterism.dart';
 import 'widgets/mastery_ring.dart';
 
-/// Cluster centres as fractions of the sky, ordered top→bottom. The crowded
-/// stats (CHA: 7 skills, DEX: 6) take the middle rows where they have room on
-/// both sides; the x stagger keeps the column organic.
+/// The sky is TALLER than the screen — a canvas you drift through, not a
+/// poster squeezed onto one phone height. The viewer starts at the top and
+/// pans down the spine (pinch zooms in on a cluster).
+const double kSkyHeightFactor = 1.55;
+
+/// Cluster centres as fractions of the (tall) sky, ordered top→bottom. The
+/// crowded stats (CHA: 7 skills, DEX: 6) take the middle rows where they have
+/// room on both sides; the x stagger keeps the column organic.
 const List<(String, Offset)> _spine = [
-  ('INT', Offset(0.575, 0.15)),
-  ('CHA', Offset(0.425, 0.38)),
-  ('DEX', Offset(0.575, 0.61)),
-  ('WIS', Offset(0.425, 0.825)),
+  ('INT', Offset(0.575, 0.13)),
+  ('CHA', Offset(0.425, 0.375)),
+  ('DEX', Offset(0.575, 0.625)),
+  ('WIS', Offset(0.425, 0.87)),
 ];
 
 Offset _statCenter(String id) =>
@@ -44,6 +49,11 @@ class GalaxyScreen extends ConsumerStatefulWidget {
 class _GalaxyScreenState extends ConsumerState<GalaxyScreen> {
   Timer? _dueTicker;
 
+  /// Drives the pannable sky; watched to fade the drift hint once the user
+  /// has moved off the top.
+  final TransformationController _viewCtrl = TransformationController();
+  bool _atTop = true;
+
   @override
   void initState() {
     super.initState();
@@ -53,11 +63,17 @@ class _GalaxyScreenState extends ConsumerState<GalaxyScreen> {
       ref.invalidate(dueReviewsProvider);
       ref.invalidate(journalOverdueProvider);
     });
+    _viewCtrl.addListener(() {
+      final atTop = _viewCtrl.value.getTranslation().y > -24 &&
+          _viewCtrl.value.getMaxScaleOnAxis() <= 1.05;
+      if (atTop != _atTop) setState(() => _atTop = atTop);
+    });
   }
 
   @override
   void dispose() {
     _dueTicker?.cancel();
+    _viewCtrl.dispose();
     super.dispose();
   }
 
@@ -72,22 +88,43 @@ class _GalaxyScreenState extends ConsumerState<GalaxyScreen> {
       body: Stack(
         fit: StackFit.expand,
         children: [
+          // The starfield stays fixed while the clusters drift over it —
+          // free parallax depth.
           Starfield(nebulae: [for (final s in catalog) s.color]),
           SafeArea(
             child: LayoutBuilder(
               builder: (context, box) {
                 final w = box.maxWidth, h = box.maxHeight;
+                final skyH = h * kSkyHeightFactor;
                 return Stack(
                   children: [
-                    // Spine glow + dashed spokes behind everything.
-                    IgnorePointer(
-                      child: CustomPaint(
-                        size: Size(w, h),
-                        painter: _SpinePainter(),
+                    Positioned.fill(
+                      child: InteractiveViewer(
+                        transformationController: _viewCtrl,
+                        constrained: false,
+                        minScale: 1.0,
+                        maxScale: 2.2,
+                        boundaryMargin: EdgeInsets.zero,
+                        child: SizedBox(
+                          width: w,
+                          height: skyH,
+                          child: Stack(
+                            children: [
+                              // Spine glow + dashed spokes behind the stars.
+                              IgnorePointer(
+                                child: CustomPaint(
+                                  size: Size(w, skyH),
+                                  painter: _SpinePainter(),
+                                ),
+                              ),
+                              for (final stat in catalog)
+                                ..._buildCluster(
+                                    context, stat, w, skyH, progress),
+                            ],
+                          ),
+                        ),
                       ),
                     ),
-                    for (final stat in catalog)
-                      ..._buildCluster(context, stat, w, h, progress),
                     _header(context, ref, level, overall),
                     if (ref.watch(dueReviewsProvider).isNotEmpty)
                       _lockBanner(context, ref.watch(dueReviewsProvider).length),
@@ -96,6 +133,7 @@ class _GalaxyScreenState extends ConsumerState<GalaxyScreen> {
                           top: ref.watch(dueReviewsProvider).isNotEmpty
                               ? 112.0
                               : 62.0),
+                    _driftHint(),
                     _bottomBar(context, ref),
                   ],
                 );
@@ -103,6 +141,37 @@ class _GalaxyScreenState extends ConsumerState<GalaxyScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  /// A whisper above the bottom bar while the viewer rests at the top: the
+  /// sky continues below the fold. Fades the moment you drift.
+  Widget _driftHint() {
+    return Positioned(
+      left: 0,
+      right: 0,
+      bottom: 46,
+      child: IgnorePointer(
+        child: AnimatedOpacity(
+          duration: const Duration(milliseconds: 400),
+          opacity: _atTop ? 1 : 0,
+          child: Column(
+            children: [
+              Text('DRIFT DOWN — THE SKY CONTINUES',
+                  textAlign: TextAlign.center,
+                  style: raleway(7.5,
+                      weight: 600,
+                      color: Colors.white.withValues(alpha: 0.30),
+                      spacing: 2.5)),
+              Text('⌄',
+                  style: TextStyle(
+                      fontSize: 14,
+                      height: 1.1,
+                      color: Colors.white.withValues(alpha: 0.30))),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -643,8 +712,10 @@ List<Offset> clusterSkillPositions(StatDomain stat, double w, double h) {
   final cx = c.dx * w, cy = c.dy * h;
   // The far edge of the stagger must keep the whole 94px label box on
   // screen: cx(0.575w) + rx + 47 ≤ w  →  rx ≤ 0.425w − 47.
-  final rx = math.min(w * 0.425 - 49, 136.0);
-  final ry = math.min(h * 0.078, 66.0);
+  final rx = math.min(w * 0.425 - 49, 150.0);
+  // h is the TALL sky canvas (kSkyHeightFactor × viewport) — the ellipses
+  // finally get vertical room to breathe.
+  final ry = math.min(h * 0.075, 96.0);
   final n = stat.skills.length;
   return [
     for (var i = 0; i < n; i++)
