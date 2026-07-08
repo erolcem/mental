@@ -82,6 +82,9 @@ void main() {
 
     await tester.enterText(find.byType(TextField), longSummary);
     await tester.pump();
+    // The quest briefing sections make the sheet scroll on a phone.
+    await tester.ensureVisible(find.textContaining('SUBMIT TO THE EXAMINER'));
+    await tester.pump(const Duration(milliseconds: 300));
     await tester.tap(find.textContaining('SUBMIT TO THE EXAMINER'));
     await tester.pump(); // start async
     await tester.pump(const Duration(milliseconds: 100)); // resolve mock
@@ -105,6 +108,8 @@ void main() {
 
     await tester.enterText(find.byType(TextField), longSummary);
     await tester.pump();
+    await tester.ensureVisible(find.textContaining('SUBMIT TO THE EXAMINER'));
+    await tester.pump(const Duration(milliseconds: 300));
     await tester.tap(find.textContaining('SUBMIT TO THE EXAMINER'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));
@@ -138,6 +143,8 @@ void main() {
     final container = await pumpSheet(tester, api, repo);
 
     expect(find.textContaining('IGNITE STAR'), findsOneWidget);
+    await tester.ensureVisible(find.textContaining('IGNITE STAR'));
+    await tester.pump(const Duration(milliseconds: 300));
     await tester.tap(find.textContaining('IGNITE STAR'));
     await tester.pump(const Duration(milliseconds: 400));
 

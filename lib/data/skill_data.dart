@@ -67,6 +67,10 @@ class Skill {
   int get maxTier => tree.fold(1, (m, n) => n.tier > m ? n.tier : m);
   SkillNode nodeById(String id) => tree.firstWhere((n) => n.id == id);
 
+  /// The stars whose way [id] opens — this node's direct dependents.
+  List<SkillNode> unlockedBy(String id) =>
+      [for (final n in tree) if (n.requires.contains(id)) n];
+
   /// Estimated deliberate-practice hours base → crown.
   int get totalHours => tree.fold(0, (s, n) => s + n.hours);
 

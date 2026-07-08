@@ -17,6 +17,36 @@ import 'theme.dart';
 /// Matches the backend's MIN_SUMMARY_CHARS floor.
 const int kMinSummaryChars = 80;
 
+/// The generated quest briefing: where this star sits in its constellation,
+/// what it costs, and what its light means — computed from catalog
+/// structure, so every one of the 431 stars reads as a legible quest.
+String starBriefing(Skill skill, SkillNode node) {
+  final isCrown =
+      node.tier == skill.maxTier && skill.unlockedBy(node.id).isEmpty;
+  final b = StringBuffer();
+  if (isCrown) {
+    b.write('The crown of ${skill.label} — every branch of this '
+        'constellation converges here, and the endgame stands or falls on '
+        'this one star. ');
+  } else if (node.requires.isEmpty) {
+    b.write(node.branch.isNotEmpty && node.branch != 'Foundations'
+        ? 'A root star of the ${node.branch} branch — it begins here, with '
+            'no prerequisites. '
+        : 'A foundation star — this constellation begins here, with no '
+            'prerequisites. ');
+  } else {
+    b.write('Tier ${node.tier} of ${skill.maxTier}'
+        '${node.branch.isNotEmpty ? ' on the ${node.branch} branch' : ''}'
+        ' — ${node.tier <= 2 ? 'early climb' : node.tier >= skill.maxTier - 1 ? 'the high climb toward the crown' : 'deep in the braid'}. ');
+  }
+  if (node.hours > 0) {
+    final months = (node.hours / 60).round(); // two focused hours a day
+    b.write('Budget ≈${node.hours} hours of deliberate work'
+        '${months >= 2 ? ' — roughly $months months at two focused hours a day' : ''}. ');
+  }
+  return b.toString().trimRight();
+}
+
 /// Returns true (via the popped future) if the user ignited the star.
 Future<bool?> showNodeSheet(BuildContext context, WidgetRef ref,
     {required StatDomain stat,
@@ -184,6 +214,20 @@ class _NodeSheetState extends ConsumerState<_NodeSheet> {
                   ),
                 ],
               ),
+              const SizedBox(height: 12),
+              Text(
+                'THE ROAD · ${widget.skill.goal.toUpperCase()}',
+                style: raleway(7.5,
+                    weight: 700,
+                    color: Colors.white.withValues(alpha: 0.3),
+                    spacing: 1.8),
+              ),
+              const SizedBox(height: 5),
+              Text(
+                starBriefing(widget.skill, widget.node),
+                style: raleway(10.5,
+                    color: Colors.white.withValues(alpha: 0.6), height: 1.55),
+              ),
               if (widget.node.proof.isNotEmpty) ...[
                 const SizedBox(height: 14),
                 Container(
@@ -197,7 +241,7 @@ class _NodeSheetState extends ConsumerState<_NodeSheet> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('COMPLETION STANDARD',
+                      Text('COMPLETION STANDARD — WHAT MUST BE TRUE',
                           style: raleway(7.5,
                               weight: 700,
                               color: color.withValues(alpha: 0.7),
@@ -213,7 +257,7 @@ class _NodeSheetState extends ConsumerState<_NodeSheet> {
               ],
               if (widget.node.requires.isNotEmpty) ...[
                 const SizedBox(height: 16),
-                Text('PREREQUISITE STARS',
+                Text('PREREQUISITE STARS — LIGHT THESE FIRST',
                     style: raleway(8.5,
                         color: Colors.white.withValues(alpha: 0.3),
                         spacing: 2)),
@@ -334,9 +378,106 @@ class _NodeSheetState extends ConsumerState<_NodeSheet> {
                 _skyLockedButton(context)
               else
                 _actionButton(color, unlocked, api),
+              // Reference reading below the action: where this light leads,
+              // and the unchanging ritual.
+              ..._unlocksSection(color),
+              _riteSection(api, color),
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  /// What this star's light opens — the quest's forward pull.
+  List<Widget> _unlocksSection(Color color) {
+    final unlocks = widget.skill.unlockedBy(widget.node.id);
+    final isCrown =
+        unlocks.isEmpty && widget.node.tier == widget.skill.maxTier;
+    if (unlocks.isEmpty && !isCrown) return const [];
+    return [
+      const SizedBox(height: 14),
+      Text('ITS LIGHT OPENS THE WAY TO',
+          style: raleway(8.5,
+              color: Colors.white.withValues(alpha: 0.3), spacing: 2)),
+      const SizedBox(height: 6),
+      if (isCrown)
+        Text(
+          'Nothing further — this is the endgame. Beyond this star there is '
+          'only keeping its light alive.',
+          style: raleway(11,
+              color: color.withValues(alpha: 0.75), height: 1.45),
+        )
+      else
+        for (final n in unlocks)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 2.5),
+            child: Row(
+              children: [
+                Text('✧',
+                    style: TextStyle(
+                        fontSize: 12,
+                        color: color.withValues(alpha: 0.55))),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    '${n.label}'
+                    '${n.branch.isNotEmpty && n.branch != widget.node.branch ? '  ·  ${n.branch.toUpperCase()}' : ''}',
+                    style: raleway(11.5,
+                        color: Colors.white.withValues(alpha: 0.55)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+    ];
+  }
+
+  /// The same five-step ritual on every star — the quest loop made explicit.
+  Widget _riteSection(MentalApi api, Color color) {
+    final steps = [
+      'Do the work until the completion standard is simply true.',
+      'Keep artifacts as you go — worked pages, recordings, builds, drafts.',
+      'Write the mastery sheet below: what you did, what you now understand.',
+      api.configured
+          ? 'Submit — the star ignites only when the Examiner is convinced.'
+          : 'Ignite on your honour (no Examiner in this build).',
+      'A lit star enters the review cycle — first recall test in '
+          '${kReviewIntervalDays.first} days; going dark on reviews or the '
+          'journal locks the whole sky.',
+    ];
+    return Padding(
+      padding: const EdgeInsets.only(top: 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('THE RITE OF IGNITION',
+              style: raleway(8.5,
+                  color: Colors.white.withValues(alpha: 0.3), spacing: 2)),
+          const SizedBox(height: 6),
+          for (var i = 0; i < steps.length; i++)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 2),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(
+                    width: 16,
+                    child: Text('${i + 1}.',
+                        style: raleway(9.5,
+                            weight: 700,
+                            color: color.withValues(alpha: 0.5))),
+                  ),
+                  Expanded(
+                    child: Text(steps[i],
+                        style: raleway(10,
+                            color: Colors.white.withValues(alpha: 0.5),
+                            height: 1.45)),
+                  ),
+                ],
+              ),
+            ),
+        ],
       ),
     );
   }
