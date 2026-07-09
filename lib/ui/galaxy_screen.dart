@@ -23,24 +23,47 @@ import 'theme.dart';
 import 'widgets/asterism.dart';
 import 'widgets/mastery_ring.dart';
 
-/// The sky is TALLER than the screen — a canvas you drift through, not a
-/// poster squeezed onto one phone height. Each stat cluster gets most of a
-/// screenful; the rail (right edge) and the guide stars fly you between
-/// them, drag drifts, pinch zooms.
-const double kSkyHeightFactor = 2.15;
+/// The sky is a 2D map larger than the screen in both axes — the four stat
+/// constellations spread into their own quadrants. Open on the whole map
+/// (overview), then pinch or tap a sigil on the rail to fly and zoom into a
+/// constellation. Canvas = viewport × these factors.
+const double kSkyW = 1.62;
+const double kSkyH = 1.92;
 
-/// Cluster centres as fractions of the (tall) sky, ordered top→bottom. The
-/// crowded stats (CHA: 7 skills, DEX: 6) take the middle rows where they have
-/// room on both sides; the x stagger keeps the column organic.
-const List<(String, Offset)> _spine = [
-  ('INT', Offset(0.575, 0.115)),
-  ('CHA', Offset(0.425, 0.37)),
-  ('DEX', Offset(0.575, 0.635)),
-  ('WIS', Offset(0.425, 0.885)),
+/// The zoom the rail/sigils fly you in to; the overview multiplies fit-scale.
+const double _focusScale = 1.18;
+const double _overviewFactor = 0.95;
+
+/// Quadrant centres as fractions of the CANVAS — a colour in each corner,
+/// gently off-grid so the sky reads as a natural field, not a tiled table.
+const List<(String, Offset)> _quads = [
+  ('INT', Offset(0.29, 0.25)),
+  ('CHA', Offset(0.72, 0.30)),
+  ('DEX', Offset(0.28, 0.73)),
+  ('WIS', Offset(0.71, 0.78)),
 ];
 
 Offset _statCenter(String id) =>
-    _spine.firstWhere((e) => e.$1 == id).$2;
+    _quads.firstWhere((e) => e.$1 == id).$2;
+
+double _fitScale(Size vp, Size canvas) =>
+    math.min(vp.width / canvas.width, vp.height / canvas.height);
+
+/// A transform that centres the whole [canvas] in [vp] at [scale].
+Matrix4 _centeredM(double scale, Size vp, Size canvas) => Matrix4.identity()
+  ..translate((vp.width - scale * canvas.width) / 2,
+      (vp.height - scale * canvas.height) / 2)
+  ..scale(scale);
+
+/// A transform that puts [canvasPoint] at the viewport centre at [scale],
+/// clamped so the view never slides past the canvas edges.
+Matrix4 _focusM(Offset canvasPoint, double scale, Size vp, Size canvas) {
+  var tx = vp.width / 2 - scale * canvasPoint.dx;
+  var ty = vp.height / 2 - scale * canvasPoint.dy;
+  tx = tx.clamp(math.min(0.0, vp.width - scale * canvas.width), 0.0);
+  ty = ty.clamp(math.min(0.0, vp.height - scale * canvas.height), 0.0);
+  return Matrix4.identity()..translate(tx, ty)..scale(scale);
+}
 
 class GalaxyScreen extends ConsumerStatefulWidget {
   const GalaxyScreen({super.key});
@@ -53,50 +76,28 @@ class _GalaxyScreenState extends ConsumerState<GalaxyScreen>
     with SingleTickerProviderStateMixin {
   Timer? _dueTicker;
 
-  /// Drives the pannable sky; watched to fade the drift hint once the user
-  /// has moved off the top and to light the rail's current stat.
+  /// Drives the pannable/zoomable sky; watched to light the rail's current
+  /// stat and to fade the explore hint once the user zooms in.
   final TransformationController _viewCtrl = TransformationController();
   late final AnimationController _fly;
-  bool _atTop = true;
-  int _railIndex = 0; // index into _spine of the cluster nearest the centre
-  double _viewportH = 0; // set during build; used by the view listener
+  bool _showHint = true;
+  int _railIndex = 0; // index into _quads of the cluster nearest the centre
+  Size? _vp; // viewport size, set during build
+  Size? _canvas; // sky-canvas size, set during build
+  bool _didInitView = false;
 
   @override
   void initState() {
     super.initState();
     _fly = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 520));
+        vsync: this, duration: const Duration(milliseconds: 620));
     // Reviews become due — and midnight can make the journal overdue — while
     // the app idles here; re-check both lock sources once a minute.
     _dueTicker = Timer.periodic(const Duration(minutes: 1), (_) {
       ref.invalidate(dueReviewsProvider);
       ref.invalidate(journalOverdueProvider);
     });
-    _viewCtrl.addListener(() {
-      final atTop = _viewCtrl.value.getTranslation().y > -24 &&
-          _viewCtrl.value.getMaxScaleOnAxis() <= 1.05;
-      var rail = _railIndex;
-      if (_viewportH > 0) {
-        final skyH = _viewportH * kSkyHeightFactor;
-        final scale = _viewCtrl.value.getMaxScaleOnAxis();
-        final centre =
-            (-_viewCtrl.value.getTranslation().y + _viewportH / 2) / scale;
-        var best = double.infinity;
-        for (var i = 0; i < _spine.length; i++) {
-          final d = (_spine[i].$2.dy * skyH - centre).abs();
-          if (d < best) {
-            best = d;
-            rail = i;
-          }
-        }
-      }
-      if (atTop != _atTop || rail != _railIndex) {
-        setState(() {
-          _atTop = atTop;
-          _railIndex = rail;
-        });
-      }
-    });
+    _viewCtrl.addListener(_onView);
     // Sky Link: converge with the other devices at startup, then coalesce
     // every local change into a debounced pull→merge→push.
     WidgetsBinding.instance.addPostFrameCallback(
@@ -107,6 +108,34 @@ class _GalaxyScreenState extends ConsumerState<GalaxyScreen>
         (_, __) => ref.read(syncControllerProvider.notifier).scheduleSync());
   }
 
+  /// Recompute which quadrant we're looking at and whether the hint shows.
+  void _onView() {
+    final vp = _vp, canvas = _canvas;
+    if (vp == null || canvas == null) return;
+    final m = _viewCtrl.value;
+    final s = m.getMaxScaleOnAxis();
+    final t = m.getTranslation();
+    final centre =
+        Offset((vp.width / 2 - t.x) / s, (vp.height / 2 - t.y) / s);
+    var best = double.infinity, idx = _railIndex;
+    for (var i = 0; i < _quads.length; i++) {
+      final p = Offset(_quads[i].$2.dx * canvas.width,
+          _quads[i].$2.dy * canvas.height);
+      final d = (p - centre).distanceSquared;
+      if (d < best) {
+        best = d;
+        idx = i;
+      }
+    }
+    final hint = s <= _fitScale(vp, canvas) * 1.08;
+    if (idx != _railIndex || hint != _showHint) {
+      setState(() {
+        _railIndex = idx;
+        _showHint = hint;
+      });
+    }
+  }
+
   @override
   void dispose() {
     _dueTicker?.cancel();
@@ -115,18 +144,29 @@ class _GalaxyScreenState extends ConsumerState<GalaxyScreen>
     super.dispose();
   }
 
-  /// Glide the viewer so [statId]'s cluster rests at the viewport's centre
-  /// (scale resets to 1 — the rail is for orientation, not zoom).
-  void _flyTo(String statId, double h) {
-    final skyH = h * kSkyHeightFactor;
-    final cy = _statCenter(statId).dy * skyH;
-    final ty = (h / 2 - cy).clamp(h - skyH, 0.0);
-    final target = Matrix4.identity()..setTranslationRaw(0, ty, 0);
+  void _animateTo(Matrix4 target) {
     final anim = Matrix4Tween(begin: _viewCtrl.value, end: target).animate(
         CurvedAnimation(parent: _fly, curve: Curves.easeInOutCubic));
     void tick() => _viewCtrl.value = anim.value;
     anim.addListener(tick);
     _fly.forward(from: 0).whenCompleteOrCancel(() => anim.removeListener(tick));
+  }
+
+  /// Fly-and-zoom so [statId]'s constellation fills the screen.
+  void _flyTo(String statId) {
+    final vp = _vp, canvas = _canvas;
+    if (vp == null || canvas == null) return;
+    final c = _statCenter(statId);
+    _animateTo(_focusM(
+        Offset(c.dx * canvas.width, c.dy * canvas.height),
+        _focusScale, vp, canvas));
+  }
+
+  /// Pull back to the whole map.
+  void _overview() {
+    final vp = _vp, canvas = _canvas;
+    if (vp == null || canvas == null) return;
+    _animateTo(_centeredM(_fitScale(vp, canvas) * _overviewFactor, vp, canvas));
   }
 
   @override
@@ -146,33 +186,45 @@ class _GalaxyScreenState extends ConsumerState<GalaxyScreen>
           SafeArea(
             child: LayoutBuilder(
               builder: (context, box) {
-                final w = box.maxWidth, h = box.maxHeight;
-                final skyH = h * kSkyHeightFactor;
-                _viewportH = h; // for the rail-highlight listener
+                final vp = Size(box.maxWidth, box.maxHeight);
+                final canvas = Size(vp.width * kSkyW, vp.height * kSkyH);
+                _vp = vp;
+                _canvas = canvas;
+                // Open on the whole map, centred — the beautiful spread.
+                if (!_didInitView) {
+                  _didInitView = true;
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (mounted) {
+                      _viewCtrl.value = _centeredM(
+                          _fitScale(vp, canvas) * _overviewFactor, vp, canvas);
+                      _onView();
+                    }
+                  });
+                }
                 return Stack(
                   children: [
                     Positioned.fill(
                       child: InteractiveViewer(
                         transformationController: _viewCtrl,
                         constrained: false,
-                        minScale: 1.0,
-                        maxScale: 2.2,
-                        boundaryMargin: EdgeInsets.zero,
+                        minScale: _fitScale(vp, canvas) * 0.85,
+                        maxScale: 2.6,
+                        boundaryMargin: EdgeInsets.all(vp.shortestSide * 0.4),
                         child: SizedBox(
-                          width: w,
-                          height: skyH,
+                          width: canvas.width,
+                          height: canvas.height,
                           child: Stack(
                             children: [
-                              // Spine glow + dashed spokes behind the stars.
+                              // The constellation web + spokes behind the stars.
                               IgnorePointer(
                                 child: CustomPaint(
-                                  size: Size(w, skyH),
-                                  painter: _SpinePainter(),
+                                  size: canvas,
+                                  painter: _WebPainter(),
                                 ),
                               ),
                               for (final stat in catalog)
-                                ..._buildCluster(
-                                    context, stat, w, skyH, progress),
+                                ..._buildCluster(context, stat, canvas.width,
+                                    canvas.height, progress),
                             ],
                           ),
                         ),
@@ -186,8 +238,8 @@ class _GalaxyScreenState extends ConsumerState<GalaxyScreen>
                           top: ref.watch(dueReviewsProvider).isNotEmpty
                               ? 112.0
                               : 62.0),
-                    _statRail(h),
-                    _driftHint(),
+                    _statRail(),
+                    _exploreHint(),
                     _bottomBar(context, ref),
                   ],
                 );
@@ -199,64 +251,44 @@ class _GalaxyScreenState extends ConsumerState<GalaxyScreen>
     );
   }
 
-  /// The constellation rail: four stat glyphs riding the right edge. Tap one
-  /// and the sky glides to that cluster; the glyph nearest the viewport's
-  /// centre burns brightest, so you always know where in the sky you are.
-  Widget _statRail(double h) {
+  /// The constellation rail: an overview button plus four stat sigils riding
+  /// the right edge. Tap a sigil to fly-and-zoom to that constellation; the
+  /// one you're looking at burns brightest, so you always know where you are.
+  Widget _statRail() {
     return Positioned(
-      right: 5,
+      right: 6,
       top: 0,
       bottom: 0,
       child: Center(
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 9),
           decoration: BoxDecoration(
-            color: const Color(0x66080A16),
-            borderRadius: BorderRadius.circular(14),
-            border:
-                Border.all(color: Colors.white.withValues(alpha: 0.07)),
+            color: const Color(0x80080A16),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+            boxShadow: const [BoxShadow(color: Colors.black38, blurRadius: 10)],
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              for (var i = 0; i < _spine.length; i++) ...[
-                if (i > 0) const SizedBox(height: 14),
-                () {
-                  final stat = statById(_spine[i].$1);
-                  final active = i == _railIndex;
-                  return GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    onTap: () => _flyTo(stat.id, h),
-                    child: AnimatedOpacity(
-                      duration: const Duration(milliseconds: 250),
-                      opacity: active ? 1 : 0.42,
-                      child: Column(
-                        children: [
-                          Text('✦',
-                              style: TextStyle(
-                                  fontSize: active ? 15 : 11,
-                                  height: 1.2,
-                                  color: stat.color,
-                                  shadows: active
-                                      ? [
-                                          Shadow(
-                                              color: stat.color,
-                                              blurRadius: 9)
-                                        ]
-                                      : null)),
-                          Text(stat.id,
-                              style: raleway(6.5,
-                                  weight: active ? 800 : 500,
-                                  color: active
-                                      ? stat.color
-                                      : Colors.white
-                                          .withValues(alpha: 0.5),
-                                  spacing: 1)),
-                        ],
-                      ),
-                    ),
-                  );
-                }(),
+              GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: _overview,
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 4),
+                  child: Icon(Icons.zoom_out_map,
+                      size: 15,
+                      color: Colors.white.withValues(alpha: 0.55)),
+                ),
+              ),
+              Container(
+                width: 16,
+                height: 1,
+                color: Colors.white.withValues(alpha: 0.10),
+              ),
+              for (var i = 0; i < _quads.length; i++) ...[
+                const SizedBox(height: 13),
+                _railSigil(statById(_quads[i].$1), i == _railIndex),
               ],
             ],
           ),
@@ -265,9 +297,42 @@ class _GalaxyScreenState extends ConsumerState<GalaxyScreen>
     );
   }
 
-  /// A whisper above the bottom bar while the viewer rests at the top: the
-  /// sky continues below the fold. Fades the moment you drift.
-  Widget _driftHint() {
+  Widget _railSigil(StatDomain stat, bool active) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () => _flyTo(stat.id),
+      child: AnimatedScale(
+        scale: active ? 1.0 : 0.86,
+        duration: const Duration(milliseconds: 250),
+        child: AnimatedOpacity(
+          duration: const Duration(milliseconds: 250),
+          opacity: active ? 1 : 0.45,
+          child: Column(
+            children: [
+              Text('✦',
+                  style: TextStyle(
+                      fontSize: active ? 16 : 12,
+                      height: 1.2,
+                      color: stat.color,
+                      shadows: active
+                          ? [Shadow(color: stat.color, blurRadius: 10)]
+                          : null)),
+              Text(stat.id,
+                  style: raleway(6.5,
+                      weight: active ? 800 : 500,
+                      color: active
+                          ? stat.color
+                          : Colors.white.withValues(alpha: 0.5),
+                      spacing: 1)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// A whisper at the overview, before the first zoom in.
+  Widget _exploreHint() {
     return Positioned(
       left: 0,
       right: 0,
@@ -275,22 +340,13 @@ class _GalaxyScreenState extends ConsumerState<GalaxyScreen>
       child: IgnorePointer(
         child: AnimatedOpacity(
           duration: const Duration(milliseconds: 400),
-          opacity: _atTop ? 1 : 0,
-          child: Column(
-            children: [
-              Text('DRIFT DOWN — THE SKY CONTINUES',
-                  textAlign: TextAlign.center,
-                  style: raleway(7.5,
-                      weight: 600,
-                      color: Colors.white.withValues(alpha: 0.30),
-                      spacing: 2.5)),
-              Text('⌄',
-                  style: TextStyle(
-                      fontSize: 14,
-                      height: 1.1,
-                      color: Colors.white.withValues(alpha: 0.30))),
-            ],
-          ),
+          opacity: _showHint ? 1 : 0,
+          child: Text('PINCH TO EXPLORE  ·  TAP A SIGIL TO FLY IN',
+              textAlign: TextAlign.center,
+              style: raleway(7.5,
+                  weight: 600,
+                  color: Colors.white.withValues(alpha: 0.32),
+                  spacing: 2.5)),
         ),
       ),
     );
@@ -698,7 +754,7 @@ class _GalaxyScreenState extends ConsumerState<GalaxyScreen>
       left: cx - 70,
       top: cy - 34,
       child: GestureDetector(
-        onTap: () => _flyTo(stat.id, h / kSkyHeightFactor),
+        onTap: () => _flyTo(stat.id),
         child: SizedBox(
           width: 140,
           height: 84,
@@ -842,58 +898,69 @@ class _GuideStarPainter extends CustomPainter {
   bool shouldRepaint(covariant _GuideStarPainter old) => old.color != color;
 }
 
-/// Positions of a stat's skill stars around its orb — shared with the spine
-/// painter so lines and stars agree.
+/// Positions of a stat's skill stars around its orb — shared with the web
+/// painter so lines and stars agree. Each cluster owns a generous ellipse
+/// inside its quadrant of the canvas.
 List<Offset> clusterSkillPositions(StatDomain stat, double w, double h) {
   final c = _statCenter(stat.id);
   final cx = c.dx * w, cy = c.dy * h;
-  // The far edge of the stagger must keep the whole 94px label box on
-  // screen: cx(0.575w) + rx + 47 ≤ w  →  rx ≤ 0.425w − 47.
-  final rx = math.min(w * 0.425 - 49, 150.0);
-  // h is the TALL sky canvas (kSkyHeightFactor × viewport) — the ellipses
-  // finally get vertical room to breathe.
-  final ry = math.min(h * 0.062, 120.0);
+  final rx = w * 0.185;
+  final ry = h * 0.135;
   final n = stat.skills.length;
   return [
     for (var i = 0; i < n; i++)
       () {
-        final a = (i / n) * 2 * math.pi - math.pi / 2;
+        // Start at the top and walk round; a half-step offset per cluster
+        // keeps the four rings from mirroring each other exactly.
+        final a = (i / n) * 2 * math.pi - math.pi / 2 + (stat.id.hashCode % 5) * 0.13;
         return Offset(cx + math.cos(a) * rx, cy + math.sin(a) * ry);
       }()
   ];
 }
 
-class _SpinePainter extends CustomPainter {
+/// The constellation web: soft nebular ribbons looping the four stat orbs,
+/// and dashed spokes from each orb to its skill stars.
+class _WebPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    // A faint river of light flowing through the four stat orbs.
-    final pts = [
-      for (final (_, c) in _spine) Offset(c.dx * size.width, c.dy * size.height)
-    ];
-    final spine = Path()..moveTo(pts.first.dx, pts.first.dy);
-    for (var i = 1; i < pts.length; i++) {
-      final mid = Offset(
-          (pts[i - 1].dx + pts[i].dx) / 2, (pts[i - 1].dy + pts[i].dy) / 2);
-      spine.quadraticBezierTo(
-          pts[i - 1].dx, (pts[i - 1].dy + mid.dy) / 2, mid.dx, mid.dy);
-      spine.quadraticBezierTo(
-          pts[i].dx, (pts[i].dy + mid.dy) / 2, pts[i].dx, pts[i].dy);
+    final centres = {
+      for (final (id, c) in _quads)
+        id: Offset(c.dx * size.width, c.dy * size.height)
+    };
+    // A gentle closed loop INT → CHA → WIS → DEX → INT, drawn as a wide,
+    // heavily-blurred ribbon of faint light — the galaxy's connective tissue.
+    final loop = ['INT', 'CHA', 'WIS', 'DEX'];
+    final path = Path();
+    for (var i = 0; i <= loop.length; i++) {
+      final a = centres[loop[i % loop.length]]!;
+      final b = centres[loop[(i + 1) % loop.length]]!;
+      if (i == 0) path.moveTo(a.dx, a.dy);
+      final mid = (a + b) / 2;
+      // Bow each segment outward from the canvas centre for an organic arc.
+      final centre = Offset(size.width / 2, size.height / 2);
+      final bow = mid + (mid - centre) * 0.12;
+      path.quadraticBezierTo(bow.dx, bow.dy, b.dx, b.dy);
     }
     canvas.drawPath(
-        spine,
+        path,
         Paint()
           ..style = PaintingStyle.stroke
-          ..strokeWidth = 26
-          ..color = Colors.white.withValues(alpha: 0.028)
-          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 18));
+          ..strokeWidth = 34
+          ..color = Colors.white.withValues(alpha: 0.022)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 26));
+    canvas.drawPath(
+        path,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.1
+          ..color = Colors.white.withValues(alpha: 0.05));
 
-    // Dashed spokes orb → skill stars.
+    // Dashed spokes orb → skill stars, tinted by the stat.
     for (final stat in catalog) {
-      final c = _statCenter(stat.id);
-      final center = Offset(c.dx * size.width, c.dy * size.height);
+      final center = centres[stat.id]!;
       final paint = Paint()
-        ..color = stat.color.withValues(alpha: 0.09)
-        ..strokeWidth = 0.8;
+        ..color = stat.color.withValues(alpha: 0.11)
+        ..strokeWidth = 0.9;
       for (final p in clusterSkillPositions(stat, size.width, size.height)) {
         _dashedLine(canvas, center, p, paint, dash: 3, gap: 6);
       }
