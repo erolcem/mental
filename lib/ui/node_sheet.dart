@@ -57,6 +57,10 @@ Future<bool?> showNodeSheet(BuildContext context, WidgetRef ref,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
     barrierColor: Colors.black54,
+    // Cap the ceiling below the phone's top so the grab handle is always
+    // reachable and there's a clear gap to drag the sheet down through.
+    constraints: BoxConstraints(
+        maxHeight: MediaQuery.sizeOf(context).height * 0.9),
     builder: (_) => _NodeSheet(stat: stat, skill: skill, node: node),
   );
 }
@@ -166,22 +170,28 @@ class _NodeSheetState extends ConsumerState<_NodeSheet> {
           border: Border(
               top: BorderSide(color: color.withValues(alpha: 0.35), width: 1)),
         ),
-        padding: const EdgeInsets.fromLTRB(22, 14, 22, 26),
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 36,
-                  height: 4,
-                  decoration: BoxDecoration(
-                      color: Colors.white24,
-                      borderRadius: BorderRadius.circular(2)),
-                ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Fixed grab handle — stays put as the body scrolls, and marks
+            // the reachable top edge for dragging the sheet down.
+            Padding(
+              padding: const EdgeInsets.only(top: 12, bottom: 4),
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                    color: Colors.white24,
+                    borderRadius: BorderRadius.circular(2)),
               ),
-              const SizedBox(height: 16),
+            ),
+            Flexible(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(22, 10, 22, 26),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -410,8 +420,11 @@ class _NodeSheetState extends ConsumerState<_NodeSheet> {
               // and the unchanging ritual.
               ..._unlocksSection(color),
               _riteSection(api, color),
-            ],
-          ),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
