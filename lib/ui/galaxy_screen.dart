@@ -241,7 +241,6 @@ class _GalaxyScreenState extends ConsumerState<GalaxyScreen>
                         ),
                       ),
                     ),
-                    _header(context, ref, level, xp, overall),
                     if (ref.watch(dueReviewsProvider).isNotEmpty)
                       _lockBanner(context, ref.watch(dueReviewsProvider).length),
                     if (ref.watch(journalOverdueProvider))
@@ -257,6 +256,10 @@ class _GalaxyScreenState extends ConsumerState<GalaxyScreen>
               },
             ),
           ),
+          // The header sits OUTSIDE the SafeArea so its scrim fills the whole
+          // top edge — including behind the notch / Face-ID camera — instead
+          // of starting below it and leaving a bright band in the corners.
+          _header(context, ref, level, xp, overall),
         ],
       ),
     );
@@ -366,22 +369,26 @@ class _GalaxyScreenState extends ConsumerState<GalaxyScreen>
   Widget _header(BuildContext context, WidgetRef ref, int level, int xp,
       double overall) {
     final toNext = xpToNextLevel(xp);
+    // The status-bar / notch inset: the scrim fills up into it, but the
+    // content is padded below so nothing hides under the Face-ID camera.
+    final topInset = MediaQuery.viewPaddingOf(context).top;
     return Positioned(
       top: 0,
       left: 0,
       right: 0,
       child: Container(
-        padding: const EdgeInsets.fromLTRB(18, 6, 6, 16),
+        padding: EdgeInsets.fromLTRB(18, topInset + 6, 6, 16),
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              kSpaceBlack.withValues(alpha: 0.92),
-              kSpaceDeep.withValues(alpha: 0.55),
+              kSpaceBlack.withValues(alpha: 0.96),
+              kSpaceBlack.withValues(alpha: 0.82),
+              kSpaceDeep.withValues(alpha: 0.5),
               kSpaceDeep.withValues(alpha: 0.0),
             ],
-            stops: const [0.0, 0.6, 1.0],
+            stops: const [0.0, 0.35, 0.7, 1.0],
           ),
         ),
         child: Column(
