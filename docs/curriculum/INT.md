@@ -1,5 +1,10 @@
 # Curriculum Review — INT (Intelligence)
 
+> **Historical proposal (2026-07).** Long since applied and then surpassed:
+> the live catalog is now **495 nodes**, each with a step-by-step `guide`
+> (THE WORK). Source of truth: `lib/data/catalog_int.dart` + the generated
+> `docs/curriculum/ANALYSIS.md`.
+
 **Status: PROPOSAL for Erol's markup — nothing applied to `skill_data.dart` yet.**
 
 Three principles applied to every node:

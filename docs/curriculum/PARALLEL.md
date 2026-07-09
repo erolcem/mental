@@ -1,7 +1,14 @@
 # The Parallel Paths Overhaul — 2026-07-06
 
 **Status: APPLIED to `skill_data.dart`.** Supersedes the four proposal docs
-(INT/WIS/CHA/DEX.md, kept for history). 4 stats → 21 skills → **431 nodes**.
+(INT/WIS/CHA/DEX.md, kept for history). 4 stats → 21 skills → **431 nodes**
+at the time of this snapshot.
+
+> **Since this snapshot (2026-07):** the catalog grew to **495 nodes**, every
+> star gained a step-by-step `guide` (THE WORK), the data split into
+> `lib/data/catalog_{int,wis,cha,dex}.dart` part files, and **CHA's Japanese
+> tree was replaced by Mandarin Chinese** (HSK spine). The generated
+> `ANALYSIS.md` is always the current source of truth for counts and hours.
 
 The earlier catalog was verifiable and self-achievable, but many trees were
 still *chains* — one node at a time, single file to the crown. A real
