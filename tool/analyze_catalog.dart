@@ -11,7 +11,13 @@
 import 'dart:io';
 import 'dart:math' as math;
 
-import 'package:mental/data/skill_data.dart';
+// Relative, not package:, on purpose — this tool must run on a bare Dart
+// container with NO `pub get` (skill_data.dart + its part files are pure
+// Dart with zero imports, so nothing needs package resolution). A package:
+// import would force `dart pub get`, which needs the Flutter SDK for this
+// project's flutter deps and would break the "no Flutter toolchain" gate.
+// ignore: avoid_relative_lib_imports
+import '../lib/data/skill_data.dart';
 
 int failures = 0;
 void check(bool cond, String msg) {
