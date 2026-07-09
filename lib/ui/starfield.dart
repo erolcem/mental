@@ -269,6 +269,39 @@ class _StarfieldPainter extends CustomPainter {
       }
     }
 
+    // ---- Hero stars: the brilliant few that anchor a real dark sky, each
+    // with a coloured bloom and a faint four-point diffraction glint ----
+    for (var i = 0; i < 9; i++) {
+      final p = randInField();
+      final color = _stellarColor(rnd);
+      final r = 1.3 + rnd.nextDouble() * 1.0;
+      c.drawCircle(
+        p,
+        r * 8,
+        Paint()
+          ..shader = ui.Gradient.radial(p, r * 8, [
+            color.withValues(alpha: 0.22),
+            color.withValues(alpha: 0.0),
+          ])
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4),
+      );
+      c.drawCircle(p, r * 1.6, Paint()..color = color.withValues(alpha: 0.9));
+      c.drawCircle(p, r * 0.9, Paint()..color = Colors.white);
+      for (final d in const [Offset(1, 0), Offset(0, 1)]) {
+        final a = p - d * (r * 6), b = p + d * (r * 6);
+        c.drawLine(
+            a,
+            b,
+            Paint()
+              ..strokeWidth = 0.8
+              ..shader = ui.Gradient.linear(a, b, [
+                Colors.white.withValues(alpha: 0),
+                Colors.white.withValues(alpha: 0.55),
+                Colors.white.withValues(alpha: 0),
+              ], [0.0, 0.5, 1.0]));
+      }
+    }
+
     // ---- Nebular haze in accent colours, drifted about the field ----
     for (var i = 0; i < nebulae.length; i++) {
       final base = randInField();
@@ -340,6 +373,22 @@ class _StarfieldPainter extends CustomPainter {
             const Color(0xFF2E4038).withValues(alpha: 0.0),
             const Color(0xFF2E4038).withValues(alpha: 0.05),
           ],
+        ),
+    );
+
+    // Photographic vignette: the sky's edges fall gently to black so the
+    // eye settles toward the centre — the depth of a real long exposure.
+    canvas.drawRect(
+      Offset.zero & size,
+      Paint()
+        ..shader = ui.Gradient.radial(
+          Offset(size.width / 2, size.height / 2),
+          size.longestSide * 0.75,
+          [
+            Colors.black.withValues(alpha: 0.0),
+            Colors.black.withValues(alpha: 0.38),
+          ],
+          [0.55, 1.0],
         ),
     );
 
