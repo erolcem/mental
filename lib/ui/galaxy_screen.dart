@@ -6,6 +6,7 @@ import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show HapticFeedback;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/repository.dart';
@@ -167,6 +168,7 @@ class _GalaxyScreenState extends ConsumerState<GalaxyScreen>
   void _flyTo(String statId) {
     final vp = _vp, canvas = _canvas;
     if (vp == null || canvas == null) return;
+    HapticFeedback.selectionClick();
     final c = _statCenter(statId);
     _animateTo(_focusM(
         Offset(c.dx * canvas.width, c.dy * canvas.height),
@@ -177,6 +179,7 @@ class _GalaxyScreenState extends ConsumerState<GalaxyScreen>
   void _overview() {
     final vp = _vp, canvas = _canvas;
     if (vp == null || canvas == null) return;
+    HapticFeedback.selectionClick();
     _animateTo(_centeredM(_fitScale(vp, canvas) * _overviewFactor, vp, canvas));
   }
 
@@ -896,7 +899,9 @@ class _GalaxyScreenState extends ConsumerState<GalaxyScreen>
         top: p.dy - 30,
         child: GestureDetector(
           behavior: HitTestBehavior.opaque,
-          onTap: () => Navigator.of(context).push(
+          onTap: () {
+            HapticFeedback.selectionClick();
+            Navigator.of(context).push(
             PageRouteBuilder(
               transitionDuration: const Duration(milliseconds: 420),
               reverseTransitionDuration: const Duration(milliseconds: 300),
@@ -914,7 +919,8 @@ class _GalaxyScreenState extends ConsumerState<GalaxyScreen>
                 );
               },
             ),
-          ),
+            );
+          },
           child: SizedBox(
             width: 94,
             height: 62,
