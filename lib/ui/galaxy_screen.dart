@@ -49,11 +49,22 @@ Offset _statCenter(String id) =>
 double _fitScale(Size vp, Size canvas) =>
     math.min(vp.width / canvas.width, vp.height / canvas.height);
 
+/// A uniform scale-then-translate transform, mapping a point p → (s·p + t).
+/// Built with the plain column-major Matrix4 constructor rather than
+/// Matrix4.translate/scale, which newer Flutter analyzers flag as deprecated
+/// (and Codemagic treats those infos as fatal).
+Matrix4 _scaleTranslate(double s, double tx, double ty) => Matrix4(
+      s, 0, 0, 0, //
+      0, s, 0, 0, //
+      0, 0, 1, 0, //
+      tx, ty, 0, 1, //
+    );
+
 /// A transform that centres the whole [canvas] in [vp] at [scale].
-Matrix4 _centeredM(double scale, Size vp, Size canvas) => Matrix4.identity()
-  ..translate((vp.width - scale * canvas.width) / 2,
-      (vp.height - scale * canvas.height) / 2)
-  ..scale(scale);
+Matrix4 _centeredM(double scale, Size vp, Size canvas) => _scaleTranslate(
+    scale,
+    (vp.width - scale * canvas.width) / 2,
+    (vp.height - scale * canvas.height) / 2);
 
 /// A transform that puts [canvasPoint] at the viewport centre at [scale],
 /// clamped so the view never slides past the canvas edges.
@@ -62,7 +73,7 @@ Matrix4 _focusM(Offset canvasPoint, double scale, Size vp, Size canvas) {
   var ty = vp.height / 2 - scale * canvasPoint.dy;
   tx = tx.clamp(math.min(0.0, vp.width - scale * canvas.width), 0.0);
   ty = ty.clamp(math.min(0.0, vp.height - scale * canvas.height), 0.0);
-  return Matrix4.identity()..translate(tx, ty)..scale(scale);
+  return _scaleTranslate(scale, tx, ty);
 }
 
 class GalaxyScreen extends ConsumerStatefulWidget {
