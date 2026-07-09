@@ -1,20 +1,30 @@
 # Mental — a constellation of lifetime mastery
 
 Skyrim-style skill trees for real life. The sky holds **4 stats** (Intelligence,
-Wisdom, Charisma, Dexterity) → **21 skills** → **431 mastery nodes**, each a star
+Wisdom, Charisma, Dexterity) → **21 skills** → **495 mastery nodes**, each a star
 in that skill's constellation. Ignite a star by completing the work and writing a
 **mastery summary sheet**; the constellation lights up star by star until the
 crown — the skill's endgame (e.g. *"The One-Hour Memorised Recital"*).
+
+Every star spells out **THE WORK** — the exact instructions: named materials
+(with a free alternative wherever one exists), the method, the cadence, and the
+artifact to keep — plus a **completion standard** the Examiner judges against.
+`proof` is the standard; `guide` is the recipe.
 
 Every constellation is a **braid of parallel branches** (technique / theory /
 practice / craft) that can be worked simultaneously and all converge on a
 single crown — see `docs/curriculum/PARALLEL.md` for the five laws every tree
 obeys (parallel, self-achievable, proof-bearing, convergent, safe). Each star
-carries a **researched effort estimate** (FSI/JLPT hour studies, CFA guidance,
-ABRSM norms): the full sky is **≈50,750 hours** of deliberate work — about 35
+carries a **researched effort estimate** (FSI/HSK hour studies, CFA guidance,
+ABRSM norms): the full sky is **≈56,000 hours** of deliberate work — about 38
 years at four focused hours a day. `dart tool/analyze_catalog.dart` recomputes
 the whole analysis (critical paths, braid factors, choice breadth) without a
 Flutter toolchain → `docs/curriculum/ANALYSIS.md`.
+
+The 21 constellations: **INT** — Physics & Chem, Mathematics, Medicine,
+Engineering; **WIS** — Geography, History, Business, Social Science; **CHA** —
+English, Turkish, **Chinese** (Mandarin, HSK spine), Khmer, Music Theory,
+Piano, Singing; **DEX** — Drawing, Writing, Cooking, Mechanics, Memory, Karate.
 
 Native Flutter app, structured after `physical` (the sibling repo): local-first,
 Riverpod state, `shared_preferences` persistence, Codemagic → TestFlight.
@@ -24,7 +34,8 @@ Riverpod state, `shared_preferences` persistence, Codemagic → TestFlight.
 ```
 lib/
   data/
-    skill_data.dart            the full catalog (parallel-paths overhaul applied)
+    skill_data.dart            catalog models + laws; part files below hold the trees
+    catalog_int/wis/cha/dex.dart  the four stats' constellations (id/proof/hours/branch/guide)
     repository.dart            NodeProgress + JournalEntry models, repo interfaces
     persistent_repository.dart shared_preferences implementation
     habit_ledger.dart          the advisor's memory: 365-day kept/missed digest

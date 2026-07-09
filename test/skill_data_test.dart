@@ -162,6 +162,22 @@ void main() {
     expect(catalogHours, inInclusiveRange(30000, 80000));
   });
 
+  test('every star spells out THE WORK (a real guide, not a hint)', () {
+    // The guide is the recipe: named materials, method, cadence, artifact.
+    // Enforce enough substance that no node can ship as a bare label again.
+    for (final stat in catalog) {
+      for (final skill in stat.skills) {
+        for (final n in skill.tree) {
+          expect(n.guide.length, greaterThanOrEqualTo(80),
+              reason: '${skill.id}.${n.id} has a thin guide: "${n.guide}"');
+          // A guide must say more than the label already does.
+          expect(n.guide.toLowerCase(), isNot(equals(n.label.toLowerCase())),
+              reason: '${skill.id}.${n.id} guide just echoes the label');
+        }
+      }
+    }
+  });
+
   test('no redundant prerequisite edges (transitive reduction holds)', () {
     for (final stat in catalog) {
       for (final skill in stat.skills) {
