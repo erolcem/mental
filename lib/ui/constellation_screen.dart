@@ -19,6 +19,7 @@ import 'node_sheet.dart';
 import 'review_ledger.dart';
 import 'starfield.dart';
 import 'theme.dart';
+import 'widgets/mastery_ring.dart';
 
 class ConstellationScreen extends ConsumerStatefulWidget {
   final String statId;
@@ -109,6 +110,9 @@ class _ConstellationScreenState extends ConsumerState<ConstellationScreen>
   Widget build(BuildContext context) {
     final progress = ref.watch(progressProvider);
     final mastery = skillMastery(progress, skill);
+    final lit = skill.tree
+        .where((n) => progress[progressKey(skill.id, n.id)]?.complete ?? false)
+        .length;
 
     return Scaffold(
       body: Stack(
@@ -155,9 +159,52 @@ class _ConstellationScreenState extends ConsumerState<ConstellationScreen>
               ),
             );
           }),
-          _header(context, mastery),
-          if (ref.watch(skyLockedProvider)) _lockChip(context),
+          _header(context, mastery, lit, skill.tree.length),
+          if (ref.watch(skyLockedProvider))
+            _lockChip(context)
+          else
+            _legend(),
         ],
+      ),
+    );
+  }
+
+  /// A quiet key to the star states, so the visual language is legible.
+  Widget _legend() {
+    Widget item(String glyph, Color c, String label) => Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(glyph, style: TextStyle(fontSize: 8.5, color: c)),
+            const SizedBox(width: 3),
+            Text(label,
+                style: raleway(6.5,
+                    weight: 600,
+                    color: Colors.white.withValues(alpha: 0.5),
+                    spacing: 1)),
+            const SizedBox(width: 9),
+          ],
+        );
+    return Positioned(
+      left: 14,
+      bottom: 16,
+      child: IgnorePointer(
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+          decoration: BoxDecoration(
+            color: const Color(0x55070A16),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              item('✦', stat.color, 'LIT'),
+              item('○', Colors.white70, 'READY'),
+              item('◆', const Color(0xFFF2B24A), 'DUE'),
+              item('·', Colors.white38, 'LOCKED'),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -192,7 +239,7 @@ class _ConstellationScreenState extends ConsumerState<ConstellationScreen>
     );
   }
 
-  Widget _header(BuildContext context, double mastery) {
+  Widget _header(BuildContext context, double mastery, int lit, int total) {
     return Positioned(
       top: 0,
       left: 0,
@@ -247,14 +294,24 @@ class _ConstellationScreenState extends ConsumerState<ConstellationScreen>
             ),
             Column(
               crossAxisAlignment: CrossAxisAlignment.end,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Text('MASTERY',
-                    style: raleway(7.5,
-                        color: Colors.white.withValues(alpha: 0.28),
+                Text('$lit / $total',
+                    style: raleway(12.5, weight: 700, color: stat.color)),
+                Text('STARS LIT',
+                    style: raleway(6.5,
+                        color: Colors.white.withValues(alpha: 0.4),
                         spacing: 1.5)),
-                Text('${(mastery * 100).round()}%',
-                    style: cinzel(18, weight: 700, color: stat.color)),
               ],
+            ),
+            const SizedBox(width: 9),
+            MasteryRing(
+              progress: mastery,
+              size: 40,
+              stroke: 3,
+              color: stat.color,
+              child: Text('${(mastery * 100).round()}%',
+                  style: raleway(9, weight: 700, color: stat.color)),
             ),
           ],
         ),

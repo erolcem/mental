@@ -54,16 +54,31 @@ class _StarfieldState extends State<Starfield>
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Honour iOS "Reduce Motion": freeze the celestial rotation entirely
+    // (and stop burning cycles) when the user has asked for calm.
+    final reduceMotion = MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    if (reduceMotion && _t.isAnimating) {
+      _t.stop();
+    } else if (!reduceMotion && !_t.isAnimating) {
+      _t.repeat();
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final reduceMotion = MediaQuery.maybeOf(context)?.disableAnimations ?? false;
     return RepaintBoundary(
       child: AnimatedBuilder(
         animation: _t,
         builder: (_, __) => CustomPaint(
           painter: _StarfieldPainter(
-            phase: _t.value, // 0–1 of a full rotation
+            phase: reduceMotion ? 0.0 : _t.value, // 0–1 of a full rotation
             nebulae: widget.nebulae,
             starCount: widget.starCount,
             dim: widget.dim,
+            motion: !reduceMotion,
           ),
           size: Size.infinite,
           isComplex: true,
@@ -99,12 +114,14 @@ class _StarfieldPainter extends CustomPainter {
   final List<Color> nebulae;
   final int starCount;
   final double dim;
+  final bool motion;
 
   _StarfieldPainter(
       {required this.phase,
       required this.nebulae,
       required this.starCount,
-      required this.dim});
+      required this.dim,
+      this.motion = true});
 
   double get _time => phase * 7200; // seconds within the rotation
 
@@ -359,8 +376,10 @@ class _StarfieldPainter extends CustomPainter {
     }
     canvas.restore();
 
-    _paintMeteor(canvas, size);
-    _paintSatellite(canvas, size);
+    if (motion) {
+      _paintMeteor(canvas, size);
+      _paintSatellite(canvas, size);
+    }
 
     // Airglow: the faint warm breath of atmosphere at the horizon.
     canvas.drawRect(
@@ -447,5 +466,8 @@ class _StarfieldPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _StarfieldPainter old) =>
-      old.phase != phase || old.dim != dim || old.starCount != starCount;
+      old.phase != phase ||
+      old.dim != dim ||
+      old.starCount != starCount ||
+      old.motion != motion;
 }
