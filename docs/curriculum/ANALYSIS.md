@@ -9,10 +9,10 @@
 | **INT Intelligence** | 118 | 175 | 23580 | 30200 |
 | **WIS Wisdom** | 103 | 142 | 8950 | 13440 |
 | **CHA Charisma** | 153 | 212 | 13735 | 22235 |
-| **DEX Dexterity** | 111 | 138 | 9105 | 15175 |
-| **TOTAL** | 485 | 667 | 55370 | 81050 |
+| **DEX Dexterity** | 121 | 152 | 9705 | 16475 |
+| **TOTAL** | 495 | 681 | 55970 | 82350 |
 
-**55370 hours of deliberate work** separate a dark sky from a full one —
+**55970 hours of deliberate work** separate a dark sky from a full one —
 ≈ 38 years at four focused hours a day, a
 five-fold Gladwell. XP is effort-weighted (XP = hours + tier × 10) so a star
 pays what it costs; the level curve (level = 1 + 98·√(xp/max)) pays out fast
@@ -51,11 +51,11 @@ Reading the columns:
 | musicTheory | 21 | 1820 | 1090 | 1.7× | 2.1 / 1 | 76% |
 | piano | 24 | 2750 | 1840 | 1.5× | 3.4 / 1 | 83% |
 | singing | 22 | 1350 | 710 | 1.9× | 2.4 / 1 | 73% |
-| drawing | 20 | 2110 | 1080 | 2.0× | 2.4 / 1 | 70% |
-| writing | 19 | 2110 | 1720 | 1.2× | 1.8 / 1 | 58% |
-| cooking | 20 | 1040 | 530 | 2.0× | 2.1 / 1 | 75% |
-| mechanics | 18 | 1235 | 680 | 1.8× | 2.8 / 1 | 83% |
-| memory | 17 | 980 | 540 | 1.8× | 2.0 / 1 | 71% |
+| drawing | 23 | 2410 | 1200 | 2.0× | 2.7 / 1 | 74% |
+| writing | 21 | 2210 | 1720 | 1.3× | 2.0 / 1 | 62% |
+| cooking | 23 | 1150 | 570 | 2.0× | 2.4 / 1 | 78% |
+| mechanics | 19 | 1295 | 680 | 1.9× | 3.1 / 1 | 84% |
+| memory | 18 | 1010 | 540 | 1.9× | 2.1 / 1 | 78% |
 | karate | 17 | 1630 | 1230 | 1.3× | 2.1 / 1 | 65% |
 
 ## The braid, branch by branch
@@ -80,11 +80,11 @@ Foundations → 3–5 working lanes → a summit lane that carries the crown.
 | musicTheory | Foundations 1·40h / Written Theory 7·590h / Ear 4·260h / Rhythm 1·30h / Composition 3·200h / Analysis 3·300h / Convergence 2·400h |
 | piano | Foundations 1·40h / Technique 6·550h / Reading 2·140h / Musicianship 4·210h / Repertoire 8·1320h / Performance 2·90h / Convergence 1·400h |
 | singing | Foundations 1·20h / Technique 9·540h / Ear 4·160h / Repertoire 3·280h / Production 4·290h / Convergence 1·60h |
-| drawing | Foundations 1·100h / Construction 4·280h / Observation 6·680h / Light & Color 3·280h / Imagination 4·410h / Convergence 2·360h |
-| writing | Foundations 1·40h / Reading 2·450h / Craft 4·190h / The Novel 6·1060h / Arena 5·220h / Convergence 1·150h |
-| cooking | Foundations 1·10h / Technique 8·350h / Science 3·140h / Baking 2·160h / World & Plate 3·180h / Convergence 3·200h |
-| mechanics | Foundations 1·20h / Auto 4·250h / Home 6·370h / Machines 3·235h / Making 3·160h / Convergence 1·200h |
-| memory | Foundations 1·60h / Systems 5·220h / Learning Science 1·30h / Applied 2·120h / Competition 7·450h / Convergence 1·100h |
+| drawing | Foundations 1·100h / Construction 5·340h / Observation 7·800h / Light & Color 3·280h / Imagination 5·530h / Convergence 2·360h |
+| writing | Foundations 1·40h / Reading 2·450h / Craft 5·250h / The Novel 6·1060h / Arena 6·260h / Convergence 1·150h |
+| cooking | Foundations 1·10h / Technique 9·390h / Science 4·180h / Baking 2·160h / World & Plate 4·210h / Convergence 3·200h |
+| mechanics | Foundations 1·20h / Auto 4·250h / Home 6·370h / Machines 3·235h / Making 4·220h / Convergence 1·200h |
+| memory | Foundations 1·60h / Systems 5·220h / Learning Science 2·60h / Applied 2·120h / Competition 7·450h / Convergence 1·100h |
 | karate | Foundations 1·40h / Kata 5·420h / Kumite 3·240h / Conditioning 1·80h / The Way 3·80h / Dan Chain 4·770h |
 
 ## Pacing: what the hours mean in calendar time
@@ -97,7 +97,7 @@ whole sky takes:
 
 | pace | 10 h/wk | 20 h/wk | 28 h/wk | 40 h/wk |
 |---|---|---|---|---|
-| full sky | 106.5 yrs | 53.2 yrs | 38.0 yrs | 26.6 yrs |
+| full sky | 107.6 yrs | 53.8 yrs | 38.4 yrs | 26.9 yrs |
 
 Single-constellation crowns at a focused 10 h/week:
 
@@ -110,9 +110,9 @@ Single-constellation crowns at a focused 10 h/week:
 | english | 1300 | 2.5 | turkish | 1685 | 3.2 |
 | chinese | 3470 | 6.7 | khmer | 1360 | 2.6 |
 | musicTheory | 1820 | 3.5 | piano | 2750 | 5.3 |
-| singing | 1350 | 2.6 | drawing | 2110 | 4.1 |
-| writing | 2110 | 4.1 | cooking | 1040 | 2.0 |
-| mechanics | 1235 | 2.4 | memory | 980 | 1.9 |
+| singing | 1350 | 2.6 | drawing | 2410 | 4.6 |
+| writing | 2210 | 4.3 | cooking | 1150 | 2.2 |
+| mechanics | 1295 | 2.5 | memory | 1010 | 1.9 |
 | karate | 1630 | 3.1 |  |  |  |
 
 ## Critical paths (the spine of each constellation)
@@ -134,9 +134,9 @@ The one chain in each tree you cannot parallelise away:
 - **musicTheory** (1090 h): mt1 → mt2 → mt3 → mt4 → mt5 → mt7 → mt8 → mt10 → mt11 → mt13 → mt14
 - **piano** (1840 h): p1 → p3 → p4 → p18 → p6 → p19 → p10 → p11 → p14 → p15 → p16
 - **singing** (710 h): v1 → v2 → v3 → v6 → v16 → v10 → v11 → v14 → v15
-- **drawing** (1080 h): d1 → d2 → d3 → d6 → d8 → d10 → d11 → d14 → d16
+- **drawing** (1200 h): d1 → d2 → d3 → d6 → d8 → d10 → d11 → d23 → d14 → d16
 - **writing** (1720 h): w1 → w2 → w3 → w4 → w5 → w6 → w7 → w8 → w9 → w11 → w10 → w12 → w14
-- **cooking** (530 h): c1 → c17 → c4 → c8 → c16 → c18 → c12 → c13 → c15
+- **cooking** (570 h): c1 → c17 → c4 → c8 → c23 → c16 → c18 → c12 → c13 → c15
 - **mechanics** (680 h): m1 → m2 → m4 → m6 → m8 → m10 → m12 → m14
 - **memory** (540 h): mem1 → mem2 → mem3 → mem4 → mem5 → mem8 → mem10 → mem12 → mem13
 - **karate** (1230 h): k1 → k2 → k3 → k5 → k7 → k8 → k10 → k11 → k12 → k14
@@ -147,16 +147,16 @@ The one chain in each tree you cannot parallelise away:
 |---|---|---|
 | science.sc15 | 700 | Thesis: original research monograph |
 | maths.m17 | 700 | Dissertation-grade monograph |
-| engineering.eg18 | 400 | Crown: 3-node cluster of your kernel + KV store |
 | science.sc13 | 400 | Classical Electrodynamics (Jackson) |
-| piano.p16 | 400 | Crown: 60-minute memorised recital |
-| science.sc5 | 400 | Organic Chemistry I–II (Clayden) |
 | karate.k12 | 400 | Nidan → Sandan gradings |
-| science.sc1 | 400 | Foundations: AP Physics C & AP Chemistry |
+| science.sc5 | 400 | Organic Chemistry I–II (Clayden) |
 | maths.m3 | 400 | Calculus I–III (Stewart) |
-| writing.w7 | 400 | The novel: 90,000-word complete draft |
-| medicine.md9 | 400 | UWorld Step 1 complete |
 | chinese.ch4 | 400 | Hanzi III: 3,000 + handwriting 500 |
+| piano.p16 | 400 | Crown: 60-minute memorised recital |
+| science.sc1 | 400 | Foundations: AP Physics C & AP Chemistry |
+| medicine.md9 | 400 | UWorld Step 1 complete |
+| writing.w7 | 400 | The novel: 90,000-word complete draft |
+| engineering.eg18 | 400 | Crown: 3-node cluster of your kernel + KV store |
 
 ## Methodology: where the hours come from
 
