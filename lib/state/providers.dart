@@ -395,3 +395,21 @@ int levelForXp(int xp) {
   final f = (xp / _maxXp).clamp(0.0, 1.0);
   return 1 + (98 * math.sqrt(f)).floor();
 }
+
+/// The XP at which [level] begins — the inverse of [levelForXp].
+int xpForLevel(int level) =>
+    (_maxXp * math.pow(((level - 1) / 98).clamp(0.0, 1.0), 2)).round();
+
+/// Progress through the current level, 0–1 (1.0 at the summit, level 99).
+double levelProgress(int xp) {
+  final lvl = levelForXp(xp);
+  if (lvl >= 99) return 1.0;
+  final lo = xpForLevel(lvl), hi = xpForLevel(lvl + 1);
+  return hi <= lo ? 1.0 : ((xp - lo) / (hi - lo)).clamp(0.0, 1.0);
+}
+
+/// XP still owed to reach the next level (0 at the summit).
+int xpToNextLevel(int xp) {
+  final lvl = levelForXp(xp);
+  return lvl >= 99 ? 0 : (xpForLevel(lvl + 1) - xp).clamp(0, 1 << 30);
+}

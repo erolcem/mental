@@ -230,14 +230,14 @@ class _GalaxyScreenState extends ConsumerState<GalaxyScreen>
                         ),
                       ),
                     ),
-                    _header(context, ref, level, overall),
+                    _header(context, ref, level, xp, overall),
                     if (ref.watch(dueReviewsProvider).isNotEmpty)
                       _lockBanner(context, ref.watch(dueReviewsProvider).length),
                     if (ref.watch(journalOverdueProvider))
                       _journalBanner(context,
                           top: ref.watch(dueReviewsProvider).isNotEmpty
-                              ? 112.0
-                              : 62.0),
+                              ? 176.0
+                              : 122.0),
                     _statRail(),
                     _exploreHint(),
                     _bottomBar(context, ref),
@@ -352,97 +352,141 @@ class _GalaxyScreenState extends ConsumerState<GalaxyScreen>
     );
   }
 
-  Widget _header(
-      BuildContext context, WidgetRef ref, int level, double overall) {
+  Widget _header(BuildContext context, WidgetRef ref, int level, int xp,
+      double overall) {
+    final toNext = xpToNextLevel(xp);
     return Positioned(
       top: 0,
       left: 0,
       right: 0,
       child: Container(
-        padding: const EdgeInsets.fromLTRB(20, 10, 8, 14),
+        padding: const EdgeInsets.fromLTRB(18, 6, 6, 16),
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              kSpaceDeep.withValues(alpha: 0.85),
-              kSpaceDeep.withValues(alpha: 0.0)
+              kSpaceBlack.withValues(alpha: 0.92),
+              kSpaceDeep.withValues(alpha: 0.55),
+              kSpaceDeep.withValues(alpha: 0.0),
             ],
+            stops: const [0.0, 0.6, 1.0],
           ),
         ),
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('✦ MENTAL',
-                      style: cinzel(17,
-                          weight: 620,
-                          color: Colors.white.withValues(alpha: 0.85),
-                          spacing: 5)),
-                  const SizedBox(height: 2),
-                  Text('$totalNodeCount LIFETIME MASTERY NODES',
-                      style: raleway(8.5,
-                          color: Colors.white.withValues(alpha: 0.28),
-                          spacing: 2.5)),
-                ],
-              ),
-            ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
+            // Title line.
+            Row(
               children: [
-                Text('LEVEL',
-                    style: raleway(8,
-                        color: Colors.white.withValues(alpha: 0.28),
-                        spacing: 1.5)),
-                // Raleway, not Cinzel: Cinzel's "1" reads as a Roman "I".
-                Text('$level',
-                    style: raleway(19, weight: 800, color: kGold)),
+                Text('✦ MENTAL',
+                    style: cinzel(16.5,
+                        weight: 640,
+                        color: Colors.white.withValues(alpha: 0.9),
+                        spacing: 5)),
+                const Spacer(),
+                IconButton(
+                  visualDensity: VisualDensity.compact,
+                  tooltip: 'Review ledger',
+                  onPressed: () => showReviewLedger(context),
+                  icon: Icon(Icons.hourglass_empty,
+                      color: kGold.withValues(alpha: 0.6), size: 17),
+                ),
+                PopupMenuButton<String>(
+                  icon: Icon(Icons.more_vert,
+                      color: Colors.white.withValues(alpha: 0.45), size: 19),
+                  color: const Color(0xEE0D0F1A),
+                  onSelected: (v) {
+                    if (v == 'wipe') _confirmWipe(context, ref);
+                    if (v == 'sync') showSkyLinkSheet(context);
+                    if (v == 'ledger') showHabitLedger(context);
+                  },
+                  itemBuilder: (_) => [
+                    PopupMenuItem(
+                      value: 'sync',
+                      child: Text(
+                          ref.read(syncControllerProvider).linked
+                              ? 'Sky Link — synced across devices'
+                              : 'Sky Link — sync across devices',
+                          style: raleway(12, color: const Color(0xFF7FE7D2))),
+                    ),
+                    PopupMenuItem(
+                      value: 'ledger',
+                      child: Text('The Habit Ledger', style: raleway(12)),
+                    ),
+                    PopupMenuItem(
+                      value: 'wipe',
+                      child: Text('Reset all progress',
+                          style: raleway(12, color: const Color(0xFFFF8888))),
+                    ),
+                  ],
+                ),
               ],
             ),
-            const SizedBox(width: 10),
-            MasteryRing(
-              progress: overall,
-              size: 40,
-              color: kGold,
-              child: Text('${(overall * 100).round()}%',
-                  style: raleway(8.5, weight: 600, color: kGold)),
-            ),
-            IconButton(
-              visualDensity: VisualDensity.compact,
-              tooltip: 'Review ledger',
-              onPressed: () => showReviewLedger(context),
-              icon: Icon(Icons.hourglass_empty,
-                  color: kGold.withValues(alpha: 0.55), size: 16),
-            ),
-            PopupMenuButton<String>(
-              icon: Icon(Icons.more_vert,
-                  color: Colors.white.withValues(alpha: 0.4), size: 18),
-              color: const Color(0xEE0D0F1A),
-              onSelected: (v) {
-                if (v == 'wipe') _confirmWipe(context, ref);
-                if (v == 'sync') showSkyLinkSheet(context);
-                if (v == 'ledger') showHabitLedger(context);
-              },
-              itemBuilder: (_) => [
-                PopupMenuItem(
-                  value: 'sync',
-                  child: Text(
-                      ref.read(syncControllerProvider).linked
-                          ? 'Sky Link — synced across devices'
-                          : 'Sky Link — sync across devices',
-                      style: raleway(12, color: const Color(0xFF7FE7D2))),
+            const SizedBox(height: 6),
+            // The command bar: level badge · XP progress · sky mastery.
+            Row(
+              children: [
+                MasteryRing(
+                  progress: levelProgress(xp),
+                  size: 46,
+                  stroke: 3,
+                  color: kGold,
+                  child: Text('$level',
+                      style: raleway(17, weight: 800, color: kGold)),
                 ),
-                PopupMenuItem(
-                  value: 'ledger',
-                  child: Text('The Habit Ledger', style: raleway(12)),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Text('LEVEL $level',
+                              style: cinzel(10.5,
+                                  weight: 680, color: kGold, spacing: 1.5)),
+                          const Spacer(),
+                          Text('${_fmtXp(xp)} XP',
+                              style: raleway(9,
+                                  weight: 600,
+                                  color: Colors.white.withValues(alpha: 0.5),
+                                  spacing: 0.5)),
+                        ],
+                      ),
+                      const SizedBox(height: 5),
+                      _xpBar(levelProgress(xp)),
+                      const SizedBox(height: 3),
+                      Text(
+                        toNext == 0
+                            ? 'THE SUMMIT — EVERY STAR LIT'
+                            : '${_fmtXp(toNext)} XP TO LEVEL ${level + 1}',
+                        style: raleway(7.5,
+                            weight: 600,
+                            color: Colors.white.withValues(alpha: 0.34),
+                            spacing: 1.2),
+                      ),
+                    ],
+                  ),
                 ),
-                PopupMenuItem(
-                  value: 'wipe',
-                  child: Text('Reset all progress',
-                      style: raleway(12, color: const Color(0xFFFF8888))),
+                const SizedBox(width: 14),
+                Column(
+                  children: [
+                    MasteryRing(
+                      progress: overall,
+                      size: 40,
+                      color: Colors.white.withValues(alpha: 0.9),
+                      child: Text('${(overall * 100).round()}%',
+                          style: raleway(9, weight: 700)),
+                    ),
+                    const SizedBox(height: 2),
+                    Text('SKY',
+                        style: raleway(6.5,
+                            weight: 700,
+                            color: Colors.white.withValues(alpha: 0.4),
+                            spacing: 2)),
+                  ],
                 ),
+                const SizedBox(width: 6),
               ],
             ),
           ],
@@ -451,10 +495,53 @@ class _GalaxyScreenState extends ConsumerState<GalaxyScreen>
     );
   }
 
+  /// A thin gold XP progress bar that fills to [p] (0–1).
+  Widget _xpBar(double p) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(3),
+      child: Container(
+        height: 5,
+        color: Colors.white.withValues(alpha: 0.10),
+        child: Align(
+          alignment: Alignment.centerLeft,
+          child: TweenAnimationBuilder<double>(
+            tween: Tween(begin: 0, end: p.clamp(0.0, 1.0)),
+            duration: const Duration(milliseconds: 800),
+            curve: Curves.easeOutCubic,
+            builder: (_, v, __) => FractionallySizedBox(
+              widthFactor: v <= 0 ? 0.001 : v,
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(colors: [
+                    kGold.withValues(alpha: 0.7),
+                    kGold,
+                  ]),
+                  boxShadow: [
+                    BoxShadow(color: kGold.withValues(alpha: 0.5), blurRadius: 6),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  static String _fmtXp(int n) {
+    final s = n.toString();
+    final b = StringBuffer();
+    for (var i = 0; i < s.length; i++) {
+      if (i > 0 && (s.length - i) % 3 == 0) b.write(',');
+      b.write(s[i]);
+    }
+    return b.toString();
+  }
+
   /// The lockout banner — sits just under the header, pulls you to the Review.
   Widget _lockBanner(BuildContext context, int count) {
     return Positioned(
-      top: 62,
+      top: 122,
       left: 20,
       right: 20,
       child: GestureDetector(
