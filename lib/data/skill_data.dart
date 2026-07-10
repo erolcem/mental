@@ -28,6 +28,27 @@ part 'catalog_int.dart';
 part 'catalog_wis.dart';
 part 'catalog_cha.dart';
 part 'catalog_dex.dart';
+part 'catalog_science.dart';
+part 'catalog_maths.dart';
+part 'catalog_medicine.dart';
+part 'catalog_engineering.dart';
+part 'catalog_geography.dart';
+part 'catalog_history.dart';
+part 'catalog_business.dart';
+part 'catalog_socialsci.dart';
+part 'catalog_english.dart';
+part 'catalog_turkish.dart';
+part 'catalog_chinese.dart';
+part 'catalog_khmer.dart';
+part 'catalog_musictheory.dart';
+part 'catalog_piano.dart';
+part 'catalog_singing.dart';
+part 'catalog_drawing.dart';
+part 'catalog_writing.dart';
+part 'catalog_cooking.dart';
+part 'catalog_mechanics.dart';
+part 'catalog_memory.dart';
+part 'catalog_karate.dart';
 
 class SkillNode {
   final String id;
