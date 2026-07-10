@@ -257,11 +257,8 @@ class _NodeSheetState extends ConsumerState<_NodeSheet> {
                               weight: 700,
                               color: Colors.white.withValues(alpha: 0.55),
                               spacing: 2)),
-                      const SizedBox(height: 3),
-                      Text(widget.node.guide,
-                          style: raleway(11,
-                              color: Colors.white.withValues(alpha: 0.82),
-                              height: 1.5)),
+                      const SizedBox(height: 5),
+                      ..._guideLines(widget.node.guide, color),
                     ],
                   ),
                 ),
@@ -372,6 +369,7 @@ class _NodeSheetState extends ConsumerState<_NodeSheet> {
                 minLines: 3,
                 style: raleway(12.5, height: 1.5),
                 cursorColor: color,
+                textCapitalization: TextCapitalization.sentences,
                 decoration: InputDecoration(
                   hintText: unlocked
                       ? 'e.g. Worked through every chapter; the hardest part was…'
@@ -428,6 +426,60 @@ class _NodeSheetState extends ConsumerState<_NodeSheet> {
         ),
       ),
     );
+  }
+
+  /// Render a guide as styled lines: numbered steps ("1. ...") get a gold
+  /// step badge; plain lines (intro, "Keep:") render quiet. Single-line
+  /// guides fall through as one paragraph, so both formats read well.
+  static final RegExp _stepRe = RegExp(r'^(\d+)\.\s+(.*)$');
+  List<Widget> _guideLines(String guide, Color color) {
+    final lines = guide.split('\n').where((l) => l.trim().isNotEmpty).toList();
+    return [
+      for (final line in lines)
+        () {
+          final m = _stepRe.firstMatch(line.trim());
+          if (m == null) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 4),
+              child: Text(line.trim(),
+                  style: raleway(11,
+                      color: Colors.white.withValues(alpha: 0.72),
+                      height: 1.5)),
+            );
+          }
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 5),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 17,
+                  height: 17,
+                  margin: const EdgeInsets.only(top: 1),
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: color.withValues(alpha: 0.10),
+                    border:
+                        Border.all(color: color.withValues(alpha: 0.35)),
+                  ),
+                  child: Text(m.group(1)!,
+                      style: raleway(8.5,
+                          weight: 800,
+                          color: color.withValues(alpha: 0.95))),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(m.group(2)!,
+                      style: raleway(11,
+                          color: Colors.white.withValues(alpha: 0.85),
+                          height: 1.5)),
+                ),
+              ],
+            ),
+          );
+        }(),
+    ];
   }
 
   /// What this star's light opens — the quest's forward pull.

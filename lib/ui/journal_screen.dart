@@ -4,6 +4,7 @@
 // and one line of reflection. Skipping a day locks the sky the next morning.
 // Without a backend: freeform entry + self-written actions (honour system).
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show HapticFeedback;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/api_client.dart';
@@ -97,6 +98,16 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
 
   String get _today => dayKey(DateTime.now());
 
+  static String _prettyToday() {
+    final d = DateTime.now();
+    const wk = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
+    const mo = [
+      'JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN',
+      'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'
+    ];
+    return '${wk[d.weekday - 1]} ${d.day} ${mo[d.month - 1]}';
+  }
+
   JournalEntry get _entry =>
       ref.watch(journalProvider)[_today] ?? JournalEntry(day: _today);
 
@@ -148,15 +159,24 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
 
   Future<void> _send() async {
     final text = _input.text.trim();
-    if (text.isEmpty || _aiThinking) return;
+    if (text.isEmpty || _aiThinking || _closing) return;
     final notifier = ref.read(journalProvider.notifier);
     final api = ref.read(apiProvider);
     var e = notifier.entryFor(_today);
     e = e.copyWith(transcript: [...e.transcript, JournalTurn('user', text)]);
     notifier.save(e);
+    HapticFeedback.lightImpact();
     _input.clear();
     _scrollDown();
     if (!api.configured) return; // honour mode: monologue journal
+    await _requestReply();
+  }
+
+  /// Ask the Confidant to answer the transcript as it stands. Safe to retry:
+  /// the user's words are already saved, so a failed call loses nothing.
+  Future<void> _requestReply() async {
+    final notifier = ref.read(journalProvider.notifier);
+    final api = ref.read(apiProvider);
     setState(() {
       _aiThinking = true;
       _error = null;
@@ -182,6 +202,7 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
   }
 
   Future<void> _closeDay() async {
+    if (_closing || _aiThinking) return; // one distillation at a time
     final notifier = ref.read(journalProvider.notifier);
     final api = ref.read(apiProvider);
     setState(() {
@@ -197,6 +218,7 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
           history: _wireHistory,
         );
         if (!mounted) return;
+        HapticFeedback.mediumImpact(); // the day seals
         final cur = notifier.entryFor(_today);
         notifier.save(cur.copyWith(
           actions: [for (final a in res.actions) ActionItem(a)],
@@ -294,9 +316,48 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
                               Padding(
                                 padding:
                                     const EdgeInsets.symmetric(vertical: 8),
-                                child: Text('⚠ $_error',
-                                    style: raleway(10.5,
-                                        color: const Color(0xFFFFC46B))),
+                                child: Row(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.start,
+                                  children: [
+                                    Expanded(
+                                      child: Text('⚠ $_error',
+                                          style: raleway(10.5,
+                                              height: 1.4,
+                                              color: const Color(
+                                                  0xFFFFC46B))),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    InkWell(
+                                      onTap: _aiThinking
+                                          ? null
+                                          : _requestReply,
+                                      borderRadius:
+                                          BorderRadius.circular(8),
+                                      child: Container(
+                                        padding: const EdgeInsets
+                                            .symmetric(
+                                            horizontal: 10,
+                                            vertical: 6),
+                                        decoration: BoxDecoration(
+                                          border: Border.all(
+                                              color: const Color(
+                                                      0xFFFFC46B)
+                                                  .withValues(
+                                                      alpha: 0.5)),
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                        ),
+                                        child: Text('TRY AGAIN',
+                                            style: raleway(8.5,
+                                                weight: 700,
+                                                color: const Color(
+                                                    0xFFFFC46B),
+                                                spacing: 1)),
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                           ],
                         ),
@@ -339,8 +400,10 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
                         weight: 640, color: kJournalViolet, spacing: 3)),
                 Text(
                   e.closed
-                      ? 'Tonight is closed — the loop continues tomorrow'
-                      : 'Close the loop: your day, its lessons, tomorrow\'s actions',
+                      ? '${_prettyToday()} — closed; the loop continues tomorrow'
+                      : '${_prettyToday()} — your day, its lessons, tomorrow\'s actions',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: raleway(9.5, color: Colors.white.withValues(alpha: 0.5)),
                 ),
               ],
@@ -420,6 +483,9 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
                   maxLines: 4,
                   style: raleway(12.5, height: 1.4),
                   cursorColor: kJournalViolet,
+                  textCapitalization: TextCapitalization.sentences,
+                  textInputAction: TextInputAction.send,
+                  onSubmitted: (_) => _send(),
                   onChanged: (_) => setState(() {}),
                   decoration: InputDecoration(
                     hintText: 'Tell the Confidant about your day…',

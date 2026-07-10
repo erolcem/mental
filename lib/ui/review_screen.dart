@@ -4,6 +4,7 @@
 // climbs; fail → restudy, return tomorrow). Without one, reviews are
 // self-attested on the honour system.
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show HapticFeedback;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/api_client.dart';
@@ -103,8 +104,10 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
       if (!mounted) return;
       final notifier = ref.read(progressProvider.notifier);
       if (grade.passed) {
+        HapticFeedback.mediumImpact(); // the star holds
         notifier.recordReviewPass(r.skill.id, r.node.id);
       } else {
+        HapticFeedback.heavyImpact(); // the light is fading
         notifier.recordReviewFail(r.skill.id, r.node.id);
       }
       setState(() {

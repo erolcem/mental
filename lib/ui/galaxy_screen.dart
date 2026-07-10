@@ -752,9 +752,12 @@ class _GalaxyScreenState extends ConsumerState<GalaxyScreen>
               const SizedBox(height: 10),
               for (var i = 0; i < entry.actions.length; i++)
                 InkWell(
-                  onTap: () => ref
-                      .read(journalProvider.notifier)
-                      .toggleAction(entry.day, i),
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                    ref
+                        .read(journalProvider.notifier)
+                        .toggleAction(entry.day, i);
+                  },
                   child: Padding(
                     padding: const EdgeInsets.symmetric(vertical: 7),
                     child: Row(
