@@ -467,23 +467,41 @@ class ConstellationPainter extends CustomPainter {
     final mag = layout.magnitude[n.id] ?? 1.0;
     final complete = _complete(n.id);
     final unlocked = _unlocked(n);
+    final isCrown = n.tier == skill.maxTier;
 
     if (complete) {
-      _paintIgnitedStar(canvas, p, mag, fading: dueNodeIds.contains(n.id));
+      _paintIgnitedStar(canvas, p, mag,
+          fading: dueNodeIds.contains(n.id), crown: isCrown);
     } else if (unlocked) {
       _paintAvailableStar(canvas, p, mag, n);
+      if (isCrown) _paintCrownRing(canvas, p, mag);
     } else {
       canvas.drawCircle(
           p, 1.7 * mag, Paint()..color = Colors.white.withValues(alpha: 0.22));
+      if (isCrown) _paintCrownRing(canvas, p, mag);
     }
 
     _paintLabel(canvas, p, n, complete: complete, unlocked: unlocked);
   }
 
+  /// The crown star wears a faint dotted circlet even before it is earned —
+  /// the summit is always visible from the valley.
+  void _paintCrownRing(Canvas canvas, Offset p, double mag) {
+    final r = 9.5 * mag;
+    for (var i = 0; i < 20; i++) {
+      final a = i * math.pi / 10 + breath * 2 * math.pi * 0.15;
+      canvas.drawCircle(
+          p + Offset(math.cos(a), math.sin(a)) * r,
+          0.55,
+          Paint()..color = color.withValues(alpha: 0.35));
+    }
+  }
+
   /// A lit star: hot white core, colour halo, 4-point diffraction spikes.
   /// A [fading] star (review overdue) gutters amber and its light dims.
+  /// The [crown] burns with six spikes and a wider halo — unmistakable.
   void _paintIgnitedStar(Canvas canvas, Offset p, double mag,
-      {bool fading = false}) {
+      {bool fading = false, bool crown = false}) {
     // Fading stars flicker irregularly, like a candle guttering.
     final tw = fading
         ? 0.62 +
@@ -492,19 +510,34 @@ class ConstellationPainter extends CustomPainter {
         : 0.92 + 0.08 * math.sin(breath * 2 * math.pi * 2 + p.dx);
     final haloColor = fading ? const Color(0xFFF2B24A) : color;
     final coreAlpha = fading ? 0.75 : 1.0;
-    final haloR = 14.0 * mag * tw;
+    final haloR = (crown ? 19.0 : 14.0) * mag * tw;
     canvas.drawCircle(
       p,
       haloR,
       Paint()
         ..shader = ui.Gradient.radial(p, haloR, [
-          haloColor.withValues(alpha: fading ? 0.28 : 0.35),
+          haloColor.withValues(alpha: fading ? 0.28 : (crown ? 0.42 : 0.35)),
           haloColor.withValues(alpha: 0.0),
         ]),
     );
-    // Diffraction spikes — vertical/horizontal, fading outward.
-    final spikeLen = 13.0 * mag * tw;
-    for (final dir in const [Offset(1, 0), Offset(0, 1)]) {
+    // A whisper-thin chromatic ring at the halo's edge — the lens signature
+    // of a bright star in a long exposure.
+    canvas.drawCircle(
+        p,
+        haloR * 0.72,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 0.5
+          ..color = haloColor.withValues(alpha: 0.18 * tw));
+    // Diffraction spikes — the crown earns six, everyone else four.
+    final spikeLen = (crown ? 16.0 : 13.0) * mag * tw;
+    final dirs = crown
+        ? [
+            for (var i = 0; i < 3; i++)
+              Offset(math.cos(i * math.pi / 3), math.sin(i * math.pi / 3))
+          ]
+        : const [Offset(1, 0), Offset(0, 1)];
+    for (final dir in dirs) {
       final aEnd = p + dir * spikeLen;
       final bEnd = p - dir * spikeLen;
       canvas.drawLine(
@@ -559,6 +592,12 @@ class ConstellationPainter extends CustomPainter {
           ..style = PaintingStyle.stroke
           ..strokeWidth = 0.8
           ..color = color.withValues(alpha: 0.4 + 0.2 * pulse));
+    // A tiny spark orbits the frontier star — the sky's own "tap me".
+    final oa = breath * 2 * math.pi * 1.5 + p.dx * 0.05;
+    canvas.drawCircle(
+        p + Offset(math.cos(oa), math.sin(oa)) * 7.2 * mag,
+        0.9,
+        Paint()..color = Colors.white.withValues(alpha: 0.55 + 0.25 * pulse));
   }
 
   void _paintLabel(Canvas canvas, Offset p, SkillNode n,

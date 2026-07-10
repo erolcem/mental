@@ -437,28 +437,67 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
 
   Widget _bubble(JournalTurn t) {
     final isUser = t.role == 'user';
-    return Align(
-      alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
-      child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 5),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        constraints: const BoxConstraints(maxWidth: 300),
-        decoration: BoxDecoration(
-          color: isUser
-              ? kJournalViolet.withValues(alpha: 0.16)
-              : Colors.white.withValues(alpha: 0.05),
-          borderRadius: BorderRadius.only(
-            topLeft: const Radius.circular(14),
-            topRight: const Radius.circular(14),
-            bottomLeft: Radius.circular(isUser ? 14 : 3),
-            bottomRight: Radius.circular(isUser ? 3 : 14),
-          ),
-          border: Border.all(
-              color: isUser
-                  ? kJournalViolet.withValues(alpha: 0.3)
-                  : Colors.white.withValues(alpha: 0.08)),
+    final bubble = Container(
+      margin: EdgeInsets.only(
+          top: 5, bottom: 5, left: isUser ? 0 : 7, right: isUser ? 0 : 0),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      constraints: const BoxConstraints(maxWidth: 292),
+      decoration: BoxDecoration(
+        gradient: isUser
+            ? null
+            : LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  kJournalViolet.withValues(alpha: 0.10),
+                  Colors.white.withValues(alpha: 0.035),
+                ],
+              ),
+        color: isUser ? kJournalViolet.withValues(alpha: 0.16) : null,
+        borderRadius: BorderRadius.only(
+          topLeft: const Radius.circular(14),
+          topRight: const Radius.circular(14),
+          bottomLeft: Radius.circular(isUser ? 14 : 3),
+          bottomRight: Radius.circular(isUser ? 3 : 14),
         ),
-        child: Text(t.text, style: raleway(12.5, height: 1.5)),
+        border: Border.all(
+            color: isUser
+                ? kJournalViolet.withValues(alpha: 0.3)
+                : kJournalViolet.withValues(alpha: 0.16)),
+        boxShadow: isUser
+            ? null
+            : [
+                BoxShadow(
+                    color: kJournalViolet.withValues(alpha: 0.06),
+                    blurRadius: 12),
+              ],
+      ),
+      child: Text(t.text, style: raleway(12.5, height: 1.5)),
+    );
+    if (isUser) {
+      return Align(alignment: Alignment.centerRight, child: bubble);
+    }
+    // The Confidant speaks beside a small star — a presence, not a chatbot.
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(top: 14),
+            child: Text('✦',
+                style: TextStyle(
+                    fontSize: 9,
+                    color: kJournalViolet.withValues(alpha: 0.75),
+                    shadows: [
+                      Shadow(
+                          color: kJournalViolet.withValues(alpha: 0.8),
+                          blurRadius: 7)
+                    ])),
+          ),
+          Flexible(child: bubble),
+        ],
       ),
     );
   }
@@ -567,16 +606,46 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
     );
   }
 
-  Widget _closedView(JournalEntry e) {
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(22, 20, 22, 30),
-      children: [
-        Center(
+  /// A hairline — ✦ — hairline ornament.
+  Widget _ornament() => Row(
+        children: [
+          Expanded(
+              child: Container(
+                  height: 0.7,
+                  decoration: BoxDecoration(
+                      gradient: LinearGradient(colors: [
+            kJournalViolet.withValues(alpha: 0.0),
+            kJournalViolet.withValues(alpha: 0.45),
+          ])))),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10),
             child: Text('✦',
                 style: TextStyle(
-                    fontSize: 34,
-                    color: kJournalViolet.withValues(alpha: 0.9)))),
-        const SizedBox(height: 12),
+                    fontSize: 13,
+                    color: kJournalViolet.withValues(alpha: 0.9),
+                    shadows: [
+                      Shadow(
+                          color: kJournalViolet.withValues(alpha: 0.8),
+                          blurRadius: 10)
+                    ])),
+          ),
+          Expanded(
+              child: Container(
+                  height: 0.7,
+                  decoration: BoxDecoration(
+                      gradient: LinearGradient(colors: [
+            kJournalViolet.withValues(alpha: 0.45),
+            kJournalViolet.withValues(alpha: 0.0),
+          ])))),
+        ],
+      );
+
+  Widget _closedView(JournalEntry e) {
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(22, 24, 22, 30),
+      children: [
+        _ornament(),
+        const SizedBox(height: 16),
         if (e.reflection.isNotEmpty) ...[
           Center(
             child: Text('"${e.reflection}"',
@@ -584,25 +653,54 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
                 style: cinzel(13.5, weight: 500,
                     color: Colors.white.withValues(alpha: 0.9))),
           ),
+          const SizedBox(height: 6),
+          Center(
+            child: Text('TONIGHT\'S LESSON',
+                style: raleway(6.5,
+                    weight: 700,
+                    color: kJournalViolet.withValues(alpha: 0.55),
+                    spacing: 2.5)),
+          ),
           const SizedBox(height: 20),
         ],
         Text('TOMORROW\'S ACTIONS',
             style: raleway(8.5,
                 color: Colors.white.withValues(alpha: 0.3), spacing: 2)),
         const SizedBox(height: 8),
-        for (final a in e.actions)
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 4),
+        for (var i = 0; i < e.actions.length; i++)
+          Container(
+            margin: const EdgeInsets.symmetric(vertical: 3.5),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              color: kJournalViolet.withValues(alpha: 0.05),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                  color: kJournalViolet.withValues(alpha: 0.22)),
+            ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('◈',
-                    style: TextStyle(
-                        fontSize: 12,
-                        color: kJournalViolet.withValues(alpha: 0.8))),
+                Container(
+                  width: 17,
+                  height: 17,
+                  margin: const EdgeInsets.only(top: 1),
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: kJournalViolet.withValues(alpha: 0.12),
+                    border: Border.all(
+                        color: kJournalViolet.withValues(alpha: 0.4)),
+                  ),
+                  child: Text('${i + 1}',
+                      style: raleway(8.5,
+                          weight: 800,
+                          color: kJournalViolet.withValues(alpha: 0.95))),
+                ),
                 const SizedBox(width: 10),
                 Expanded(
-                    child: Text(a.text, style: raleway(12.5, height: 1.5))),
+                    child: Text(e.actions[i].text,
+                        style: raleway(12.5, height: 1.5))),
               ],
             ),
           ),
