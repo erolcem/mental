@@ -3,13 +3,17 @@
 // Built like an astrophoto, not a texture:
 //  • ~1,600 stars on a power-law magnitude curve (multitudes of faint points,
 //    a handful of brilliant ones) with real stellar colour classes.
+//  • Nine hero stars — the brilliant few that anchor any dark-sky photograph —
+//    each with a coloured bloom and a faint four-point diffraction glint.
 //  • A textured Milky Way: a dense diagonal star-river with soft galactic
 //    glow, dark dust lanes, and a warm core.
 //  • Nebular haze in the given accent colours; faint airglow at the horizon.
 //  • The whole celestial layer ROTATES imperceptibly around a pole (one full
 //    turn every 2 hours) — stand still and the sky turns.
 //  • Atmosphere on top: twinkling stars, meteors every ~9 s, the occasional
-//    drifting satellite.
+//    drifting satellite. All of it stands down under iOS Reduce Motion.
+//  • A photographic vignette: the frame's edges fall to black so the eye
+//    settles toward the centre, like a real long exposure.
 //
 // Performance contract: everything static is rasterised ONCE into a cached
 // ui.Picture (drawn per-frame under a rotation transform, which is cheap);
@@ -57,16 +61,33 @@ class _StarfieldState extends State<Starfield>
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Honour iOS "Reduce Motion": freeze the celestial rotation entirely
+    // (and stop burning cycles) when the user has asked for calm.
+    final reduceMotion =
+        MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    if (reduceMotion && _t.isAnimating) {
+      _t.stop();
+    } else if (!reduceMotion && !_t.isAnimating) {
+      _t.repeat();
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final reduceMotion =
+        MediaQuery.maybeOf(context)?.disableAnimations ?? false;
     return RepaintBoundary(
       child: AnimatedBuilder(
         animation: _t,
         builder: (_, __) => CustomPaint(
           painter: _StarfieldPainter(
-            phase: _t.value, // 0–1 of a full rotation
+            phase: reduceMotion ? 0.0 : _t.value, // 0–1 of a full rotation
             nebulae: widget.nebulae,
             starCount: widget.starCount,
             dim: widget.dim,
+            motion: !reduceMotion,
           ),
           size: Size.infinite,
           isComplex: true,
@@ -110,12 +131,14 @@ class _StarfieldPainter extends CustomPainter {
   final List<Color> nebulae;
   final int starCount;
   final double dim;
+  final bool motion;
 
   _StarfieldPainter(
       {required this.phase,
       required this.nebulae,
       required this.starCount,
-      required this.dim});
+      required this.dim,
+      this.motion = true});
 
   double get _time => phase * 7200; // seconds within the rotation
 
@@ -268,9 +291,9 @@ class _StarfieldPainter extends CustomPainter {
 
     // ---- General field stars: power-law magnitudes.
     // Background stars stay SMALL — brightness reads through subtle bloom,
-    // never size. Diffraction glints are reserved for meaningful objects
-    // (guide stars, ignited nodes), so the background can never upstage them
-    // or sit over text.
+    // never size — so the field can never upstage foreground content or sit
+    // heavily over text. The nine hero stars below are the one deliberate
+    // exception, as in any real dark-sky photograph.
     for (var i = 0; i < starCount; i++) {
       final p = randInField();
       final m = math.pow(rnd.nextDouble(), 3.1).toDouble(); // most stars faint
@@ -292,6 +315,43 @@ class _StarfieldPainter extends CustomPainter {
             Paint()
               ..color = color.withValues(alpha: alpha * 0.13)
               ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2.5));
+      }
+    }
+
+    // ---- Hero stars: the brilliant few that anchor a real dark sky, each
+    // with a coloured bloom and a faint four-point diffraction glint ----
+    for (var i = 0; i < 9; i++) {
+      final p = randInField();
+      final color = _stellarColor(rnd);
+      final r = 1.3 + rnd.nextDouble() * 1.0;
+      c.drawCircle(
+        p,
+        r * 8,
+        Paint()
+          ..shader = ui.Gradient.radial(p, r * 8, [
+            color.withValues(alpha: 0.22),
+            color.withValues(alpha: 0.0),
+          ])
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4),
+      );
+      c.drawCircle(p, r * 1.6, Paint()..color = color.withValues(alpha: 0.9));
+      c.drawCircle(p, r * 0.9, Paint()..color = Colors.white);
+      for (final d in const [Offset(1, 0), Offset(0, 1)]) {
+        final a = p - d * (r * 6), b = p + d * (r * 6);
+        c.drawLine(
+            a,
+            b,
+            Paint()
+              ..strokeWidth = 0.8
+              ..shader = ui.Gradient.linear(a, b, [
+                Colors.white.withValues(alpha: 0),
+                Colors.white.withValues(alpha: 0.55),
+                Colors.white.withValues(alpha: 0),
+              ], [
+                0.0,
+                0.5,
+                1.0
+              ]));
       }
     }
 
@@ -361,8 +421,10 @@ class _StarfieldPainter extends CustomPainter {
     }
     canvas.restore();
 
-    _paintMeteor(canvas, size);
-    _paintSatellite(canvas, size);
+    if (motion) {
+      _paintMeteor(canvas, size);
+      _paintSatellite(canvas, size);
+    }
 
     // Airglow: the faint warm breath of atmosphere at the horizon.
     canvas.drawRect(
@@ -378,20 +440,21 @@ class _StarfieldPainter extends CustomPainter {
         ),
     );
 
-    // Photographic vignette: edges fall away, the centre breathes. This one
-    // touch does the most to move the frame from "graphic" to "night".
+    // Photographic vignette: the sky's edges fall gently to black so the
+    // eye settles toward the centre — the depth of a real long exposure.
+    // This one touch does the most to move the frame from "graphic" to
+    // "night".
     canvas.drawRect(
       Offset.zero & size,
       Paint()
         ..shader = ui.Gradient.radial(
-          Offset(size.width * 0.5, size.height * 0.42),
-          size.longestSide * 0.78,
+          Offset(size.width / 2, size.height / 2),
+          size.longestSide * 0.75,
           [
             Colors.black.withValues(alpha: 0.0),
-            Colors.black.withValues(alpha: 0.0),
-            Colors.black.withValues(alpha: 0.26),
+            Colors.black.withValues(alpha: 0.38),
           ],
-          [0.0, 0.62, 1.0],
+          [0.55, 1.0],
         ),
     );
 
@@ -450,5 +513,8 @@ class _StarfieldPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _StarfieldPainter old) =>
-      old.phase != phase || old.dim != dim || old.starCount != starCount;
+      old.phase != phase ||
+      old.dim != dim ||
+      old.starCount != starCount ||
+      old.motion != motion;
 }
