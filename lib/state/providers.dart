@@ -159,6 +159,15 @@ class ProgressNotifier extends StateNotifier<Map<String, NodeProgress>> {
     state = repo.load();
   }
 
+  /// Adopt a Sky-Link-merged progress map wholesale: persist every record
+  /// and swap state in one step.
+  void adoptMerged(Map<String, NodeProgress> merged) {
+    for (final e in merged.entries) {
+      repo.save(e.key, e.value);
+    }
+    state = Map.of(merged);
+  }
+
   void _write(String key, NodeProgress p) {
     repo.save(key, p);
     state = {...state, key: p};
@@ -223,17 +232,19 @@ class JournalNotifier extends StateNotifier<Map<String, JournalEntry>> {
     state = merged;
   }
 
+  /// Adopt a Sky-Link-merged journal wholesale.
+  void adoptMerged(Map<String, JournalEntry> merged) {
+    for (final e in merged.entries) {
+      repo.saveJournalEntry(e.value);
+    }
+    state = Map.of(merged);
+  }
+
   void wipe() {
     repo.clearJournal();
     state = repo.loadJournal();
   }
 }
-
-/// Local calendar day key (yyyy-mm-dd).
-String dayKey(DateTime t) =>
-    '${t.year.toString().padLeft(4, '0')}-${t.month.toString().padLeft(2, '0')}-${t.day.toString().padLeft(2, '0')}';
-
-String yesterdayKey(DateTime t) => dayKey(t.subtract(const Duration(days: 1)));
 
 /// The journal lock: once the habit has begun (≥1 closed entry), a day
 /// without journaling locks the NEXT day until today's session is closed.
@@ -434,4 +445,22 @@ int levelForXp(int xp) {
   if (_maxXp == 0) return 1;
   final f = (xp / _maxXp).clamp(0.0, 1.0);
   return 1 + (98 * math.sqrt(f)).floor();
+}
+
+/// The XP at which [level] begins — the inverse of [levelForXp].
+int xpForLevel(int level) =>
+    (_maxXp * math.pow(((level - 1) / 98).clamp(0.0, 1.0), 2)).round();
+
+/// Progress through the current level, 0–1 (1.0 at the summit, level 99).
+double levelProgress(int xp) {
+  final lvl = levelForXp(xp);
+  if (lvl >= 99) return 1.0;
+  final lo = xpForLevel(lvl), hi = xpForLevel(lvl + 1);
+  return hi <= lo ? 1.0 : ((xp - lo) / (hi - lo)).clamp(0.0, 1.0);
+}
+
+/// XP still owed to reach the next level (0 at the summit).
+int xpToNextLevel(int xp) {
+  final lvl = levelForXp(xp);
+  return lvl >= 99 ? 0 : (xpForLevel(lvl + 1) - xp).clamp(0, 1 << 30);
 }

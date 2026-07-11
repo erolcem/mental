@@ -1,7 +1,7 @@
 # Mental — a constellation of lifetime mastery
 
 Skyrim-style skill trees for real life. The sky holds **4 stats** (Intelligence,
-Wisdom, Charisma, Dexterity) → **21 skills** → **1,058 mastery stars**, each a
+Wisdom, Charisma, Dexterity) → **22 skills** → **1,108 mastery stars**, each a
 star in that skill's constellation. Ignite a star by completing the work and
 writing a **mastery summary sheet**; the constellation lights up star by star
 until the crown — the skill's endgame (e.g. *"The One-Hour Memorised Recital"*).
@@ -13,7 +13,7 @@ tree obeys (parallel, self-achievable, quest-bearing, convergent, safe, honest
 hours). Every star is a **quest**: a `guide` (what to do — the materials, the
 method, the route) and a `proof` (the completion standard the Examiner judges).
 Each carries a **researched effort estimate** (FSI/JLPT hour studies, CFA
-guidance, ABRSM norms): the full sky is **≈87,000 hours** of deliberate work —
+guidance, ABRSM norms): the full sky is **≈92,000 hours** of deliberate work —
 a lifetime, on purpose. `dart tool/analyze_catalog.dart` recomputes the whole
 analysis (critical paths, braid factors, choice breadth) without a Flutter
 toolchain → `docs/curriculum/ANALYSIS.md`.
@@ -103,7 +103,13 @@ up"), shown beside its checkbox.
 
 ## Cross-device progress
 
-`⋮ → Export sky to clipboard` serialises everything (progress + journal) to a
+**Sky Link (server sync):** `⋮ → Sky Link` mints a 24-character Sky Key on
+one device; enter it on another and every sync is pull → merge → push against
+the backend's `/sync` blob store (the server only ever sees the key's SHA-256;
+snapshots merge conservatively — nothing lit or written is ever lost). Set
+`SYNC_DB` on the backend (see `backend/DEPLOY.md`).
+
+**Clipboard transfer (no backend needed):** `⋮ → Export sky to clipboard` serialises everything (progress + journal) to a
 JSON blob; paste it into `⋮ → Import sky from clipboard` on the other device.
 Import **merges** — per star and per journal day the newer record wins, and a
 lit star never goes dark — so you can carry the sky phone ↔ phone ↔ desktop

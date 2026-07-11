@@ -1,7 +1,7 @@
 # The Grand Braid — the 2026-07 catalog overhaul (current spec)
 
 **Status: SHIPPED.** This document describes the live catalog:
-**21 skills · 1,058 stars · 87,140 researched hours** (see ANALYSIS.md for
+**22 skills · 1,108 stars · 91,965 researched hours** (see ANALYSIS.md for
 computed numbers — that file regenerates from the data and never lies).
 The per-stat proposals (INT.md, WIS.md, CHA.md, DEX.md) and the earlier
 431-node design this file replaces are retained as history.
@@ -70,7 +70,8 @@ widens with the densest tier and the screen pans.
   Output), business 50 (CFA spine · Strategy · Marketing · Venture · Arena),
   social science 49 (Methods · Mind & Society · Anthro & Soc · Institutions ·
   Practice · The Study).
-- **CHA (354)** — english 51, turkish 51, japanese 51, khmer 50 (each:
+- **CHA (405)** — english 51, turkish 51, japanese 51, chinese 51 (HSK
+  spine, ids ported from main so progress carries), khmer 50 (each:
   grammar/vocab/listening/speaking/reading/writing/culture + exam spine),
   music theory 50, piano 52, singing 50.
 - **DEX (300)** — drawing 50, writing 50, cooking 50, mechanics 50,

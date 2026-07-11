@@ -37,7 +37,10 @@ workflows:
       - name: Get Flutter packages
         script: flutter pub get
       - name: Analyze
-        script: flutter analyze
+        # --no-fatal-infos: a Flutter/SDK bump can introduce new deprecation
+        # *infos* (e.g. Matrix4.translate) that would otherwise hard-fail a
+        # release build. Errors and warnings still fail the step.
+        script: flutter analyze --no-fatal-infos
       - name: Test
         script: flutter test
       - name: Build signed IPA

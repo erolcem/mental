@@ -11,7 +11,13 @@
 import 'dart:io';
 import 'dart:math' as math;
 
-import 'package:mental/data/skill_data.dart';
+// Relative, not package:, on purpose — this tool must run on a bare Dart
+// container with NO `pub get` (skill_data.dart + its part files are pure
+// Dart with zero imports, so nothing needs package resolution). A package:
+// import would force `dart pub get`, which needs the Flutter SDK for this
+// project's flutter deps and would break the "no Flutter toolchain" gate.
+// ignore: avoid_relative_lib_imports
+import '../lib/data/skill_data.dart';
 
 int failures = 0;
 void check(bool cond, String msg) {
@@ -376,9 +382,10 @@ Estimates are planning figures for a motivated self-studier, anchored to
 published research rather than invented:
 
 - **Languages** — FSI classroom-hour categories (Turkish Cat IV ≈ 1,100 h,
-  Japanese Cat V ≈ 2,200 h classroom / 3,000–4,500 h self-study surveys for
-  JLPT N1 without kanji background, Khmer Cat III ≈ 900 h plus a
-  resource-scarcity overhead), CEFR level deltas for the per-level nodes.
+  Mandarin Chinese Cat V ≈ 2,200 h classroom / 3,000–4,000 h self-study
+  surveys for HSK 6 including the character load, Khmer Cat III ≈ 900 h plus
+  a resource-scarcity overhead), CEFR/HSK level deltas for the per-level
+  nodes.
 - **Finance** — CFA Institute's ≈300 h/level guidance for the three mock
   gauntlets.
 - **Music** — ABRSM grade norms (Grade 8 piano ≈ 2,000+ deliberate hours

@@ -8,19 +8,19 @@
 |---|---|---|---|---|
 | **INT Intelligence** | 203 | 330 | 32370 | 44300 |
 | **WIS Wisdom** | 201 | 288 | 14700 | 24930 |
-| **CHA Charisma** | 354 | 527 | 22995 | 45055 |
+| **CHA Charisma** | 404 | 606 | 27820 | 52640 |
 | **DEX Dexterity** | 300 | 443 | 17075 | 35455 |
-| **TOTAL** | 1058 | 1588 | 87140 | 149740 |
+| **TOTAL** | 1108 | 1667 | 91965 | 157325 |
 
-**87140 hours of deliberate work** separate a dark sky from a full one —
-≈ 60 years at four focused hours a day, a
-8.7-fold Gladwell. XP is effort-weighted (XP = hours + tier × 10) so a star
+**91965 hours of deliberate work** separate a dark sky from a full one —
+≈ 63 years at four focused hours a day, a
+9.2-fold Gladwell. XP is effort-weighted (XP = hours + tier × 10) so a star
 pays what it costs; the level curve (level = 1 + 98·√(xp/max)) pays out fast
 early and slow late:
 
 | sky completed (XP) | 1% | 5% | 10% | 25% | 50% | 75% | 100% |
 |---|---|---|---|---|---|---|---|
-| level | 10 | 22 | 31 | 50 | 70 | 85 | 99 |
+| level | 10 | 22 | 31 | 49 | 70 | 85 | 99 |
 
 ## Per constellation
 
@@ -47,6 +47,7 @@ Reading the columns:
 | english | 50 | 2640 | 590 | 4.5× | 7.0 / 1 | 94% |
 | turkish | 51 | 2660 | 920 | 2.9× | 4.8 / 1 | 94% |
 | japanese | 51 | 5220 | 1680 | 3.1× | 6.1 / 1 | 96% |
+| chinese | 50 | 4825 | 1670 | 2.9× | 7.4 / 1 | 96% |
 | khmer | 50 | 2355 | 1010 | 2.3× | 4.9 / 1 | 90% |
 | musicTheory | 50 | 3220 | 1040 | 3.1× | 5.6 / 1 | 94% |
 | piano | 52 | 4400 | 1890 | 2.3× | 6.2 / 1 | 94% |
@@ -76,6 +77,7 @@ Foundations → 3–5 working lanes → a summit lane that carries the crown.
 | english | Foundations 2·90h / Vocabulary 6·320h / Writing 10·550h / Rhetoric 9·400h / Literature 7·530h / Argument 6·260h / Storytelling 6·220h / Convergence 4·270h |
 | turkish | Foundations 2·50h / Grammar 8·590h / Vocabulary 7·530h / Listening 6·295h / Speaking 8·265h / Reading 5·290h / Writing 4·130h / Culture 6·190h / Convergence 5·320h |
 | japanese | Foundations 3·70h / Kanji 5·860h / Grammar 8·1120h / Input 14·1830h / Output 12·570h / Culture 4·170h / JLPT 5·600h |
+| chinese | Foundations 2·60h / Hanzi 6·970h / Grammar 6·880h / Vocabulary 4·810h / Listening 6·555h / Speaking 8·340h / Reading 5·300h / Writing 3·110h / Culture 5·200h / HSK 5·600h |
 | khmer | Foundations 2·60h / Script 8·260h / Core 6·700h / Listening 7·310h / Speaking 12·375h / Writing 4·140h / Culture 7·270h / Convergence 4·240h |
 | musicTheory | Fundamentals 4·150h / Written 13·920h / Ear 10·510h / Analysis 8·460h / Composition 7·400h / Orchestration 6·380h / Convergence 2·400h |
 | piano | Foundations 4·120h / Technique 16·1180h / Reading 3·220h / Musicianship 8·430h / Repertoire 14·1810h / Performance 5·200h / Convergence 2·440h |
@@ -97,7 +99,7 @@ whole sky takes:
 
 | pace | 10 h/wk | 20 h/wk | 28 h/wk | 40 h/wk |
 |---|---|---|---|---|
-| full sky | 167.6 yrs | 83.8 yrs | 59.8 yrs | 41.9 yrs |
+| full sky | 176.9 yrs | 88.4 yrs | 63.2 yrs | 44.2 yrs |
 
 Single-constellation crowns at a focused 10 h/week:
 
@@ -108,12 +110,12 @@ Single-constellation crowns at a focused 10 h/week:
 | geography | 3350 | 6.4 | history | 3470 | 6.7 |
 | business | 4760 | 9.2 | socialSci | 3120 | 6.0 |
 | english | 2640 | 5.1 | turkish | 2660 | 5.1 |
-| japanese | 5220 | 10.0 | khmer | 2355 | 4.5 |
-| musicTheory | 3220 | 6.2 | piano | 4400 | 8.5 |
-| singing | 2500 | 4.8 | drawing | 3770 | 7.3 |
-| writing | 3530 | 6.8 | cooking | 2120 | 4.1 |
-| mechanics | 2455 | 4.7 | memory | 2150 | 4.1 |
-| karate | 3050 | 5.9 |  |  |  |
+| japanese | 5220 | 10.0 | chinese | 4825 | 9.3 |
+| khmer | 2355 | 4.5 | musicTheory | 3220 | 6.2 |
+| piano | 4400 | 8.5 | singing | 2500 | 4.8 |
+| drawing | 3770 | 7.3 | writing | 3530 | 6.8 |
+| cooking | 2120 | 4.1 | mechanics | 2455 | 4.7 |
+| memory | 2150 | 4.1 | karate | 3050 | 5.9 |
 
 ## Critical paths (the spine of each constellation)
 
@@ -130,6 +132,7 @@ The one chain in each tree you cannot parallelise away:
 - **english** (590 h): e2 → e3 → e4 → e15 → e16 → e18 → e19 → e30 → e50 → e33 → e35
 - **turkish** (920 h): tr1 → tr3 → tr4 → tr34 → tr5 → tr6 → tr47 → tr7 → tr20 → tr27 → tr28 → tr30 → tr31
 - **japanese** (1680 h): j1 → j3 → j4 → j5 → j14 → j15 → j27 → j28
+- **chinese** (1670 h): ch1 → ch2 → ch3 → ch9 → ch10 → ch32 → ch19 → ch8 → ch20 → ch21 → ch22
 - **khmer** (1010 h): kh1 → kh3 → kh7 → kh8 → kh29 → kh9 → kh13 → kh31 → kh14 → kh40 → kh25 → kh46 → kh26 → kh27
 - **musicTheory** (1040 h): mt1 → mt2 → mt3 → mt4 → mt5 → mt6 → mt7 → mt9 → mt17 → mt26 → mt29
 - **piano** (1890 h): p2 → p33 → p3 → p4 → p19 → p20 → p21 → p22 → p23 → p24 → p25 → p31 → p32
@@ -147,16 +150,16 @@ The one chain in each tree you cannot parallelise away:
 |---|---|---|
 | maths.m38 | 650 | Dissertation-grade monograph |
 | science.sc48 | 600 | Original research monograph |
-| japanese.j5 | 400 | Kanji III: all 2,136 jōyō |
 | writing.w20 | 400 | The novel: 90k complete draft |
-| engineering.eg35 | 400 | Crown: 3-node cluster of your kernel + KV store |
+| chinese.ch4 | 400 | Hanzi III: 3,000 + handwriting 500 |
 | piano.p32 | 400 | Crown: the one-hour memorised recital |
+| japanese.j5 | 400 | Kanji III: all 2,136 jōyō |
+| engineering.eg35 | 400 | Crown: 3-node cluster of your kernel + KV store |
 | science.sc17 | 380 | Classical Electrodynamics (Jackson) |
+| business.b18 | 350 | CFA Level 2 |
 | science.sc23 | 350 | Quantum Field Theory (Peskin I) |
 | science.sc27 | 350 | Organic Chemistry I–II (Clayden) |
 | business.b20 | 350 | CFA Level 3 |
-| business.b18 | 350 | CFA Level 2 |
-| medicine.md27 | 350 | UWorld Step 1 complete |
 
 ## Methodology: where the hours come from
 
@@ -164,9 +167,10 @@ Estimates are planning figures for a motivated self-studier, anchored to
 published research rather than invented:
 
 - **Languages** — FSI classroom-hour categories (Turkish Cat IV ≈ 1,100 h,
-  Japanese Cat V ≈ 2,200 h classroom / 3,000–4,500 h self-study surveys for
-  JLPT N1 without kanji background, Khmer Cat III ≈ 900 h plus a
-  resource-scarcity overhead), CEFR level deltas for the per-level nodes.
+  Mandarin Chinese Cat V ≈ 2,200 h classroom / 3,000–4,000 h self-study
+  surveys for HSK 6 including the character load, Khmer Cat III ≈ 900 h plus
+  a resource-scarcity overhead), CEFR/HSK level deltas for the per-level
+  nodes.
 - **Finance** — CFA Institute's ≈300 h/level guidance for the three mock
   gauntlets.
 - **Music** — ABRSM grade norms (Grade 8 piano ≈ 2,000+ deliberate hours

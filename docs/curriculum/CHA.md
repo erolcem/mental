@@ -1,5 +1,11 @@
 # Curriculum Review — CHA (Charisma)
 
+> **Historical proposal (2026-07).** Superseded: the live catalog is now
+> **495 nodes**, each with a step-by-step `guide` (THE WORK), and the
+> **Japanese tree below was replaced by Mandarin Chinese** (HSK spine).
+> Source of truth: `lib/data/catalog_cha.dart` + the generated
+> `docs/curriculum/ANALYSIS.md`.
+
 **Status: PROPOSAL for Erol's markup.** Accessibility rule applied throughout:
 languages verify via **timed official-format mocks + logged input/output
 hours** (conversation via iTalki, or free via Tandem/HelloTalk); music via

@@ -16,9 +16,11 @@ import '../data/skill_data.dart';
 import '../data/transfer.dart';
 import '../state/providers.dart';
 import 'constellation_screen.dart';
+import 'habit_ledger_sheet.dart';
 import 'journal_screen.dart';
 import 'review_ledger.dart';
 import 'review_screen.dart';
+import 'sky_link_sheet.dart';
 import 'starfield.dart';
 import 'theme.dart';
 import 'widgets/asterism.dart';
@@ -211,8 +213,20 @@ class _GalaxyScreenState extends ConsumerState<GalaxyScreen> {
                 if (v == 'wipe') _confirmWipe(context, ref);
                 if (v == 'export') _exportSky(context, ref);
                 if (v == 'import') _importSky(context, ref);
+                if (v == 'skylink') showSkyLinkSheet(context);
+                if (v == 'ledger') showHabitLedger(context);
               },
               itemBuilder: (_) => [
+                PopupMenuItem(
+                  value: 'skylink',
+                  child: Text('Sky Link — sync devices',
+                      style: raleway(12, color: Colors.white70)),
+                ),
+                PopupMenuItem(
+                  value: 'ledger',
+                  child: Text('Habit ledger',
+                      style: raleway(12, color: Colors.white70)),
+                ),
                 PopupMenuItem(
                   value: 'export',
                   child: Text('Export sky to clipboard',

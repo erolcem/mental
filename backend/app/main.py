@@ -12,7 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 
 from .config import settings
-from .routers import health, journal, review, verify
+from .routers import health, journal, review, sync, verify
 
 app = FastAPI(title="Mental Backend", version="0.1.0")
 app.add_middleware(
@@ -32,3 +32,4 @@ app.include_router(health.router)
 app.include_router(verify.router)
 app.include_router(review.router)
 app.include_router(journal.router)
+app.include_router(sync.router)

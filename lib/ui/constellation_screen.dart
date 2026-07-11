@@ -158,7 +158,13 @@ class _ConstellationScreenState extends ConsumerState<ConstellationScreen>
               ),
             );
           }),
-          _header(context, mastery),
+          _header(
+              context,
+              mastery,
+              skill.tree
+                  .where((n) =>
+                      progress[progressKey(skill.id, n.id)]?.complete ?? false)
+                  .length),
           if (ref.watch(skyLockedProvider)) _lockChip(context),
         ],
       ),
@@ -192,7 +198,7 @@ class _ConstellationScreenState extends ConsumerState<ConstellationScreen>
     );
   }
 
-  Widget _header(BuildContext context, double mastery) {
+  Widget _header(BuildContext context, double mastery, int litCount) {
     return Positioned(
       top: 0,
       left: 0,
@@ -253,6 +259,11 @@ class _ConstellationScreenState extends ConsumerState<ConstellationScreen>
                         spacing: 1.5)),
                 Text('${(mastery * 100).round()}%',
                     style: cinzel(18, weight: 700, color: stat.color)),
+                Text('$litCount / ${skill.tree.length} STARS LIT',
+                    style: raleway(7,
+                        weight: 600,
+                        color: Colors.white.withValues(alpha: 0.35),
+                        spacing: 1.2)),
               ],
             ),
           ],

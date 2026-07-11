@@ -1,5 +1,5 @@
 // data/catalog/cha_skills.dart — CHARISMA: English, Turkish, Japanese,
-// Khmer, Music Theory, Piano, Singing. Language trees braid the four skills
+// Chinese, Khmer, Music Theory, Piano, Singing. Language trees braid the four skills
 // (listening/speaking/reading/writing) with grammar, vocabulary and culture;
 // music trees braid technique, ear, repertoire and creation. Tiers derived.
 import 'model.dart';
@@ -1268,6 +1268,458 @@ final _japanese = braidSkill(
       'JLPT',
       150,
       '30 unscripted native minutes + the novel behind you.',
+      'A 30-min unscripted native conversation, recorded'),
+]);
+
+// ===========================================================================
+// CHINESE (Mandarin) — HSK 6 plus the spoken skill HSK never tests.
+// Ported from main's tree (ids ch1–ch23 preserved so progress carries over)
+// and expanded into the full braid.
+final _chinese = braidSkill('chinese', 'Chinese', '\u{1F1E8}\u{1F1F3}',
+    'HSK 6 + the Spoken Skill HSK Never Tests', [
+  // — Foundations —
+  nx(
+      'ch1',
+      'Pinyin + the four tones',
+      null,
+      'Foundations',
+      40,
+      'Master pinyin and tones FIRST — errors fossilise. Daily tone-pair '
+          'trainer; drill \u00fc/u, zh/j, q/x with minimal pairs.',
+      'Tone-pair minimal-pair test \u226590%; 50 syllables native-checked'),
+  nx(
+      'ch24',
+      'Study system: SRS + immersion plan',
+      null,
+      'Foundations',
+      20,
+      'Anki decks + a daily immersion pipeline you will actually keep.',
+      'Running decks + a written immersion plan, 2 weeks logged'),
+
+  // — Hanzi —
+  nx(
+      'ch2',
+      'Hanzi I: 500 characters + radicals',
+      ['ch1', 'ch24'],
+      'Hanzi',
+      200,
+      'Top 50 radicals first, then 500 characters via mnemonic SRS; '
+          'write the 100 most frequent by hand.',
+      'SRS matured; 100 most common written from memory; 50 radicals named'),
+  nx(
+      'ch25',
+      'Handwriting & stroke order',
+      'ch2',
+      'Hanzi',
+      40,
+      'Stroke-order rules + grid-paper practice (Skritter or paper).',
+      '300 characters handwritten with correct order, sampled'),
+  nx(
+      'ch3',
+      'Hanzi II: 1,500 characters',
+      'ch2',
+      'Hanzi',
+      250,
+      'Push on with phonetic-component awareness (\u9752/\u6e05/\u8bf7 '
+          'families); read a graded reader leaning on hanzi.',
+      'SRS matured; a graded reader read via hanzi, not pinyin'),
+  nx(
+      'ch26',
+      'Hanzi in the wild: photo hunt 100',
+      'ch3',
+      'Hanzi',
+      20,
+      'Photograph and read real-world signage and menus.',
+      '100 photographed signs read correctly'),
+  nx(
+      'ch23',
+      'Traditional characters & calligraphy taste',
+      'ch3',
+      'Hanzi',
+      60,
+      'The 300 most-diverged traditional forms; brush-pen 20 characters '
+          'against a Kaishu copybook.',
+      '300 traditional forms read; 20 characters brushed + critiqued'),
+  nx(
+      'ch4',
+      'Hanzi III: 3,000 + handwriting 500',
+      ['ch3', 'ch25'],
+      'Hanzi',
+      400,
+      'The literacy summit: 3,000 characters covers 99% of running '
+          'text; handwrite the HSK-4 500 from memory.',
+      'SRS matured at 3,000; 500 written from memory; news read aloud'),
+
+  // — Grammar —
+  nx(
+      'ch5',
+      'HSK 1\u20132: Integrated Chinese I',
+      'ch1',
+      'Grammar',
+      150,
+      'Integrated Chinese vol. 1 / HSK Standard Course 1\u20132: every '
+          'workbook exercise, every dialogue shadowed.',
+      'All workbook exercises; HSK 2 mock \u226580%'),
+  nx(
+      'ch27',
+      'Measure words & \u4e86 mastery',
+      'ch5',
+      'Grammar',
+      30,
+      'The two beginner-boss fights, drilled with production sentences.',
+      '50 measure-word pairs + 30 \u4e86 sentences produced correctly'),
+  nx(
+      'ch6',
+      'HSK 3: Integrated Chinese II',
+      'ch5',
+      'Grammar',
+      150,
+      'Complements of result/direction, comparisons, \u7684/\u5f97/\u5730; '
+          'the Chinese Grammar Wiki as reference.',
+      'All workbook exercises; HSK 3 mock \u226580%, timed'),
+  nx(
+      'ch7',
+      'HSK 4 grammar: the connector layer',
+      ['ch6', 'ch27'],
+      'Grammar',
+      250,
+      '\u628a/\u88ab for real, \u8d8a\u6765\u8d8a, the connector '
+          'pairs; 10 produced sentences per pattern, corrected.',
+      'HSK 4 grammar drilled both ways; error log by pattern'),
+  nx(
+      'ch28',
+      'Grammar in the wild: 100 mined patterns',
+      'ch7',
+      'Grammar',
+      50,
+      'Find every textbook pattern three times in real media.',
+      '100 patterns mined with source sentences'),
+  nx(
+      'ch8',
+      'HSK 5 grammar + formal patterns',
+      'ch19',
+      'Grammar',
+      250,
+      'Written-register constructions (\u5bf9\u4e8e, \u4ee5\u2026\u4e3a, '
+          '\u4e4b\u6240\u4ee5\u2026\u662f\u56e0\u4e3a); meet each in '
+          'real articles.',
+      'HSK 5 patterns drilled; 20 formal constructions found in the wild'),
+
+  // — Vocabulary —
+  nx(
+      'ch9',
+      'Core 2k vocab + graded readers',
+      ['ch6', 'ch3'],
+      'Vocabulary',
+      200,
+      'The 2,000-word frequency core into SRS; five graded readers.',
+      'Matured 2,000-word deck; 5 graded readers finished'),
+  nx(
+      'ch11',
+      'Core 5k from your own mining',
+      'ch9',
+      'Vocabulary',
+      300,
+      'Grow to 5k by mining your own input; retire English keys.',
+      'Matured 5,000-word deck from own-mined sentences'),
+  nx(
+      'ch18',
+      'Chengyu & internet Chinese: 150 + 50',
+      'ch11',
+      'Vocabulary',
+      60,
+      'The idiom layer natives actually use + the meme register.',
+      '150 chengyu + 50 internet terms used correctly'),
+  nx(
+      'ch29',
+      'Vocabulary to 10k: mining mastery',
+      'ch11',
+      'Vocabulary',
+      250,
+      'Own-mined cards carry you past every list.',
+      'Deck at 10k; sampled retention \u226590%'),
+
+  // — Listening —
+  nx(
+      'ch31',
+      'Listening I: 20 hrs graded audio',
+      'ch5',
+      'Listening',
+      25,
+      'Slow learner podcasts, actively noted.',
+      '20 logged hours; 10 short summaries written'),
+  nx(
+      'ch10',
+      'Input II: 100 hrs native audio',
+      ['ch31', 'ch9'],
+      'Listening',
+      150,
+      'Podcasts, vloggers, dashcam-life; no subtitles.',
+      '100-hour log + weekly summaries in Chinese'),
+  nx(
+      'ch32',
+      'Dictation: 50 clips',
+      'ch10',
+      'Listening',
+      40,
+      'Transcribe short native clips exactly, tones included.',
+      '50 clips transcribed and checked'),
+  nx(
+      'ch12',
+      'Native TV: one series complete',
+      'ch10',
+      'Listening',
+      60,
+      'A full drama without subtitles; mine as you go.',
+      'Series finished; per-episode summaries in Chinese'),
+  nx(
+      'ch33',
+      'Input III: 250 total hours',
+      'ch12',
+      'Listening',
+      250,
+      'Bulk immersion across genres and registers.',
+      'Log at 250 hrs; a 20-min episode summarised cold'),
+  nx(
+      'ch49',
+      'Regional accents & Taiwan Mandarin',
+      'ch33',
+      'Listening',
+      30,
+      'Beijing r-colouring vs southern accents vs Taiwan norms.',
+      '5 regional clips identified and described'),
+
+  // — Speaking —
+  nx(
+      'ch13',
+      'Tones in the wild: shadowing I',
+      'ch5',
+      'Speaking',
+      40,
+      'Shadow native clips; compare your pitch traces.',
+      '10 shadowed clips; tone accuracy native-checked'),
+  nx(
+      'ch34',
+      'Tone sandhi & flow',
+      'ch13',
+      'Speaking',
+      40,
+      'Third-tone sandhi, \u4e0d/\u4e00 changes, natural rhythm.',
+      'Sandhi drill sentences fluent on recording'),
+  nx(
+      'ch35',
+      'Conversation: first 25 hours',
+      ['ch13', 'ch9'],
+      'Speaking',
+      30,
+      'iTalki/exchange sessions with a fix log.',
+      '25 logged hours; self-rated CEFR descriptors'),
+  nx(
+      'ch50',
+      'Language exchange: teach back',
+      'ch35',
+      'Speaking',
+      20,
+      'Structured exchange builds relationships and reps.',
+      '10 exchange sessions logged both ways'),
+  nx(
+      'ch15',
+      'Speaking: 50 conversation hours',
+      ['ch10', 'ch50'],
+      'Speaking',
+      80,
+      'Push fluency; record a 10-minute conversation.',
+      '10-min recorded conversation, native-rated B2'),
+  nx(
+      'ch36',
+      'Tutor course: 25 structured lessons',
+      'ch35',
+      'Speaking',
+      50,
+      'A real curriculum with one consistent tutor.',
+      "25 lessons logged + tutor's written assessment"),
+  nx(
+      'ch37',
+      'Debate & opinions: 10 discussions',
+      'ch15',
+      'Speaking',
+      30,
+      'Argue positions; get corrected.',
+      '10 opinion discussions; corrections logged'),
+  nx(
+      'ch16',
+      'Formal register & business Chinese',
+      'ch15',
+      'Speaking',
+      50,
+      'Meetings, toasts, honorific address \u2014 role-played.',
+      '10 business scenarios role-played, checked'),
+
+  // — Reading —
+  nx(
+      'ch38',
+      'Graded readers: 10 books',
+      'ch9',
+      'Reading',
+      60,
+      'Mandarin Companion → Sinolingua ladder.',
+      '10 graded readers logged, lookups declining'),
+  nx(
+      'ch39',
+      'Native articles: 30',
+      ['ch38', 'ch7'],
+      'Reading',
+      60,
+      'News and blogs with a mining workflow.',
+      '30 articles summarised in Chinese'),
+  nx(
+      'ch41',
+      'Webnovels & manhua: extensive volume',
+      'ch38',
+      'Reading',
+      60,
+      'High-volume fun reading builds speed.',
+      'A reading log at 300+ pages equivalent'),
+  nx(
+      'ch40',
+      'A first native novel',
+      ['ch39', 'ch18'],
+      'Reading',
+      80,
+      'A real book (\u4f59\u534e, \u4e09\u4f53-lite...), dictionary at '
+          'hand.',
+      'A native novel finished; reading journal kept'),
+  nx(
+      'ch51',
+      'Classical Chinese taster (\u6587\u8a00\u6587)',
+      'ch40',
+      'Reading',
+      40,
+      'Enough wenyan to read famous openings and chengyu sources.',
+      'Three classical passages parsed and translated'),
+
+  // — Writing —
+  nx(
+      'ch14',
+      'Writing I: 30 corrected entries',
+      'ch6',
+      'Writing',
+      50,
+      'Daily entries on LangCorrect/HelloTalk.',
+      '30 corrected entries; error log shrinking'),
+  nx(
+      'ch43',
+      'Type & text: chat fluency',
+      'ch14',
+      'Writing',
+      20,
+      'Pinyin IME speed + chat register.',
+      '50 real chat exchanges; IME at speed'),
+  nx(
+      'ch42',
+      'Essays: 10 corrected',
+      ['ch14', 'ch7'],
+      'Writing',
+      40,
+      'Structured essays with native correction.',
+      '10 corrected essays archived'),
+
+  // — Culture —
+  nx(
+      'ch17',
+      'Culture: customs, regions, food',
+      'ch5',
+      'Culture',
+      40,
+      'Briefs on customs; a China geography deck.',
+      '20 culture briefs; geography deck matured'),
+  nx(
+      'ch44',
+      'History survey of China',
+      'ch17',
+      'Culture',
+      60,
+      'Dynasties to the present, one readable survey.',
+      'A history read; dynasty timeline from memory'),
+  nx(
+      'ch45',
+      'Songs: 30 with lyrics',
+      'ch9',
+      'Culture',
+      30,
+      'Study lyrics; sing along; memorise ten.',
+      '30 songs studied; 10 sung from memory'),
+  nx(
+      'ch46',
+      'Films: 10 classics',
+      'ch17',
+      'Culture',
+      30,
+      'Fifth-generation classics to modern hits, with notes.',
+      '10 films; reviews written in Chinese for 3'),
+  nx(
+      'ch48',
+      'Culture synthesis: 20 briefs',
+      ['ch44', 'ch45', 'ch46'],
+      'Culture',
+      40,
+      'Weld history, music and cinema into real literacy.',
+      '20 culture briefs written in Chinese'),
+
+  // — HSK spine & Convergence —
+  nx(
+      'ch19',
+      'HSK 4 exam',
+      ['ch7', 'ch38', 'ch32'],
+      'HSK',
+      60,
+      'Official sitting if reachable, else two timed mocks.',
+      'Official pass, or 2 timed mocks \u2265 pass +10%'),
+  nx(
+      'ch20',
+      'HSK 5 exam',
+      ['ch8', 'ch11', 'ch42'],
+      'HSK',
+      80,
+      'The advanced gate: full HSK 5 curriculum under exam timing.',
+      'Official pass, or 2 timed mocks \u2265 pass +10%'),
+  nx(
+      'ch21',
+      'HSK 6 / HSK 3.0 band 7 prep',
+      ['ch20', 'ch29', 'ch33'],
+      'HSK',
+      250,
+      'The summit exam under the new banding.',
+      'Official pass, or 2 timed mocks \u2265 pass +10%'),
+  nx(
+      'ch47',
+      'C1 output: talks + long essays',
+      ['ch37', 'ch36'],
+      'HSK',
+      60,
+      'Three recorded talks + ten C1 essays corrected.',
+      '3 recorded talks; 10 corrected C1 essays'),
+  nx(
+      'ch22',
+      'Crown: literature + your own voice',
+      [
+        'ch21',
+        'ch47',
+        'ch48',
+        'ch16',
+        'ch23',
+        'ch41',
+        'ch43',
+        'ch34',
+        'ch49',
+        'ch51',
+        'ch4',
+        'ch26',
+        'ch28'
+      ],
+      'HSK',
+      150,
+      '30 unscripted native minutes + a real novel behind you.',
       'A 30-min unscripted native conversation, recorded'),
 ]);
 
@@ -2793,6 +3245,7 @@ final List<Skill> chaSkills = [
   _english,
   _turkish,
   _japanese,
+  _chinese,
   _khmer,
   _musicTheory,
   _piano,

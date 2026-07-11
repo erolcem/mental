@@ -125,12 +125,18 @@ class JournalEntry {
   final List<JournalTurn> transcript;
   final List<ActionItem> actions;
   final String reflection;
+
+  /// The advisor's reasoning behind [actions] — its note to its future self
+  /// ("Anki kept 6/7 → +5 reps"). Fed back through the habit ledger so each
+  /// night's prescription continues the last one's iteration.
+  final String rationale;
   final DateTime? closedAt;
   const JournalEntry({
     required this.day,
     this.transcript = const [],
     this.actions = const [],
     this.reflection = '',
+    this.rationale = '',
     this.closedAt,
   });
 
@@ -140,12 +146,14 @@ class JournalEntry {
           {List<JournalTurn>? transcript,
           List<ActionItem>? actions,
           String? reflection,
+          String? rationale,
           DateTime? closedAt}) =>
       JournalEntry(
         day: day,
         transcript: transcript ?? this.transcript,
         actions: actions ?? this.actions,
         reflection: reflection ?? this.reflection,
+        rationale: rationale ?? this.rationale,
         closedAt: closedAt ?? this.closedAt,
       );
 
@@ -155,6 +163,7 @@ class JournalEntry {
           'tr': [for (final t in transcript) t.toJson()],
         if (actions.isNotEmpty) 'a': [for (final a in actions) a.toJson()],
         if (reflection.isNotEmpty) 'rf': reflection,
+        if (rationale.isNotEmpty) 'ra': rationale,
         if (closedAt != null) 'c': closedAt!.toIso8601String(),
       };
 
@@ -169,9 +178,17 @@ class JournalEntry {
             ActionItem.fromJson(a as Map<String, dynamic>)
         ],
         reflection: (j['rf'] as String?) ?? '',
+        rationale: (j['ra'] as String?) ?? '',
         closedAt: j['c'] == null ? null : DateTime.tryParse(j['c'] as String),
       );
 }
+
+/// Local calendar day key (yyyy-mm-dd). Lives here (pure data layer) so the
+/// habit ledger can be built without Flutter.
+String dayKey(DateTime t) =>
+    '${t.year.toString().padLeft(4, '0')}-${t.month.toString().padLeft(2, '0')}-${t.day.toString().padLeft(2, '0')}';
+
+String yesterdayKey(DateTime t) => dayKey(DateTime(t.year, t.month, t.day - 1));
 
 abstract class JournalRepository {
   /// All entries keyed by local day (yyyy-mm-dd).

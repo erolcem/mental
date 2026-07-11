@@ -4,9 +4,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mental/data/skill_data.dart';
 
 void main() {
-  test('catalog has 4 stats and 21 skills', () {
+  test('catalog has 4 stats and 22 skills', () {
     expect(catalog.length, 4);
-    expect(catalog.expand((s) => s.skills).length, 21);
+    expect(catalog.expand((s) => s.skills).length, 22);
     expect(totalNodeCount, greaterThan(1000));
   });
 
@@ -161,7 +161,7 @@ void main() {
       }
     }
     // The whole sky is a life's work: on the order of a nine-fold Gladwell.
-    expect(catalogHours, inInclusiveRange(30000, 90000));
+    expect(catalogHours, inInclusiveRange(30000, 100000));
   });
 
   test('no redundant prerequisite edges (transitive reduction holds)', () {

@@ -1,5 +1,10 @@
 # Curriculum Review — WIS (Wisdom)
 
+> **Historical proposal (2026-07).** Long since applied and then surpassed:
+> the live catalog is now **495 nodes**, each with a step-by-step `guide`
+> (THE WORK). Source of truth: `lib/data/catalog_wis.dart` + the generated
+> `docs/curriculum/ANALYSIS.md`.
+
 **Status: PROPOSAL for Erol's markup.** Same three principles as INT, plus the
 accessibility rule: **every node is self-studyable or mimics a real
 examination** — no employer, university, or institution's permission required
