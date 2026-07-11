@@ -8,6 +8,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart' show setEquals;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show HapticFeedback;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/repository.dart';
@@ -50,7 +51,7 @@ class _ConstellationScreenState extends ConsumerState<ConstellationScreen>
         AnimationController(vsync: this, duration: const Duration(seconds: 4))
           ..repeat();
     _burst = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 900));
+        vsync: this, duration: const Duration(milliseconds: 1100));
     // Reviews can come due while studying a constellation; the sheet's lock
     // gate must notice without a restart.
     _dueTicker = Timer.periodic(
@@ -99,6 +100,7 @@ class _ConstellationScreenState extends ConsumerState<ConstellationScreen>
         showNodeSheet(context, ref, stat: stat, skill: skill, node: hit);
     ignitedNow.then((ignited) {
       if (ignited == true && mounted) {
+        HapticFeedback.mediumImpact(); // the star catches
         setState(() => _burstNodeId = hit!.id);
         _burst.forward(from: 0);
       }
@@ -165,8 +167,48 @@ class _ConstellationScreenState extends ConsumerState<ConstellationScreen>
                   .where((n) =>
                       progress[progressKey(skill.id, n.id)]?.complete ?? false)
                   .length),
-          if (ref.watch(skyLockedProvider)) _lockChip(context),
+          if (ref.watch(skyLockedProvider)) _lockChip(context) else _legend(),
         ],
+      ),
+    );
+  }
+
+  /// A quiet key to the star states, so the visual language is legible.
+  Widget _legend() {
+    Widget item(String glyph, Color c, String label) => Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(glyph, style: TextStyle(fontSize: 8.5, color: c)),
+            const SizedBox(width: 3),
+            Text(label,
+                style: raleway(6.5,
+                    weight: 600,
+                    color: Colors.white.withValues(alpha: 0.5),
+                    spacing: 1)),
+            const SizedBox(width: 9),
+          ],
+        );
+    return Positioned(
+      left: 14,
+      bottom: 16,
+      child: IgnorePointer(
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+          decoration: BoxDecoration(
+            color: const Color(0x55070A16),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              item('✦', stat.color, 'LIT'),
+              item('○', Colors.white70, 'READY'),
+              item('◆', const Color(0xFFF2B24A), 'DUE'),
+              item('·', Colors.white38, 'LOCKED'),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -428,23 +470,41 @@ class ConstellationPainter extends CustomPainter {
     final mag = layout.magnitude[n.id] ?? 1.0;
     final complete = _complete(n.id);
     final unlocked = _unlocked(n);
+    final isCrown = n.tier == skill.maxTier;
 
     if (complete) {
-      _paintIgnitedStar(canvas, p, mag, fading: dueNodeIds.contains(n.id));
+      _paintIgnitedStar(canvas, p, mag,
+          fading: dueNodeIds.contains(n.id), crown: isCrown);
     } else if (unlocked) {
       _paintAvailableStar(canvas, p, mag, n);
+      if (isCrown) _paintCrownRing(canvas, p, mag);
     } else {
       canvas.drawCircle(
           p, 1.7 * mag, Paint()..color = Colors.white.withValues(alpha: 0.22));
+      if (isCrown) _paintCrownRing(canvas, p, mag);
     }
 
     _paintLabel(canvas, p, n, complete: complete, unlocked: unlocked);
   }
 
+  /// The crown star wears a faint dotted circlet even before it is earned —
+  /// the summit is always visible from the valley.
+  void _paintCrownRing(Canvas canvas, Offset p, double mag) {
+    final r = 9.5 * mag;
+    for (var i = 0; i < 20; i++) {
+      final a = i * math.pi / 10 + breath * 2 * math.pi * 0.15;
+      canvas.drawCircle(
+          p + Offset(math.cos(a), math.sin(a)) * r,
+          0.55,
+          Paint()..color = color.withValues(alpha: 0.35));
+    }
+  }
+
   /// A lit star: hot white core, colour halo, 4-point diffraction spikes.
   /// A [fading] star (review overdue) gutters amber and its light dims.
+  /// The [crown] burns with six spikes and a wider halo — unmistakable.
   void _paintIgnitedStar(Canvas canvas, Offset p, double mag,
-      {bool fading = false}) {
+      {bool fading = false, bool crown = false}) {
     // Fading stars flicker irregularly, like a candle guttering.
     final tw = fading
         ? 0.62 +
@@ -453,19 +513,34 @@ class ConstellationPainter extends CustomPainter {
         : 0.92 + 0.08 * math.sin(breath * 2 * math.pi * 2 + p.dx);
     final haloColor = fading ? const Color(0xFFF2B24A) : color;
     final coreAlpha = fading ? 0.75 : 1.0;
-    final haloR = 14.0 * mag * tw;
+    final haloR = (crown ? 19.0 : 14.0) * mag * tw;
     canvas.drawCircle(
       p,
       haloR,
       Paint()
         ..shader = ui.Gradient.radial(p, haloR, [
-          haloColor.withValues(alpha: fading ? 0.28 : 0.35),
+          haloColor.withValues(alpha: fading ? 0.28 : (crown ? 0.42 : 0.35)),
           haloColor.withValues(alpha: 0.0),
         ]),
     );
-    // Diffraction spikes — vertical/horizontal, fading outward.
-    final spikeLen = 13.0 * mag * tw;
-    for (final dir in const [Offset(1, 0), Offset(0, 1)]) {
+    // A whisper-thin chromatic ring at the halo's edge — the lens signature
+    // of a bright star in a long exposure.
+    canvas.drawCircle(
+        p,
+        haloR * 0.72,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 0.5
+          ..color = haloColor.withValues(alpha: 0.18 * tw));
+    // Diffraction spikes — the crown earns six, everyone else four.
+    final spikeLen = (crown ? 16.0 : 13.0) * mag * tw;
+    final dirs = crown
+        ? [
+            for (var i = 0; i < 3; i++)
+              Offset(math.cos(i * math.pi / 3), math.sin(i * math.pi / 3))
+          ]
+        : const [Offset(1, 0), Offset(0, 1)];
+    for (final dir in dirs) {
       final aEnd = p + dir * spikeLen;
       final bEnd = p - dir * spikeLen;
       canvas.drawLine(
@@ -519,6 +594,12 @@ class ConstellationPainter extends CustomPainter {
           ..style = PaintingStyle.stroke
           ..strokeWidth = 0.8
           ..color = color.withValues(alpha: 0.4 + 0.2 * pulse));
+    // A tiny spark orbits the frontier star — the sky's own "tap me".
+    final oa = breath * 2 * math.pi * 1.5 + p.dx * 0.05;
+    canvas.drawCircle(
+        p + Offset(math.cos(oa), math.sin(oa)) * 7.2 * mag,
+        0.9,
+        Paint()..color = Colors.white.withValues(alpha: 0.55 + 0.25 * pulse));
   }
 
   void _paintLabel(Canvas canvas, Offset p, SkillNode n,
@@ -549,35 +630,73 @@ class ConstellationPainter extends CustomPainter {
     tp.paint(canvas, Offset(p.dx - tp.width / 2, p.dy + 24));
   }
 
-  /// Ignition shockwave: expanding ring + flash rays.
+  /// Ignition: a white flash, two staggered shockwaves, a crown of rays, and
+  /// a scatter of sparks flung outward — the star catching fire.
   void _paintBurst(Canvas canvas, Offset p, double t) {
     final fade = (1 - t).clamp(0.0, 1.0);
-    final r = 10 + 70 * Curves.easeOutCubic.transform(t);
-    canvas.drawCircle(
-        p,
-        r,
-        Paint()
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 2 * fade
-          ..color = color.withValues(alpha: 0.5 * fade));
-    canvas.drawCircle(
-        p,
-        r * 0.6,
-        Paint()
-          ..shader = ui.Gradient.radial(p, r * 0.6, [
-            Colors.white.withValues(alpha: 0.5 * fade),
-            color.withValues(alpha: 0.0),
-          ]));
-    // Rays.
-    for (var i = 0; i < 6; i++) {
-      final a = i * math.pi / 3 + t * 0.6;
-      final dir = Offset(math.cos(a), math.sin(a));
-      canvas.drawLine(
-          p + dir * r * 0.5,
-          p + dir * (r * 0.5 + 18 * fade),
+    final e = Curves.easeOutCubic.transform(t);
+
+    // A brilliant flash that peaks at once, then collapses.
+    final flash = (1 - t * 1.7).clamp(0.0, 1.0);
+    if (flash > 0) {
+      final fr = 30.0 * (0.5 + e);
+      canvas.drawCircle(
+          p,
+          fr,
           Paint()
-            ..strokeWidth = 1.2 * fade
-            ..color = Colors.white.withValues(alpha: 0.55 * fade));
+            ..shader = ui.Gradient.radial(p, fr, [
+              Colors.white.withValues(alpha: 0.9 * flash),
+              color.withValues(alpha: 0.45 * flash),
+              color.withValues(alpha: 0.0),
+            ], [
+              0.0,
+              0.4,
+              1.0
+            ]));
+    }
+
+    // Two staggered shockwave rings.
+    for (final (delay, w) in const [(0.0, 2.6), (0.18, 1.4)]) {
+      final tt = ((t - delay) / (1 - delay)).clamp(0.0, 1.0);
+      if (tt <= 0) continue;
+      final rr = 8 + 82 * Curves.easeOutCubic.transform(tt);
+      final rf = 1 - tt;
+      canvas.drawCircle(
+          p,
+          rr,
+          Paint()
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = w * rf
+            ..color = color.withValues(alpha: 0.55 * rf));
+    }
+
+    // A crown of tapered rays — long and short alternating.
+    final r = 10 + 72 * e;
+    for (var i = 0; i < 12; i++) {
+      final a = i * math.pi / 6 + t * 0.5;
+      final dir = Offset(math.cos(a), math.sin(a));
+      final inner = p + dir * (r * 0.42);
+      final outer = inner + dir * ((i.isEven ? 22 : 12) * fade);
+      canvas.drawLine(
+          inner,
+          outer,
+          Paint()
+            ..strokeWidth = (i.isEven ? 1.5 : 0.8) * fade
+            ..strokeCap = StrokeCap.round
+            ..color = Colors.white.withValues(alpha: 0.65 * fade));
+    }
+
+    // Sparks flung outward, cooling from white to the stat colour.
+    for (var i = 0; i < 14; i++) {
+      final a = i * 2 * math.pi / 14 + i * 0.7;
+      final dir = Offset(math.cos(a), math.sin(a));
+      final sp = p + dir * ((18 + (i % 5) * 10) * e);
+      canvas.drawCircle(
+          sp,
+          1.4 * fade,
+          Paint()
+            ..color = Color.lerp(Colors.white, color, i / 14)!
+                .withValues(alpha: 0.85 * fade));
     }
   }
 

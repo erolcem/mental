@@ -122,7 +122,6 @@ class _GalaxyScreenState extends ConsumerState<GalaxyScreen> {
                         ),
                       ),
                     ),
-                    _header(context, ref, level, overall),
                     if (ref.watch(dueReviewsProvider).isNotEmpty)
                       _lockBanner(
                           context, ref.watch(dueReviewsProvider).length),
@@ -137,6 +136,10 @@ class _GalaxyScreenState extends ConsumerState<GalaxyScreen> {
               },
             ),
           ),
+          // The header sits OUTSIDE the SafeArea so its scrim fills the whole
+          // top edge — including behind the notch / Face-ID camera — instead
+          // of starting below it and leaving a bright band in the corners.
+          _header(context, ref, level, overall),
         ],
       ),
     );
@@ -144,20 +147,26 @@ class _GalaxyScreenState extends ConsumerState<GalaxyScreen> {
 
   Widget _header(
       BuildContext context, WidgetRef ref, int level, double overall) {
+    // The status-bar / notch inset: the scrim fills up into it, but the
+    // content is padded below so nothing hides under the Face-ID camera.
+    final topInset = MediaQuery.viewPaddingOf(context).top;
     return Positioned(
       top: 0,
       left: 0,
       right: 0,
       child: Container(
-        padding: const EdgeInsets.fromLTRB(20, 10, 8, 14),
+        padding: EdgeInsets.fromLTRB(20, topInset + 10, 8, 14),
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              kSpaceDeep.withValues(alpha: 0.85),
+              kSpaceBlack.withValues(alpha: 0.96),
+              kSpaceBlack.withValues(alpha: 0.82),
+              kSpaceDeep.withValues(alpha: 0.5),
               kSpaceDeep.withValues(alpha: 0.0)
             ],
+            stops: const [0.0, 0.35, 0.7, 1.0],
           ),
         ),
         child: Row(
@@ -437,9 +446,12 @@ class _GalaxyScreenState extends ConsumerState<GalaxyScreen> {
               const SizedBox(height: 10),
               for (var i = 0; i < entry.actions.length; i++)
                 InkWell(
-                  onTap: () => ref
-                      .read(journalProvider.notifier)
-                      .toggleAction(entry.day, i),
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                    ref
+                        .read(journalProvider.notifier)
+                        .toggleAction(entry.day, i);
+                  },
                   child: Padding(
                     padding: const EdgeInsets.symmetric(vertical: 7),
                     child: Row(
@@ -657,25 +669,28 @@ class _GalaxyScreenState extends ConsumerState<GalaxyScreen> {
         top: p.dy - 34,
         child: GestureDetector(
           behavior: HitTestBehavior.opaque,
-          onTap: () => Navigator.of(context).push(
-            PageRouteBuilder(
-              transitionDuration: const Duration(milliseconds: 420),
-              reverseTransitionDuration: const Duration(milliseconds: 300),
-              pageBuilder: (_, __, ___) =>
-                  ConstellationScreen(statId: stat.id, skillId: skill.id),
-              transitionsBuilder: (_, anim, __, child) {
-                final curved =
-                    CurvedAnimation(parent: anim, curve: Curves.easeOutCubic);
-                return FadeTransition(
-                  opacity: curved,
-                  child: ScaleTransition(
-                    scale: Tween(begin: 1.06, end: 1.0).animate(curved),
-                    child: child,
-                  ),
-                );
-              },
-            ),
-          ),
+          onTap: () {
+            HapticFeedback.selectionClick();
+            Navigator.of(context).push(
+              PageRouteBuilder(
+                transitionDuration: const Duration(milliseconds: 420),
+                reverseTransitionDuration: const Duration(milliseconds: 300),
+                pageBuilder: (_, __, ___) =>
+                    ConstellationScreen(statId: stat.id, skillId: skill.id),
+                transitionsBuilder: (_, anim, __, child) {
+                  final curved =
+                      CurvedAnimation(parent: anim, curve: Curves.easeOutCubic);
+                  return FadeTransition(
+                    opacity: curved,
+                    child: ScaleTransition(
+                      scale: Tween(begin: 1.06, end: 1.0).animate(curved),
+                      child: child,
+                    ),
+                  );
+                },
+              ),
+            );
+          },
           child: SizedBox(
             width: 104,
             height: 68,
