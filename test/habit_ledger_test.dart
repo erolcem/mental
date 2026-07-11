@@ -26,8 +26,8 @@ void main() {
     expect(buildHabitLedger({}, now), '');
     // An unclosed draft and today's own session are not yet evidence.
     final entries = {
-      '2026-07-08': day('2026-07-08',
-          actions: [const ActionItem('Tonight thing')]),
+      '2026-07-08':
+          day('2026-07-08', actions: [const ActionItem('Tonight thing')]),
       '2026-07-07': day('2026-07-07', closed: false),
     };
     expect(buildHabitLedger(entries, now), '');
@@ -53,8 +53,8 @@ void main() {
     expect(ledger, contains('lesson: Guard the morning.'));
     expect(ledger, contains('advisor: Anki held six days, nudged one notch.'));
     // Most recent first.
-    expect(ledger.indexOf('2026-07-07'),
-        lessThan(ledger.indexOf('2026-07-06')));
+    expect(
+        ledger.indexOf('2026-07-07'), lessThan(ledger.indexOf('2026-07-06')));
     // Deterministic.
     expect(buildHabitLedger(entries, now), ledger);
   });
@@ -69,7 +69,11 @@ void main() {
         ]),
       // An older, longer run: 10–14 June (5 days).
       for (final d in [
-        '2026-06-10', '2026-06-11', '2026-06-12', '2026-06-13', '2026-06-14'
+        '2026-06-10',
+        '2026-06-11',
+        '2026-06-12',
+        '2026-06-13',
+        '2026-06-14'
       ])
         d: day(d, actions: [const ActionItem('C', done: true)]),
     };

@@ -14,15 +14,10 @@ import 'package:mental/ui/galaxy_screen.dart';
 import 'package:mental/ui/journal_screen.dart';
 import 'package:mental/ui/theme.dart';
 
-/// Captures each request body so tests can assert what the Confidant was
-/// actually told (yesterday's loop, the habit ledger).
-final List<Map<String, dynamic>> confidantSaw = [];
-
 MentalApi confidantApi() => MentalApi(
       baseUrl: 'https://examiner.test',
       token: 't',
       client: MockClient((req) async {
-        confidantSaw.add(jsonDecode(req.body) as Map<String, dynamic>);
         if (req.url.path == '/journal/reply') {
           return http.Response(
               jsonEncode({'reply': 'What broke the Anki streak today?'}), 200,
@@ -32,7 +27,6 @@ MentalApi confidantApi() => MentalApi(
             jsonEncode({
               'actions': ['Do 20 Anki reps before noon', 'Read Rudin 7.4'],
               'reflection': 'Guard the morning before the day claims it.',
-              'rationale': 'Anki kept 6/7 — one notch up; Rudin continues.',
             }),
             200,
             headers: {'content-type': 'application/json'});
@@ -56,44 +50,23 @@ void phone(WidgetTester tester) {
 }
 
 void main() {
-  testWidgets(
-      'journal: greet → converse → close → actions + reflection + rationale, '
-      'with the habit ledger on the wire', (tester) async {
+  testWidgets('journal: greet → converse → close → actions + reflection',
+      (tester) async {
     phone(tester);
-    confidantSaw.clear();
     final repo = InMemoryJournalRepository();
-    // Two closed days of history → the advisor must receive a ledger.
-    final past = dayKey(DateTime.now().subtract(const Duration(days: 1)));
-    repo.saveJournalEntry(JournalEntry(
-      day: past,
-      transcript: const [JournalTurn('user', 'day')],
-      actions: const [
-        ActionItem('Do 15 Anki reps', done: true),
-        ActionItem('Run 5k'),
-      ],
-      rationale: 'Started small on purpose.',
-      closedAt: DateTime.now().subtract(const Duration(days: 1)),
-    ));
     await tester.pumpWidget(app(repo, confidantApi(), const JournalScreen()));
     await tester.pump(const Duration(milliseconds: 300));
 
-    // The Confidant greets first (with yesterday's actions on the table).
-    expect(find.textContaining('how did you fare'), findsOneWidget);
+    // The Confidant greets first.
+    expect(find.textContaining('Tell me about your day'), findsOneWidget);
 
-    await tester.enterText(find.byType(TextField),
-        'Did 40 mins of Rudin but skipped Anki again.');
+    await tester.enterText(
+        find.byType(TextField), 'Did 40 mins of Rudin but skipped Anki again.');
     await tester.pump();
     await tester.tap(find.byIcon(Icons.arrow_upward));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));
     expect(find.text('What broke the Anki streak today?'), findsOneWidget);
-
-    // The reply request carried the advisor's memory.
-    final replyReq = confidantSaw.first;
-    expect(replyReq['history'], contains('HABIT LEDGER'));
-    expect(replyReq['history'], contains('[x] Do 15 Anki reps'));
-    expect(replyReq['history'], contains('[ ] Run 5k'));
-    expect(replyReq['history'], contains('advisor: Started small on purpose.'));
 
     await tester.tap(find.textContaining('CLOSE THE DAY'));
     await tester.pump();
@@ -101,14 +74,10 @@ void main() {
 
     expect(find.textContaining('Guard the morning'), findsOneWidget);
     expect(find.text('Do 20 Anki reps before noon'), findsOneWidget);
-    // The advisor's reasoning is shown and remembered.
-    expect(find.textContaining('one notch up'), findsOneWidget);
-    expect(confidantSaw.last['history'], contains('HABIT LEDGER'));
     final today = dayKey(DateTime.now());
     final saved = repo.loadJournal()[today]!;
     expect(saved.closed, isTrue);
     expect(saved.actions.length, 2);
-    expect(saved.rationale, contains('one notch up'));
     expect(saved.transcript.length, 3); // greet + user + reply
   });
 

@@ -67,8 +67,7 @@ void main() {
 
     test('closed beats open; ticks given anywhere stay given', () {
       const open = JournalEntry(
-          day: '2026-07-07',
-          transcript: [JournalTurn('user', 'hello')]);
+          day: '2026-07-07', transcript: [JournalTurn('user', 'hello')]);
       final closedA = JournalEntry(
         day: '2026-07-07',
         actions: const [ActionItem('Anki', done: true), ActionItem('Run')],
@@ -196,7 +195,8 @@ void main() {
       );
       final container = ProviderContainer(overrides: [
         repositoryProvider.overrideWithValue(InMemoryProgressRepository()),
-        journalRepositoryProvider.overrideWithValue(InMemoryJournalRepository()),
+        journalRepositoryProvider
+            .overrideWithValue(InMemoryJournalRepository()),
         apiProvider.overrideWithValue(api),
         syncKeyStoreProvider
             .overrideWithValue(InMemorySyncKeyStore()..key = newSkyKey()),
@@ -214,12 +214,13 @@ void main() {
       final api = MentalApi(
         baseUrl: 'https://examiner.test',
         token: 't',
-        client: MockClient(
-            (req) async => http.Response('{"detail": "boom"}', 500)),
+        client:
+            MockClient((req) async => http.Response('{"detail": "boom"}', 500)),
       );
       final container = ProviderContainer(overrides: [
         repositoryProvider.overrideWithValue(progressRepo),
-        journalRepositoryProvider.overrideWithValue(InMemoryJournalRepository()),
+        journalRepositoryProvider
+            .overrideWithValue(InMemoryJournalRepository()),
         apiProvider.overrideWithValue(api),
         syncKeyStoreProvider
             .overrideWithValue(InMemorySyncKeyStore()..key = newSkyKey()),
@@ -229,8 +230,11 @@ void main() {
       final state = container.read(syncControllerProvider);
       expect(state.error, isNotNull);
       expect(state.busy, isFalse);
-      expect(container.read(progressProvider)[progressKey('maths', 'm1')]!
-          .complete, isTrue);
+      expect(
+          container
+              .read(progressProvider)[progressKey('maths', 'm1')]!
+              .complete,
+          isTrue);
     });
   });
 }

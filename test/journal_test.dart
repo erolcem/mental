@@ -35,8 +35,8 @@ void main() {
     });
 
     test('open (unclosed) entry does not count', () {
-      const draft = JournalEntry(
-          day: today, transcript: [JournalTurn('user', 'hi')]);
+      const draft =
+          JournalEntry(day: today, transcript: [JournalTurn('user', 'hi')]);
       expect(
           journalOverdue(
               {'2026-06-29': closed('2026-06-29'), today: draft}, now),
@@ -93,11 +93,53 @@ void main() {
     expect(back.closed, isTrue);
   });
 
+  group('advisorHistory (the 365-day habit memory)', () {
+    test('only closed days before today travel, oldest first', () {
+      final entries = {
+        today: closed(today), // tonight — excluded
+        '2026-06-30': closed('2026-06-30',
+            actions: const [ActionItem('Do Anki', done: true, why: 'streak')]),
+        yesterday: closed(yesterday, actions: const [ActionItem('Read Rudin')]),
+        '2026-06-28': const JournalEntry(
+            day: '2026-06-28',
+            transcript: [JournalTurn('user', 'never closed')]),
+      };
+      final h = advisorHistory(entries, today);
+      expect([for (final e in h) e['day']], ['2026-06-30', yesterday]);
+      final acts = h.first['actions'] as List;
+      expect(acts.first, {'text': 'Do Anki', 'done': true});
+    });
+
+    test('caps at the most recent N days and truncates long reflections', () {
+      final entries = <String, JournalEntry>{};
+      for (var i = 1; i <= 30; i++) {
+        final day = '2026-06-${i.toString().padLeft(2, '0')}';
+        entries[day] = JournalEntry(
+            day: day,
+            reflection: 'r' * 500,
+            closedAt: DateTime(2026, 6, i, 22));
+      }
+      final h = advisorHistory(entries, '2026-07-01', days: 7);
+      expect(h.length, 7);
+      expect(h.first['day'], '2026-06-24');
+      expect(h.last['day'], '2026-06-30');
+      expect((h.first['reflection'] as String).length, 380);
+    });
+  });
+
+  test('ActionItem JSON round-trips the why and toggling keeps it', () {
+    const a = ActionItem('20 reps', why: 'hit 6/7 — step up');
+    final back = ActionItem.fromJson(a.toJson());
+    expect(back.why, 'hit 6/7 — step up');
+    expect(back.toggled().why, 'hit 6/7 — step up');
+    expect(back.toggled().done, isTrue);
+  });
+
   test('extraLock blocks ignition when journal is overdue', () {
     final maths = skillById('maths');
     var locked = true;
-    final n = ProgressNotifier(InMemoryProgressRepository(),
-        extraLock: () => locked);
+    final n =
+        ProgressNotifier(InMemoryProgressRepository(), extraLock: () => locked);
     n.ignite(maths, maths.nodeById('m1'));
     expect(n.isComplete('maths', 'm1'), isFalse);
     locked = false;

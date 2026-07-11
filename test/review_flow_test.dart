@@ -34,7 +34,10 @@ MentalApi reviewerApi({required bool pass}) => MentalApi(
         if (req.url.path == '/review/questions') {
           return http.Response(
               jsonEncode({
-                'questions': ['Explain eigenvalues à la Axler.', 'Apply rank-nullity.']
+                'questions': [
+                  'Explain eigenvalues à la Axler.',
+                  'Apply rank-nullity.'
+                ]
               }),
               200,
               headers: {'content-type': 'application/json'});
@@ -69,8 +72,8 @@ void main() {
   testWidgets('locked galaxy shows the banner; unlocked does not',
       (tester) async {
     phone(tester);
-    await tester.pumpWidget(
-        app(repoWithDueReview(), MentalApi(baseUrl: '', token: ''), const GalaxyScreen()));
+    await tester.pumpWidget(app(repoWithDueReview(),
+        MentalApi(baseUrl: '', token: ''), const GalaxyScreen()));
     await tester.pump(const Duration(milliseconds: 400));
     expect(find.textContaining('SKY LOCKED'), findsOneWidget);
 
@@ -83,8 +86,8 @@ void main() {
   testWidgets('quiz pass: interval climbs, sky unlocks', (tester) async {
     phone(tester);
     final repo = repoWithDueReview();
-    await tester.pumpWidget(
-        app(repo, reviewerApi(pass: true), const ReviewScreen()));
+    await tester
+        .pumpWidget(app(repo, reviewerApi(pass: true), const ReviewScreen()));
     await tester.pump(const Duration(milliseconds: 300));
 
     expect(find.textContaining('star demands review'), findsOneWidget);
@@ -95,8 +98,10 @@ void main() {
     expect(find.textContaining('Explain eigenvalues'), findsOneWidget);
     final fields = find.byType(TextField);
     expect(fields, findsNWidgets(2));
-    await tester.enterText(fields.at(0), 'Invariant subspaces replace determinants.');
-    await tester.enterText(fields.at(1), 'Kernel dimension revealed a hidden constraint.');
+    await tester.enterText(
+        fields.at(0), 'Invariant subspaces replace determinants.');
+    await tester.enterText(
+        fields.at(1), 'Kernel dimension revealed a hidden constraint.');
     await tester.pump();
     await tester.tap(find.text('SUBMIT ANSWERS'));
     await tester.pump();
@@ -114,8 +119,8 @@ void main() {
       (tester) async {
     phone(tester);
     final repo = repoWithDueReview();
-    await tester.pumpWidget(
-        app(repo, reviewerApi(pass: false), const ReviewScreen()));
+    await tester
+        .pumpWidget(app(repo, reviewerApi(pass: false), const ReviewScreen()));
     await tester.pump(const Duration(milliseconds: 300));
 
     await tester.tap(find.textContaining('BEGIN THE REVIEW'));

@@ -1,30 +1,22 @@
 # Mental — a constellation of lifetime mastery
 
 Skyrim-style skill trees for real life. The sky holds **4 stats** (Intelligence,
-Wisdom, Charisma, Dexterity) → **21 skills** → **495 mastery nodes**, each a star
-in that skill's constellation. Ignite a star by completing the work and writing a
-**mastery summary sheet**; the constellation lights up star by star until the
-crown — the skill's endgame (e.g. *"The One-Hour Memorised Recital"*).
+Wisdom, Charisma, Dexterity) → **22 skills** → **1,108 mastery stars**, each a
+star in that skill's constellation. Ignite a star by completing the work and
+writing a **mastery summary sheet**; the constellation lights up star by star
+until the crown — the skill's endgame (e.g. *"The One-Hour Memorised Recital"*).
 
-Every star spells out **THE WORK** — the exact instructions: named materials
-(with a free alternative wherever one exists), the method, the cadence, and the
-artifact to keep — plus a **completion standard** the Examiner judges against.
-`proof` is the standard; `guide` is the recipe.
-
-Every constellation is a **braid of parallel branches** (technique / theory /
-practice / craft) that can be worked simultaneously and all converge on a
-single crown — see `docs/curriculum/PARALLEL.md` for the five laws every tree
-obeys (parallel, self-achievable, proof-bearing, convergent, safe). Each star
-carries a **researched effort estimate** (FSI/HSK hour studies, CFA guidance,
-ABRSM norms): the full sky is **≈56,000 hours** of deliberate work — about 38
-years at four focused hours a day. `dart tool/analyze_catalog.dart` recomputes
-the whole analysis (critical paths, braid factors, choice breadth) without a
-Flutter toolchain → `docs/curriculum/ANALYSIS.md`.
-
-The 21 constellations: **INT** — Physics & Chem, Mathematics, Medicine,
-Engineering; **WIS** — Geography, History, Business, Social Science; **CHA** —
-English, Turkish, **Chinese** (Mandarin, HSK spine), Khmer, Music Theory,
-Piano, Singing; **DEX** — Drawing, Writing, Cooking, Mechanics, Memory, Karate.
+Every constellation is a **braid of 6–9 parallel branches** (technique / theory
+/ practice / craft / arena) that can be worked simultaneously and all converge
+on a single crown — see `docs/curriculum/PARALLEL.md` for the six laws every
+tree obeys (parallel, self-achievable, quest-bearing, convergent, safe, honest
+hours). Every star is a **quest**: a `guide` (what to do — the materials, the
+method, the route) and a `proof` (the completion standard the Examiner judges).
+Each carries a **researched effort estimate** (FSI/JLPT hour studies, CFA
+guidance, ABRSM norms): the full sky is **≈92,000 hours** of deliberate work —
+a lifetime, on purpose. `dart tool/analyze_catalog.dart` recomputes the whole
+analysis (critical paths, braid factors, choice breadth) without a Flutter
+toolchain → `docs/curriculum/ANALYSIS.md`.
 
 Native Flutter app, structured after `physical` (the sibling repo): local-first,
 Riverpod state, `shared_preferences` persistence, Codemagic → TestFlight.
@@ -34,25 +26,22 @@ Riverpod state, `shared_preferences` persistence, Codemagic → TestFlight.
 ```
 lib/
   data/
-    skill_data.dart            catalog models + laws; part files below hold the trees
-    catalog_int/wis/cha/dex.dart  the four stats' constellations (id/proof/hours/branch/guide)
-    repository.dart            NodeProgress + JournalEntry models, repo interfaces
+    skill_data.dart            catalog spine: re-exports the model, assembles the sky
+    catalog/model.dart         pure-Dart model + braidSkill (derived tiers + relaxation)
+    catalog/{int,wis,cha,dex}_skills.dart   the 1,058-star curriculum
+    repository.dart            NodeProgress model + repository interface
     persistent_repository.dart shared_preferences implementation
-    habit_ledger.dart          the advisor's memory: 365-day kept/missed digest
-    sync.dart                  Sky Link: keys, snapshots, conservative merge
+    transfer.dart              cross-device export/import (newer-wins merge)
   state/
     providers.dart             Riverpod: progress notifier + mastery/XP/level derivations
-    sync_controller.dart       Sky Link orchestration (pull → merge → push)
   ui/
-    galaxy_screen.dart         home sky: a tall drifting canvas (pan + pinch zoom)
+    galaxy_screen.dart         home sky: pannable/pinchable tall galaxy, 4 stat clusters
     constellation_screen.dart  one skill as a pan/zoom constellation (CustomPainter)
-    constellation_layout.dart  deterministic organic star layout (seeded per node)
-    node_sheet.dart            the quest sheet: road, briefing, standard, unlocks, rite
-    habit_ledger_sheet.dart    the Habit Ledger: every kept and missed action
-    sky_link_sheet.dart        Sky Link: forge/link keys, sync across devices
-    starfield.dart             animated night sky (cached static layer + twinkle + meteors)
+    constellation_layout.dart  branch-lane layout: each branch its own strand of sky
+    node_sheet.dart            the quest sheet: guide, proof, prereqs, unlocks, examiner
+    starfield.dart             animated night sky (keyed baked-picture cache + twinkle)
     theme.dart                 palette + Cinzel/Raleway variable fonts
-test/                          data integrity, progress rules, locks, merge laws, widget smoke
+test/                          data integrity, progress rules, locks, layout, widget flows
 tool/analyze_catalog.dart      pure-Dart catalog verifier + analytics generator
 Wisdom/                        legacy React prototype (reference only)
 ```
@@ -64,9 +53,10 @@ Wisdom/                        legacy React prototype (reference only)
   it costs); level 1–99 on a square-root curve — full sky = 99.
 - Extinguishing a star darkens every star that depended on it (summaries are kept).
 - Progress keys are `skillId.nodeId` (node ids repeat across trees, e.g. maths/mechanics `m1`).
-- Trees are braids, not chains: several branches stay workable at once, tiers
-  strictly increase along every edge, and every star lies on a path to its
-  tree's single crown (all enforced by `test/skill_data_test.dart`).
+- Trees are braids, not chains: 6–9 branches stay workable at once, tiers
+  strictly increase along every edge, no tier exceeds 7 stars, and every star
+  lies on a path to its tree's single crown (all enforced by
+  `test/skill_data_test.dart` and the CI catalog gate).
 
 ## The Examiner (stage 2)
 
@@ -76,7 +66,9 @@ with feedback. Pass → the star ignites **verified**, with the Examiner's note
 kept on the node. Fail → the feedback appears in the sheet and you revise and
 resubmit. No backend configured → honour-system ignition (stage-1 behaviour).
 Deploy: `backend/DEPLOY.md`; wire the app via `BACKEND_URL`/`APP_TOKEN` in
-`codemagic.yaml`.
+`codemagic.yaml`. Models are tiered: `GEMINI_MODEL` (chat replies, low
+thinking) and `GEMINI_MODEL_DEEP` (verdicts, grading, the nightly close — high
+thinking); both default to `gemini-3.5-flash`.
 
 ## The Review (stage 3)
 
@@ -89,7 +81,7 @@ falls a rung and returns tomorrow (a faced review always unlocks — lockout
 demands you show up, not that you ace it). Overdue stars gutter amber in their
 constellations; without a backend, reviews are self-attested on honour.
 
-## The Journal (stage 4) — and the Disciplined Advisor
+## The Journal (stage 4)
 
 The nightly closed loop. You talk the day through with the **Confidant**
 (`/journal/reply`) — it knows yesterday's action items and asks about
@@ -100,30 +92,30 @@ journal asks how they went. Once the habit has begun (first closed entry),
 a day without journaling **locks the sky the next morning** until today's
 session is closed. Without a backend: freeform entry + self-written actions.
 
-The Confidant is also a **disciplined habit advisor with a year of memory**.
-Every request carries the **habit ledger** (`lib/data/habit_ledger.dart`): a
-client-built digest of the last 365 days — every action kept or missed,
-each night's lesson, and the advisor's own past **rationale** — verbose for
-the recent weeks, monthly rollups beyond, hard-capped to match the backend.
-Closing the day is prescribed by iteration, not invention: *continuity*
-(evolve yesterday's list), *one notch up* after ~a week kept, *shrink what
-keeps failing* (never verbatim a third time, never silently dropped), *one
-new thing at a time* — and the advisor writes its reasoning down, which
-feeds back through the ledger the next night. The **Habit Ledger sheet**
-(journal header, or the galaxy menu) shows the same evidence: streaks,
-follow-through rate, and every day's checkmarks.
+**The advisor has memory.** The app ships up to **365 days of habit history**
+(every action, its done/not-done state, every reflection) with each call; the
+backend compiles it into a **habit ledger** — per-habit success rates, streak
+patterns, the last fortnight verbatim — and the close runs a progression
+doctrine: advance what succeeds (~80%+ → one notch harder), shrink what fails
+(3+ misses → a floor version or a new trigger), at most one new habit at a
+time. Every prescribed action carries a **why** ("hit 6/7 this week — stepping
+up"), shown beside its checkbox.
 
-## Sky Link (cross-device sync)
+## Cross-device progress
 
-Forge a **Sky Key** (galaxy menu → Sky Link), enter it on another device,
-and the two skies merge and stay in step. Every sync is pull → merge →
-push; the merge is a conservative union with tested laws — a lit star
-beats a dark one, an offline-drafted sheet survives, the higher review
-rung carries the schedule, a closed journal day beats an open one, and a
-tick given anywhere stays given. The server (`/sync/*`) stores one opaque
-snapshot per key, only ever sees the key's SHA-256, and sits behind the
-same APP_TOKEN as everything else. Losing the key means minting a new sky
-— no accounts, nothing to phish, nothing to recover.
+**Sky Link (server sync):** `⋮ → Sky Link` mints a 24-character Sky Key on
+one device; enter it on another and every sync is pull → merge → push against
+the backend's `/sync` blob store (the server only ever sees the key's SHA-256;
+snapshots merge conservatively — nothing lit or written is ever lost). Set
+`SYNC_DB` on the backend (see `backend/DEPLOY.md`).
+
+**Clipboard transfer (no backend needed):** `⋮ → Export sky to clipboard` serialises everything (progress + journal) to a
+JSON blob; paste it into `⋮ → Import sky from clipboard` on the other device.
+Import **merges** — per star and per journal day the newer record wins, and a
+lit star never goes dark — so you can carry the sky phone ↔ phone ↔ desktop
+without accounts. (Real sign-in sync would follow `physical`'s JWT + Postgres
+pattern on the backend; the transfer format in `lib/data/transfer.dart` is the
+migration path.)
 
 ## Roadmap
 
@@ -131,9 +123,8 @@ same APP_TOKEN as everything else. Losing the key means minting a new sky
 2. **Stage 2 (done)** — the AI Examiner verifies summary sheets before a star may ignite.
 3. **Stage 3 (done)** — spaced-repetition reviews with AI quizzes; overdue reviews lock the sky.
 4. **Stage 4 (done)** — daily closed-loop AI journal → 1–3 next-day actions; skipping locks the sky.
-5. **Stage 5 (this)** — the Disciplined Advisor (365-day habit ledger + rationale memory),
-   Sky Link cross-device sync, the tall drifting home sky, quest briefings on every star,
-   per-role Gemini models (`GEMINI_MODEL` / `GEMINI_JOURNAL_MODEL`, default `gemini-3.5-flash`).
+5. **Stage 5 (this)** — the Grand Braid: 1,058-star quest catalog, habit-ledger
+   advisor, pannable galaxy, cross-device transfer.
 
 ## Build
 

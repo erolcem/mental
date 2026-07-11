@@ -10,16 +10,20 @@ class Settings:
     # Gemini (Google AI Studio key) — same ecosystem as physical's coach.
     gemini_api_key: str = os.environ.get("GEMINI_API_KEY", "")
 
-    # The graders (Examiner verdicts, Reviewer quizzes). gemini-3.5-flash is
-    # the stable price/strength sweet spot on the paid tier (2026-07); short
-    # verdict-sized outputs keep its cost pennies-per-month at one user.
+    # Two model tiers (both default to the GA frontier flash, which is strong
+    # AND cheap; ~$1.50/$9 per M tokens as of mid-2026):
+    #  - CHAT: conversational journal replies — latency matters, depth less.
+    #  - DEEP: examiner verdicts, review grading, the nightly close/advisor —
+    #    the calls whose judgement quality IS the product. Override
+    #    GEMINI_MODEL_DEEP=gemini-3.1-pro for maximum judgement at ~2.5× cost.
     gemini_model: str = os.environ.get("GEMINI_MODEL", "gemini-3.5-flash")
+    gemini_model_deep: str = os.environ.get(
+        "GEMINI_MODEL_DEEP", os.environ.get("GEMINI_MODEL", "gemini-3.5-flash"))
 
-    # The Confidant/advisor — the nightly journal that reasons over a year of
-    # habit history. Defaults to the grader model; set GEMINI_JOURNAL_MODEL
-    # (e.g. gemini-3.1-pro) to give the advisor a bigger brain without
-    # touching grading costs.
-    gemini_journal_model: str = os.environ.get("GEMINI_JOURNAL_MODEL", "")
+    # Thinking effort per tier (Gemini 3+ `thinkingLevel`; older 2.5 models
+    # fall back automatically — see gemini.py's degradation ladder).
+    gemini_thinking_chat: str = os.environ.get("GEMINI_THINKING_CHAT", "low")
+    gemini_thinking_deep: str = os.environ.get("GEMINI_THINKING_DEEP", "high")
 
     # Shared bearer token. The Flutter app ships it via --dart-define and the
     # backend rejects requests without it. This keeps drive-by abuse off the

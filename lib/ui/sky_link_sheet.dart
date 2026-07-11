@@ -46,11 +46,10 @@ class _SkyLinkSheetState extends ConsumerState<_SkyLinkSheet> {
     final api = ref.watch(apiProvider);
 
     return Padding(
-      padding:
-          EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
+      padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
       child: Container(
-        constraints: BoxConstraints(
-            maxHeight: MediaQuery.sizeOf(context).height * 0.8),
+        constraints:
+            BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * 0.8),
         decoration: BoxDecoration(
           color: const Color(0xF20B0E22),
           borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
@@ -117,8 +116,7 @@ class _SkyLinkSheetState extends ConsumerState<_SkyLinkSheet> {
             shape:
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),
-          onPressed: () =>
-              ref.read(syncControllerProvider.notifier).forgeKey(),
+          onPressed: () => ref.read(syncControllerProvider.notifier).forgeKey(),
           child: Text('✦  FORGE A NEW SKY KEY',
               style: cinzel(12, weight: 700, color: kSpaceBlack)),
         ),
@@ -135,8 +133,7 @@ class _SkyLinkSheetState extends ConsumerState<_SkyLinkSheet> {
         textCapitalization: TextCapitalization.characters,
         decoration: InputDecoration(
           hintText: 'XXXX-XXXX-XXXX-XXXX-XXXX-XXXX',
-          hintStyle:
-              raleway(11, color: Colors.white.withValues(alpha: 0.2)),
+          hintStyle: raleway(11, color: Colors.white.withValues(alpha: 0.2)),
           errorText: _linkError,
           filled: true,
           fillColor: Colors.white.withValues(alpha: 0.05),
@@ -200,7 +197,9 @@ class _SkyLinkSheetState extends ConsumerState<_SkyLinkSheet> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(prettySkyKey(sync.key),
-                  style: raleway(13, weight: 600, spacing: 1.2,
+                  style: raleway(13,
+                      weight: 600,
+                      spacing: 1.2,
                       color: Colors.white.withValues(alpha: 0.9))),
               const SizedBox(height: 4),
               Text(_copied ? 'COPIED ✓' : 'TAP TO COPY',

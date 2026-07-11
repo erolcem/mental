@@ -42,9 +42,9 @@ MentalApi _failingExaminer() => MentalApi(
               'confidence': 0.86,
               'feedback':
                   'You describe finishing Dummit & Foote but name no actual '
-                  'structures — which groups did you classify, and what made '
-                  'the Sylow theorems click for you? Show one proof you are '
-                  'proud of.',
+                      'structures — which groups did you classify, and what made '
+                      'the Sylow theorems click for you? Show one proof you are '
+                      'proud of.',
             }),
             200,
             headers: {'content-type': 'application/json'});
@@ -170,9 +170,11 @@ void main() {
     overrides: [
       repositoryProvider.overrideWithValue(repo),
       journalRepositoryProvider.overrideWithValue(journalRepo),
-      if (_preview == 'verify') apiProvider.overrideWithValue(_failingExaminer()),
+      if (_preview == 'verify')
+        apiProvider.overrideWithValue(_failingExaminer()),
       if (_preview == 'review') apiProvider.overrideWithValue(_fakeReviewer()),
-      if (_preview == 'journal') apiProvider.overrideWithValue(_fakeConfidant()),
+      if (_preview == 'journal')
+        apiProvider.overrideWithValue(_fakeConfidant()),
     ],
     child: MaterialApp(
       title: 'Mental (preview)',

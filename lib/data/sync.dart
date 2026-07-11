@@ -111,8 +111,7 @@ JournalEntry mergeDay(JournalEntry local, JournalEntry remote) {
   if (local.closed && remote.closed) {
     // Same night closed on two devices (rare): later close wins the words,
     // but a tick given on EITHER device stays given.
-    final winner =
-        remote.closedAt!.isAfter(local.closedAt!) ? remote : local;
+    final winner = remote.closedAt!.isAfter(local.closedAt!) ? remote : local;
     final other = identical(winner, local) ? remote : local;
     final doneByText = {
       for (final a in other.actions)
@@ -198,9 +197,8 @@ class PrefsSyncKeyStore implements SyncKeyStore {
   @override
   String get key => _prefs.getString(_kKey) ?? '';
   @override
-  set key(String v) => v.isEmpty
-      ? _prefs.remove(_kKey)
-      : _prefs.setString(_kKey, v);
+  set key(String v) =>
+      v.isEmpty ? _prefs.remove(_kKey) : _prefs.setString(_kKey, v);
 
   @override
   DateTime? get lastSync {

@@ -56,7 +56,7 @@ void verify(Skill skill) {
   final ids = skill.tree.map((n) => n.id).toSet();
   check(ids.length == skill.tree.length, 'duplicate node id in ${skill.id}');
   final byId = {for (final n in skill.tree) n.id: n};
-  check(skill.branches.length >= 5,
+  check(skill.branches.length >= 6,
       '${skill.id} names only ${skill.branches.length} branches — not a braid');
   for (final n in skill.tree) {
     check(n.tier >= 1, '${skill.id}.${n.id} tier < 1');
@@ -64,6 +64,8 @@ void verify(Skill skill) {
     check(n.branch.isNotEmpty, '${skill.id}.${n.id} belongs to no branch');
     check(n.proof.length >= 24,
         '${skill.id}.${n.id} has a thin completion standard: "${n.proof}"');
+    check(n.guide.length >= 24,
+        '${skill.id}.${n.id} has a thin quest guide: "${n.guide}"');
     for (final r in n.requires) {
       check(ids.contains(r), '${skill.id}.${n.id} requires missing $r');
       if (byId[r] != null) {
@@ -116,10 +118,10 @@ void verify(Skill skill) {
       });
   for (final n in skill.tree) {
     for (final r in n.requires) {
-      final implied = n.requires
-          .where((o) => o != r && ancestors(o).contains(r))
-          .toList();
-      check(implied.isEmpty,
+      final implied =
+          n.requires.where((o) => o != r && ancestors(o).contains(r)).toList();
+      check(
+          implied.isEmpty,
           '${skill.id}.${n.id}: requiring $r is redundant — already implied '
           'via ${implied.join(', ')}');
     }
@@ -130,12 +132,13 @@ void verify(Skill skill) {
     widths[n.tier] = (widths[n.tier] ?? 0) + 1;
   }
   widths.forEach(
-      (t, w) => check(w <= 5, '${skill.id} tier $t crowds the layout ($w)'));
+      (t, w) => check(w <= 7, '${skill.id} tier $t crowds the layout ($w)'));
   check(widths.values.where((w) => w >= 2).length >= 4,
       '${skill.id} is chain-shaped');
   check(widths.values.where((w) => w >= 3).isNotEmpty,
       '${skill.id} never opens 3 stars at once');
-  check(skill.tree.length >= 16, '${skill.id} is too small');
+  check(skill.tree.length >= 50,
+      '${skill.id} has ${skill.tree.length} stars — a mastery braid needs 50+');
 }
 
 SkillReport analyze(StatDomain stat, Skill skill) {
@@ -149,9 +152,10 @@ SkillReport analyze(StatDomain stat, Skill skill) {
   final placed = <String>{};
   var remaining = List.of(skill.tree);
   while (remaining.isNotEmpty) {
-    final ready =
-        remaining.where((n) => n.requires.every(placed.contains)).toList()
-          ..sort((a, b) => a.id.compareTo(b.id));
+    final ready = remaining
+        .where((n) => n.requires.every(placed.contains))
+        .toList()
+      ..sort((a, b) => a.id.compareTo(b.id));
     topo.addAll(ready);
     placed.addAll(ready.map((n) => n.id));
     remaining = remaining.where((n) => !placed.contains(n.id)).toList();
@@ -181,11 +185,10 @@ SkillReport analyze(StatDomain stat, Skill skill) {
   final sizes = <int>[];
   while (lit.length < skill.tree.length) {
     final open = skill.tree
-        .where((n) =>
-            !lit.contains(n.id) && n.requires.every(lit.contains))
+        .where((n) => !lit.contains(n.id) && n.requires.every(lit.contains))
         .toList()
-      ..sort((a, b) =>
-          a.tier != b.tier ? a.tier - b.tier : a.id.compareTo(b.id));
+      ..sort(
+          (a, b) => a.tier != b.tier ? a.tier - b.tier : a.id.compareTo(b.id));
     sizes.add(open.length);
     lit.add(open.first.id);
   }
@@ -223,8 +226,7 @@ void main(List<String> args) {
     for (final stat in catalog)
       for (final skill in stat.skills) analyze(stat, skill)
   ];
-  final totalHours =
-      reports.fold(0, (s, r) => s + r.skill.totalHours);
+  final totalHours = reports.fold(0, (s, r) => s + r.skill.totalHours);
   final totalXp = reports.fold(0, (s, r) => s + r.xp);
 
   final heaviest = [
@@ -259,13 +261,21 @@ void main(List<String> args) {
 
 **$totalHours hours of deliberate work** separate a dark sky from a full one —
 ≈ ${fmt(totalHours / (4 * 365), 0)} years at four focused hours a day, a
-five-fold Gladwell. XP is effort-weighted (XP = hours + tier × 10) so a star
+${fmt(totalHours / 10000, 1)}-fold Gladwell. XP is effort-weighted (XP = hours + tier × 10) so a star
 pays what it costs; the level curve (level = 1 + 98·√(xp/max)) pays out fast
 early and slow late:
 
 | sky completed (XP) | 1% | 5% | 10% | 25% | 50% | 75% | 100% |
 |---|---|---|---|---|---|---|---|
-| level | ${[0.01, 0.05, 0.10, 0.25, 0.50, 0.75, 1.0].map((f) => levelForXp((totalXp * f).round(), totalXp)).join(' | ')} |
+| level | ${[
+    0.01,
+    0.05,
+    0.10,
+    0.25,
+    0.50,
+    0.75,
+    1.0
+  ].map((f) => levelForXp((totalXp * f).round(), totalXp)).join(' | ')} |
 
 ## Per constellation
 
@@ -320,7 +330,12 @@ whole sky takes:
 
 | pace | 10 h/wk | 20 h/wk | 28 h/wk | 40 h/wk |
 |---|---|---|---|---|
-| full sky | ${[10, 20, 28, 40].map((w) => '${fmt(totalHours / (w * 52), 1)} yrs').join(' | ')} |
+| full sky | ${[
+    10,
+    20,
+    28,
+    40
+  ].map((w) => '${fmt(totalHours / (w * 52), 1)} yrs').join(' | ')} |
 
 Single-constellation crowns at a focused 10 h/week:
 

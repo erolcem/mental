@@ -53,12 +53,10 @@ class HabitStats {
 
 /// Closed entries strictly BEFORE today (tonight's open session is not yet
 /// evidence), inside the window, most recent first.
-List<JournalEntry> ledgerDays(
-    Map<String, JournalEntry> entries, DateTime now,
+List<JournalEntry> ledgerDays(Map<String, JournalEntry> entries, DateTime now,
     {int windowDays = 365}) {
   final today = dayKey(now);
-  final cutoff =
-      dayKey(DateTime(now.year, now.month, now.day - windowDays));
+  final cutoff = dayKey(DateTime(now.year, now.month, now.day - windowDays));
   final days = [
     for (final e in entries.values)
       if (e.closed &&

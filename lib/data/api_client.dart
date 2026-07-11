@@ -41,10 +41,10 @@ class ReviewGrade {
 /// The Confidant's distillation of a closed journal session.
 class JournalCloseResult {
   final List<String> actions; // 1–3 next-day items
+  final List<String> whys; // index-aligned evidence for each action
   final String reflection;
-  final String rationale; // the advisor's evidence-citing reasoning
   const JournalCloseResult(
-      {required this.actions, required this.reflection, this.rationale = ''});
+      {required this.actions, this.whys = const [], required this.reflection});
 }
 
 class MentalApi {
@@ -52,7 +52,8 @@ class MentalApi {
   final String token;
   final http.Client _client;
 
-  MentalApi({this.baseUrl = kBackendUrl, this.token = kAppToken, http.Client? client})
+  MentalApi(
+      {this.baseUrl = kBackendUrl, this.token = kAppToken, http.Client? client})
       : _client = client ?? http.Client();
 
   /// False when the app was built without a BACKEND_URL — the sky then runs
@@ -138,13 +139,13 @@ class MentalApi {
     );
   }
 
-  /// One conversational turn from the Confidant. [history] is the habit
-  /// ledger digest — the advisor's memory of what was actually done.
+  /// One conversational turn from the Confidant. [history] is the advisor's
+  /// memory: up to a year of closed days ({day, actions, reflection}).
   Future<String> journalReply({
     required String day,
     required List<Map<String, String>> transcript, // {role, text}
     required List<Map<String, dynamic>> yesterdayActions, // {text, done}
-    String history = '',
+    List<Map<String, dynamic>> history = const [],
   }) async {
     final j = await _post('/journal/reply', {
       'day': day,
@@ -155,13 +156,13 @@ class MentalApi {
     return (j['reply'] as String?) ?? '';
   }
 
-  /// Close tonight's session → 1–3 next-day actions + reflection + the
-  /// advisor's rationale (kept as its memory for future iterations).
+  /// Close tonight's session → 1–3 next-day actions (each with the advisor's
+  /// why) + a reflection.
   Future<JournalCloseResult> journalClose({
     required String day,
     required List<Map<String, String>> transcript,
     required List<Map<String, dynamic>> yesterdayActions,
-    String history = '',
+    List<Map<String, dynamic>> history = const [],
   }) async {
     final j = await _post('/journal/close', {
       'day': day,
@@ -171,8 +172,8 @@ class MentalApi {
     });
     return JournalCloseResult(
       actions: [for (final a in (j['actions'] as List? ?? [])) a.toString()],
+      whys: [for (final w in (j['whys'] as List? ?? [])) w.toString()],
       reflection: (j['reflection'] as String?) ?? '',
-      rationale: (j['rationale'] as String?) ?? '',
     );
   }
 
@@ -202,7 +203,8 @@ class MentalApi {
     );
   }
 
-  Future<Map<String, dynamic>> _post(String path, Map<String, dynamic> body) async {
+  Future<Map<String, dynamic>> _post(
+      String path, Map<String, dynamic> body) async {
     final http.Response r;
     try {
       r = await _client
@@ -221,7 +223,9 @@ class MentalApi {
     if (r.statusCode != 200) {
       String detail = r.body;
       try {
-        detail = (jsonDecode(r.body) as Map<String, dynamic>)['detail']?.toString() ?? r.body;
+        detail = (jsonDecode(r.body) as Map<String, dynamic>)['detail']
+                ?.toString() ??
+            r.body;
       } catch (_) {}
       throw ApiException(detail, r.statusCode);
     }

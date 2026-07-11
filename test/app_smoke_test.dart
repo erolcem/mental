@@ -51,7 +51,7 @@ void main() {
 
     expect(find.text('Prove and Publish an Original Theorem'), findsOneWidget);
     // The polished header shows a star count + a mastery ring.
-    expect(find.text('STARS LIT'), findsOneWidget);
+    expect(find.textContaining('STARS LIT'), findsOneWidget);
   });
 
   testWidgets('igniting a root star updates mastery and persists',

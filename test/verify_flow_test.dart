@@ -76,7 +76,11 @@ void main() {
   testWidgets('fail: feedback panel shows, star stays dark', (tester) async {
     final repo = InMemoryProgressRepository();
     final api = scriptedApi([
-      {'verdict': 'fail', 'confidence': 0.9, 'feedback': 'Name the theorems you proved.'}
+      {
+        'verdict': 'fail',
+        'confidence': 0.9,
+        'feedback': 'Name the theorems you proved.'
+      }
     ]);
     final container = await pumpSheet(tester, api, repo);
 
@@ -93,7 +97,9 @@ void main() {
     expect(find.text('Name the theorems you proved.'), findsOneWidget);
     expect(find.textContaining('RESUBMIT'), findsOneWidget);
     expect(
-        container.read(progressProvider)[progressKey('maths', 'm1')]?.complete ??
+        container
+                .read(progressProvider)[progressKey('maths', 'm1')]
+                ?.complete ??
             false,
         isFalse);
   });
@@ -102,7 +108,11 @@ void main() {
       (tester) async {
     final repo = InMemoryProgressRepository();
     final api = scriptedApi([
-      {'verdict': 'pass', 'confidence': 0.95, 'feedback': 'Specific and convincing.'}
+      {
+        'verdict': 'pass',
+        'confidence': 0.95,
+        'feedback': 'Specific and convincing.'
+      }
     ]);
     final container = await pumpSheet(tester, api, repo);
 

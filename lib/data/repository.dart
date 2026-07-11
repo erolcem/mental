@@ -74,7 +74,8 @@ class NodeProgress {
       };
 
   static NodeProgress fromJson(Map<String, dynamic> j) => NodeProgress(
-        completedAt: j['c'] == null ? null : DateTime.tryParse(j['c'] as String),
+        completedAt:
+            j['c'] == null ? null : DateTime.tryParse(j['c'] as String),
         summary: (j['s'] as String?) ?? '',
         verifiedAt: j['v'] == null ? null : DateTime.tryParse(j['v'] as String),
         examinerNote: (j['n'] as String?) ?? '',
@@ -104,11 +105,17 @@ class JournalTurn {
 class ActionItem {
   final String text;
   final bool done;
-  const ActionItem(this.text, {this.done = false});
-  ActionItem toggled() => ActionItem(text, done: !done);
-  Map<String, dynamic> toJson() => {'t': text, if (done) 'd': true};
+
+  /// The advisor's evidence for prescribing this action ("hit 6/7 this week —
+  /// stepping up"). Shown beside the checkbox; teaches the method.
+  final String why;
+  const ActionItem(this.text, {this.done = false, this.why = ''});
+  ActionItem toggled() => ActionItem(text, done: !done, why: why);
+  Map<String, dynamic> toJson() =>
+      {'t': text, if (done) 'd': true, if (why.isNotEmpty) 'w': why};
   static ActionItem fromJson(Map<String, dynamic> j) =>
-      ActionItem((j['t'] as String?) ?? '', done: j['d'] == true);
+      ActionItem((j['t'] as String?) ?? '',
+          done: j['d'] == true, why: (j['w'] as String?) ?? '');
 }
 
 /// One day's journal: the conversation, and the 1–3 actions it distilled for
@@ -181,8 +188,7 @@ class JournalEntry {
 String dayKey(DateTime t) =>
     '${t.year.toString().padLeft(4, '0')}-${t.month.toString().padLeft(2, '0')}-${t.day.toString().padLeft(2, '0')}';
 
-String yesterdayKey(DateTime t) =>
-    dayKey(DateTime(t.year, t.month, t.day - 1));
+String yesterdayKey(DateTime t) => dayKey(DateTime(t.year, t.month, t.day - 1));
 
 abstract class JournalRepository {
   /// All entries keyed by local day (yyyy-mm-dd).

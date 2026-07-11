@@ -98,5 +98,5 @@ def examine(*, stat: str, skill: str, goal: str, node: str, tier: int,
     turn = build_user_turn(stat=stat, skill=skill, goal=goal, node=node,
                            tier=tier, prerequisites=prerequisites,
                            summary=summary, proof=proof)
-    reply = gen(SYSTEM_PROMPT, [{"role": "user", "text": turn}])
+    reply = gen(SYSTEM_PROMPT, [{"role": "user", "text": turn}], effort="deep")
     return parse_verdict(reply)

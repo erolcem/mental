@@ -190,8 +190,7 @@ class _HabitLedgerSheet extends ConsumerWidget {
             const SizedBox(height: 4),
             Text('“${entry.reflection}”',
                 style: raleway(9,
-                    height: 1.4,
-                    color: Colors.white.withValues(alpha: 0.35))),
+                    height: 1.4, color: Colors.white.withValues(alpha: 0.35))),
           ],
         ],
       ),
@@ -203,8 +202,18 @@ class _HabitLedgerSheet extends ConsumerWidget {
     if (d == null) return day;
     const wk = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
     const mo = [
-      'JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN',
-      'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'
+      'JAN',
+      'FEB',
+      'MAR',
+      'APR',
+      'MAY',
+      'JUN',
+      'JUL',
+      'AUG',
+      'SEP',
+      'OCT',
+      'NOV',
+      'DEC'
     ];
     return '${wk[d.weekday - 1]} ${d.day} ${mo[d.month - 1]}';
   }

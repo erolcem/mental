@@ -41,8 +41,7 @@ _Figure _figure(String skillId, Size box) {
       heading += _randIn(skillId, i * 3, 0.55, 1.75) *
           (_rand(skillId, i * 3 + 1) > 0.5 ? 1 : -1);
       final len = _randIn(skillId, i * 3 + 2, 0.8, 1.35);
-      pts.add(pts.last +
-          Offset(math.cos(heading), math.sin(heading)) * len);
+      pts.add(pts.last + Offset(math.cos(heading), math.sin(heading)) * len);
     }
     final links = <(int, int)>[for (var i = 0; i < n - 1; i++) (i, i + 1)];
     // ~40% of figures grow a spur off an interior star (fork shapes).
@@ -64,7 +63,8 @@ _Figure _figure(String skillId, Size box) {
     }
     final w = math.max(maxX - minX, 0.001), h = math.max(maxY - minY, 0.001);
     final scale = math.min((box.width - 10) / w, (box.height - 10) / h);
-    final offX = (box.width - w * scale) / 2, offY = (box.height - h * scale) / 2;
+    final offX = (box.width - w * scale) / 2,
+        offY = (box.height - h * scale) / 2;
     return _Figure(
       [
         for (final p in pts)
@@ -107,9 +107,8 @@ class _AsterismPainter extends CustomPainter {
     final fig = _figure(skillId, size);
     final n = fig.stars.length;
     // Any progress at all lights the first star — a begun skill must glow.
-    final lit = mastery <= 0
-        ? 0
-        : math.max(1, (mastery * n).round()).clamp(0, n);
+    final lit =
+        mastery <= 0 ? 0 : math.max(1, (mastery * n).round()).clamp(0, n);
 
     // Figure lines: bright between lit stars, ghostly otherwise.
     for (final (a, b) in fig.links) {
@@ -144,8 +143,10 @@ class _AsterismPainter extends CustomPainter {
           final glint = Paint()
             ..color = Colors.white.withValues(alpha: 0.65)
             ..strokeWidth = 0.7;
-          canvas.drawLine(p - Offset(5 * mag, 0), p + Offset(5 * mag, 0), glint);
-          canvas.drawLine(p - Offset(0, 5 * mag), p + Offset(0, 5 * mag), glint);
+          canvas.drawLine(
+              p - Offset(5 * mag, 0), p + Offset(5 * mag, 0), glint);
+          canvas.drawLine(
+              p - Offset(0, 5 * mag), p + Offset(0, 5 * mag), glint);
         }
       } else {
         canvas.drawCircle(p, 1.1 * mag,

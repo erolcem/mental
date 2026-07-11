@@ -89,8 +89,7 @@ void main() {
     expect(p(n, 'm1').nextReviewAt, isNotNull);
   });
 
-  test('backfill gives pre-review stars a schedule from now, not ignition',
-      () {
+  test('backfill gives pre-review stars a schedule from now, not ignition', () {
     final repo = InMemoryProgressRepository();
     // A star ignited "months ago" by the stage-1 build: no schedule fields.
     repo.save(progressKey('maths', 'm1'),
@@ -102,10 +101,9 @@ void main() {
     expect(skyLocked(repo.load(), now), isFalse,
         reason: 'upgrade must not greet the user with a lockout');
     // Idempotent: running again must not push the date further out.
-    backfillReviewSchedules(repo,
-        now: now.add(const Duration(days: 1)));
-    expect(repo.load()[progressKey('maths', 'm1')]!.nextReviewAt,
-        np.nextReviewAt);
+    backfillReviewSchedules(repo, now: now.add(const Duration(days: 1)));
+    expect(
+        repo.load()[progressKey('maths', 'm1')]!.nextReviewAt, np.nextReviewAt);
   });
 
   test('review fields survive the JSON round-trip', () {
