@@ -24,8 +24,8 @@ final apiProvider = Provider<MentalApi>((ref) => MentalApi());
 final progressProvider =
     StateNotifierProvider<ProgressNotifier, Map<String, NodeProgress>>((ref) =>
         ProgressNotifier(ref.watch(repositoryProvider),
-            extraLock: () => journalOverdue(
-                ref.read(journalProvider), DateTime.now())));
+            extraLock: () =>
+                journalOverdue(ref.read(journalProvider), DateTime.now())));
 
 class ProgressNotifier extends StateNotifier<Map<String, NodeProgress>> {
   final ProgressRepository repo;
@@ -74,8 +74,7 @@ class ProgressNotifier extends StateNotifier<Map<String, NodeProgress>> {
     final p = _get(key);
     if (!p.complete) return;
     final t = now ?? DateTime.now();
-    final stage =
-        (p.reviewStage + 1).clamp(0, kReviewIntervalDays.length - 1);
+    final stage = (p.reviewStage + 1).clamp(0, kReviewIntervalDays.length - 1);
     _write(
         key,
         p.copyWith(
@@ -94,7 +93,8 @@ class ProgressNotifier extends StateNotifier<Map<String, NodeProgress>> {
     _write(
         key,
         p.copyWith(
-            reviewStage: (p.reviewStage - 1).clamp(0, kReviewIntervalDays.length - 1),
+            reviewStage:
+                (p.reviewStage - 1).clamp(0, kReviewIntervalDays.length - 1),
             nextReviewAt: t.add(const Duration(days: kFailedReviewRetryDays))));
   }
 
@@ -140,9 +140,9 @@ class ProgressNotifier extends StateNotifier<Map<String, NodeProgress>> {
     return darkened.where((id) => isComplete(skill.id, id)).length;
   }
 
-  void saveSummary(Skill skill, SkillNode node, String text) =>
-      _write(progressKey(skill.id, node.id),
-          _get(progressKey(skill.id, node.id)).copyWith(summary: text));
+  void saveSummary(Skill skill, SkillNode node, String text) => _write(
+      progressKey(skill.id, node.id),
+      _get(progressKey(skill.id, node.id)).copyWith(summary: text));
 
   /// Cross-device import: merge an exported sky into this one (see
   /// data/transfer.dart for the newer-record-wins rules) and persist it all.
@@ -198,8 +198,7 @@ class JournalNotifier extends StateNotifier<Map<String, JournalEntry>> {
   final JournalRepository repo;
   JournalNotifier(this.repo) : super(repo.loadJournal());
 
-  JournalEntry entryFor(String day) =>
-      state[day] ?? JournalEntry(day: day);
+  JournalEntry entryFor(String day) => state[day] ?? JournalEntry(day: day);
 
   void save(JournalEntry entry) {
     repo.saveJournalEntry(entry);
@@ -250,8 +249,8 @@ bool journalOverdue(Map<String, JournalEntry> entries, DateTime now) {
   return closedDays.last.compareTo(yesterdayKey(now)) < 0;
 }
 
-final journalOverdueProvider = Provider<bool>((ref) =>
-    journalOverdue(ref.watch(journalProvider), DateTime.now()));
+final journalOverdueProvider = Provider<bool>(
+    (ref) => journalOverdue(ref.watch(journalProvider), DateTime.now()));
 
 /// Whether tonight's session is already closed.
 final journaledTodayProvider = Provider<bool>((ref) =>
@@ -332,7 +331,8 @@ List<DueReview> dueReviews(Map<String, NodeProgress> progress, DateTime now) {
       }
     }
   }
-  due.sort((a, b) => a.progress.nextReviewAt!.compareTo(b.progress.nextReviewAt!));
+  due.sort(
+      (a, b) => a.progress.nextReviewAt!.compareTo(b.progress.nextReviewAt!));
   return due;
 }
 
@@ -363,10 +363,12 @@ void backfillReviewSchedules(ProgressRepository repo, {DateTime? now}) {
 // ---------------------------------------------------------------------------
 // Derived views (pure functions of the progress map — cheap at this scale).
 
-bool nodeComplete(Map<String, NodeProgress> progress, String skillId, String nodeId) =>
+bool nodeComplete(
+        Map<String, NodeProgress> progress, String skillId, String nodeId) =>
     progress[progressKey(skillId, nodeId)]?.complete ?? false;
 
-bool nodeUnlocked(Map<String, NodeProgress> progress, Skill skill, SkillNode node) =>
+bool nodeUnlocked(
+        Map<String, NodeProgress> progress, Skill skill, SkillNode node) =>
     node.requires.every((r) => nodeComplete(progress, skill.id, r));
 
 /// Fraction of a skill's stars that are lit.
@@ -380,7 +382,9 @@ double skillMastery(Map<String, NodeProgress> progress, Skill skill) {
 /// Equal-weight average of the stat's skill masteries (matches the prototype).
 double statMastery(Map<String, NodeProgress> progress, StatDomain stat) {
   if (stat.skills.isEmpty) return 0;
-  return stat.skills.map((sk) => skillMastery(progress, sk)).reduce((a, b) => a + b) /
+  return stat.skills
+          .map((sk) => skillMastery(progress, sk))
+          .reduce((a, b) => a + b) /
       stat.skills.length;
 }
 

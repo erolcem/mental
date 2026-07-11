@@ -50,7 +50,8 @@ class _HonourCloseDialogState extends State<_HonourCloseDialog> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('The Confidant is offline — set 1–3 concrete actions yourself.',
+            Text(
+                'The Confidant is offline — set 1–3 concrete actions yourself.',
                 style: raleway(11, color: Colors.white54)),
             const SizedBox(height: 10),
             for (final c in _controllers)
@@ -247,64 +248,73 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
     final userSpoke = e.transcript.any((t) => t.role == 'user');
 
     return Scaffold(
+      // The sky must NOT resize with the keyboard: every resized frame would
+      // re-bake the starfield picture (the iPhone crash). The composer pads
+      // itself by the keyboard inset instead.
+      resizeToAvoidBottomInset: false,
       body: Stack(
         fit: StackFit.expand,
         children: [
           const Starfield(nebulae: [kJournalViolet], starCount: 1200),
           SafeArea(
-            child: Column(
-              children: [
-                _header(e),
-                if (!api.configured)
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(18, 4, 18, 0),
-                    child: Text(
-                      '⚠ CONFIDANT OFFLINE — this build has no BACKEND_URL. '
-                      'In Codemagic, the variables must live in a group the '
-                      'workflow imports (see backend/DEPLOY.md).',
-                      style: raleway(8.5,
-                          color: const Color(0xFFFFC46B).withValues(alpha: 0.8),
-                          height: 1.5),
+            child: Padding(
+              padding: EdgeInsets.only(
+                  bottom: MediaQuery.viewInsetsOf(context).bottom),
+              child: Column(
+                children: [
+                  _header(e),
+                  if (!api.configured)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(18, 4, 18, 0),
+                      child: Text(
+                        '⚠ CONFIDANT OFFLINE — this build has no BACKEND_URL. '
+                        'In Codemagic, the variables must live in a group the '
+                        'workflow imports (see backend/DEPLOY.md).',
+                        style: raleway(8.5,
+                            color:
+                                const Color(0xFFFFC46B).withValues(alpha: 0.8),
+                            height: 1.5),
+                      ),
                     ),
-                  ),
-                Expanded(
-                  child: e.closed
-                      ? _closedView(e)
-                      : ListView(
-                          controller: _scroll,
-                          keyboardDismissBehavior:
-                              ScrollViewKeyboardDismissBehavior.onDrag,
-                          padding: const EdgeInsets.fromLTRB(18, 10, 18, 10),
-                          children: [
-                            for (final t in e.transcript) _bubble(t),
-                            if (_aiThinking)
-                              Padding(
-                                padding: const EdgeInsets.all(12),
-                                child: Row(children: [
-                                  const SizedBox(
-                                      width: 12,
-                                      height: 12,
-                                      child: CircularProgressIndicator(
-                                          strokeWidth: 1.5)),
-                                  const SizedBox(width: 10),
-                                  Text('The Confidant considers…',
+                  Expanded(
+                    child: e.closed
+                        ? _closedView(e)
+                        : ListView(
+                            controller: _scroll,
+                            keyboardDismissBehavior:
+                                ScrollViewKeyboardDismissBehavior.onDrag,
+                            padding: const EdgeInsets.fromLTRB(18, 10, 18, 10),
+                            children: [
+                              for (final t in e.transcript) _bubble(t),
+                              if (_aiThinking)
+                                Padding(
+                                  padding: const EdgeInsets.all(12),
+                                  child: Row(children: [
+                                    const SizedBox(
+                                        width: 12,
+                                        height: 12,
+                                        child: CircularProgressIndicator(
+                                            strokeWidth: 1.5)),
+                                    const SizedBox(width: 10),
+                                    Text('The Confidant considers…',
+                                        style: raleway(10.5,
+                                            color: Colors.white38)),
+                                  ]),
+                                ),
+                              if (_error != null)
+                                Padding(
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 8),
+                                  child: Text('⚠ $_error',
                                       style: raleway(10.5,
-                                          color: Colors.white38)),
-                                ]),
-                              ),
-                            if (_error != null)
-                              Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 8),
-                                child: Text('⚠ $_error',
-                                    style: raleway(10.5,
-                                        color: const Color(0xFFFFC46B))),
-                              ),
-                          ],
-                        ),
-                ),
-                if (!e.closed) _composer(api, userSpoke),
-              ],
+                                          color: const Color(0xFFFFC46B))),
+                                ),
+                            ],
+                          ),
+                  ),
+                  if (!e.closed) _composer(api, userSpoke),
+                ],
+              ),
             ),
           ),
         ],
@@ -343,7 +353,8 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
                   e.closed
                       ? 'Tonight is closed — the loop continues tomorrow'
                       : 'Close the loop: your day, its lessons, tomorrow\'s actions',
-                  style: raleway(9.5, color: Colors.white.withValues(alpha: 0.5)),
+                  style:
+                      raleway(9.5, color: Colors.white.withValues(alpha: 0.5)),
                 ),
               ],
             ),
@@ -443,8 +454,7 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
                 backgroundColor: userSpoke && !_closing && !_aiThinking
                     ? kJournalViolet.withValues(alpha: 0.9)
                     : Colors.white.withValues(alpha: 0.06),
-                foregroundColor:
-                    userSpoke ? kSpaceBlack : Colors.white38,
+                foregroundColor: userSpoke ? kSpaceBlack : Colors.white38,
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12)),
               ),
@@ -496,8 +506,8 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
           Center(
             child: Text('"${e.reflection}"',
                 textAlign: TextAlign.center,
-                style: cinzel(13.5, weight: 500,
-                    color: Colors.white.withValues(alpha: 0.9))),
+                style: cinzel(13.5,
+                    weight: 500, color: Colors.white.withValues(alpha: 0.9))),
           ),
           const SizedBox(height: 20),
         ],
@@ -527,8 +537,8 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
                           child: Text(a.why,
                               style: raleway(10,
                                   height: 1.4,
-                                  color: kJournalViolet.withValues(
-                                      alpha: 0.65))),
+                                  color:
+                                      kJournalViolet.withValues(alpha: 0.65))),
                         ),
                     ],
                   ),
@@ -544,8 +554,7 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
               foregroundColor: kSpaceBlack,
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14)),
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
+              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
             ),
             onPressed: () => Navigator.of(context).pop(),
             child: Text('RETURN TO THE SKY',

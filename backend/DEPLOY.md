@@ -11,7 +11,15 @@ used for physical's backend.
    - `GEMINI_API_KEY` — from [aistudio.google.com](https://aistudio.google.com)
      (same key type as physical's coach; you can reuse that key).
    - `APP_TOKEN` — any long random string, e.g. `openssl rand -hex 24`.
-   - (optional) `GEMINI_MODEL` — defaults to `gemini-2.5-flash`.
+   - (optional) `GEMINI_MODEL` — chat-tier model (journal replies); defaults
+     to `gemini-3.5-flash` (the GA frontier flash, mid-2026).
+   - (optional) `GEMINI_MODEL_DEEP` — judgement-tier model (examiner verdicts,
+     review grading, the nightly close). Defaults to `GEMINI_MODEL`; set
+     `gemini-3.1-pro` for maximum judgement at ~2.5× the cost.
+   - (optional) `GEMINI_THINKING_CHAT` / `GEMINI_THINKING_DEEP` — thinking
+     levels (`minimal|low|medium|high`), default `low` / `high`. Older 2.5-era
+     model overrides degrade automatically (the client falls back through
+     `thinkingBudget` to plain requests).
 3. Settings → **Generate Domain** → note the URL,
    e.g. `https://mental-production-xxxx.up.railway.app`.
 4. Check `https://<domain>/health` →

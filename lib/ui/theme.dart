@@ -39,7 +39,10 @@ TextStyle cinzel(double size,
 
 /// Raleway (variable) — quiet UI text.
 TextStyle raleway(double size,
-        {double weight = 400, Color color = Colors.white, double? spacing, double? height}) =>
+        {double weight = 400,
+        Color color = Colors.white,
+        double? spacing,
+        double? height}) =>
     TextStyle(
       fontFamily: 'Raleway',
       fontSize: size,

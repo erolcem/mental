@@ -13,8 +13,8 @@ import 'repository.dart';
 const int kTransferVersion = 1;
 
 /// Everything the app remembers, as one pastable JSON string.
-String exportBlob(Map<String, NodeProgress> progress,
-    Map<String, JournalEntry> journal) {
+String exportBlob(
+    Map<String, NodeProgress> progress, Map<String, JournalEntry> journal) {
   return jsonEncode({
     'app': 'mental',
     'v': kTransferVersion,
@@ -60,8 +60,8 @@ TransferPayload parseBlob(String raw) {
 /// Merge [incoming] into [local]: per star, the record with the later
 /// activity wins; a lit star always beats an unlit one. Returns the merged
 /// map (inputs untouched).
-Map<String, NodeProgress> mergeProgress(Map<String, NodeProgress> local,
-    Map<String, NodeProgress> incoming) {
+Map<String, NodeProgress> mergeProgress(
+    Map<String, NodeProgress> local, Map<String, NodeProgress> incoming) {
   final out = Map<String, NodeProgress>.of(local);
   incoming.forEach((key, inc) {
     final cur = out[key];
@@ -87,8 +87,8 @@ DateTime _activity(NodeProgress p) {
 
 /// Merge journals: per day, a closed entry beats an open one; two closed
 /// entries resolve to the later close.
-Map<String, JournalEntry> mergeJournal(Map<String, JournalEntry> local,
-    Map<String, JournalEntry> incoming) {
+Map<String, JournalEntry> mergeJournal(
+    Map<String, JournalEntry> local, Map<String, JournalEntry> incoming) {
   final out = Map<String, JournalEntry>.of(local);
   incoming.forEach((day, inc) {
     final cur = out[day];
@@ -96,7 +96,9 @@ Map<String, JournalEntry> mergeJournal(Map<String, JournalEntry> local,
       out[day] = inc;
     } else if (inc.closed && !cur.closed) {
       out[day] = inc;
-    } else if (inc.closed && cur.closed && inc.closedAt!.isAfter(cur.closedAt!)) {
+    } else if (inc.closed &&
+        cur.closed &&
+        inc.closedAt!.isAfter(cur.closedAt!)) {
       out[day] = inc;
     }
   });

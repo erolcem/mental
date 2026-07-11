@@ -53,8 +53,8 @@ class _ConstellationScreenState extends ConsumerState<ConstellationScreen>
         vsync: this, duration: const Duration(milliseconds: 900));
     // Reviews can come due while studying a constellation; the sheet's lock
     // gate must notice without a restart.
-    _dueTicker = Timer.periodic(const Duration(minutes: 1),
-        (_) => ref.invalidate(dueReviewsProvider));
+    _dueTicker = Timer.periodic(
+        const Duration(minutes: 1), (_) => ref.invalidate(dueReviewsProvider));
   }
 
   @override
@@ -95,8 +95,8 @@ class _ConstellationScreenState extends ConsumerState<ConstellationScreen>
       }
     }
     if (hit == null) return;
-    final ignitedNow = showNodeSheet(context, ref,
-        stat: stat, skill: skill, node: hit);
+    final ignitedNow =
+        showNodeSheet(context, ref, stat: stat, skill: skill, node: hit);
     ignitedNow.then((ignited) {
       if (ignited == true && mounted) {
         setState(() => _burstNodeId = hit!.id);
@@ -111,6 +111,9 @@ class _ConstellationScreenState extends ConsumerState<ConstellationScreen>
     final mastery = skillMastery(progress, skill);
 
     return Scaffold(
+      // The node sheet's keyboard must not resize (and per-frame re-bake)
+      // the starfield behind it; the sheet pads itself by the inset.
+      resizeToAvoidBottomInset: false,
       body: Stack(
         fit: StackFit.expand,
         children: [
@@ -120,8 +123,8 @@ class _ConstellationScreenState extends ConsumerState<ConstellationScreen>
             return InteractiveViewer(
               transformationController: _viewCtrl,
               constrained: false,
-              boundaryMargin: const EdgeInsets.symmetric(
-                  horizontal: 120, vertical: 160),
+              boundaryMargin:
+                  const EdgeInsets.symmetric(horizontal: 120, vertical: 160),
               minScale: 0.35,
               maxScale: 2.5,
               child: SizedBox(
@@ -172,20 +175,17 @@ class _ConstellationScreenState extends ConsumerState<ConstellationScreen>
         child: GestureDetector(
           onTap: () => showReviewLedger(context),
           child: Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
             decoration: BoxDecoration(
               color: const Color(0xF0141022),
               borderRadius: BorderRadius.circular(20),
               border: Border.all(color: kGold.withValues(alpha: 0.5)),
               boxShadow: [
-                BoxShadow(
-                    color: kGold.withValues(alpha: 0.15), blurRadius: 16),
+                BoxShadow(color: kGold.withValues(alpha: 0.15), blurRadius: 16),
               ],
             ),
             child: Text('🔒 THE SKY IS SEALED — VIEW THE LEDGER',
-                style: raleway(9,
-                    weight: 700, color: kGold, spacing: 1.5)),
+                style: raleway(9, weight: 700, color: kGold, spacing: 1.5)),
           ),
         ),
       ),
@@ -222,8 +222,7 @@ class _ConstellationScreenState extends ConsumerState<ConstellationScreen>
                 padding:
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
-                  border: Border.all(
-                      color: stat.color.withValues(alpha: 0.35)),
+                  border: Border.all(color: stat.color.withValues(alpha: 0.35)),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text('← Sky',
@@ -375,17 +374,25 @@ class ConstellationPainter extends CustomPainter {
                 ..strokeWidth = 1.1
                 ..strokeCap = StrokeCap.round);
         } else if (pathLit) {
-          _dashed(canvas, from, to,
+          _dashed(
+              canvas,
+              from,
+              to,
               Paint()
                 ..color = color.withValues(alpha: 0.32)
                 ..strokeWidth = 1.0,
-              dash: 5, gap: 4);
+              dash: 5,
+              gap: 4);
         } else {
-          _dashed(canvas, from, to,
+          _dashed(
+              canvas,
+              from,
+              to,
               Paint()
                 ..color = Colors.white.withValues(alpha: 0.06)
                 ..strokeWidth = 0.9,
-              dash: 3, gap: 6);
+              dash: 3,
+              gap: 6);
         }
       }
     }
@@ -471,14 +478,13 @@ class ConstellationPainter extends CustomPainter {
         Paint()
           ..color = Colors.white.withValues(alpha: coreAlpha)
           ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 1));
-    canvas.drawCircle(
-        p, 1.6 * mag, Paint()..color = Colors.white.withValues(alpha: coreAlpha));
+    canvas.drawCircle(p, 1.6 * mag,
+        Paint()..color = Colors.white.withValues(alpha: coreAlpha));
   }
 
   /// The frontier: unlocked but unlit — a breathing ember inviting a tap.
   void _paintAvailableStar(Canvas canvas, Offset p, double mag, SkillNode n) {
-    final pulse =
-        0.5 + 0.5 * math.sin(breath * 2 * math.pi + p.dy * 0.05);
+    final pulse = 0.5 + 0.5 * math.sin(breath * 2 * math.pi + p.dy * 0.05);
     final haloR = (9.0 + 4.0 * pulse) * mag;
     canvas.drawCircle(
       p,

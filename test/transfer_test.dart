@@ -36,8 +36,8 @@ void main() {
   test('parse rejects non-JSON, foreign JSON, and future versions', () {
     expect(() => parseBlob('hello'), throwsFormatException);
     expect(() => parseBlob('{"app": "other"}'), throwsFormatException);
-    expect(() => parseBlob('{"app": "mental", "v": 99}'),
-        throwsFormatException);
+    expect(
+        () => parseBlob('{"app": "mental", "v": 99}'), throwsFormatException);
   });
 
   test('merge: a lit star never goes dark; newer completion wins', () {
@@ -61,8 +61,7 @@ void main() {
     final reviewedEarlier = {
       'a': NodeProgress(completedAt: t0, reviewStage: 1, nextReviewAt: t0),
     };
-    expect(
-        mergeProgress(reviewedEarlier, reviewedLater)['a']!.reviewStage, 3);
+    expect(mergeProgress(reviewedEarlier, reviewedLater)['a']!.reviewStage, 3);
     expect(mergeProgress(reviewedLater, reviewedEarlier)['a']!.reviewStage, 3);
   });
 

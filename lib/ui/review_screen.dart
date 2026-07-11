@@ -127,7 +127,8 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
       _active = r;
       _grade = const ReviewGrade(
           passed: true,
-          feedback: 'Reviewed on the honour system — the Examiner was offline.');
+          feedback:
+              'Reviewed on the honour system — the Examiner was offline.');
       _doneCount++;
       _phase = _Phase.verdict;
     });
@@ -149,6 +150,10 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
     final current = _sessionNode(due);
 
     return Scaffold(
+      // Keyboard resizes must not reach the starfield (each resized frame
+      // would re-bake the sky picture — the iPhone crash); the scroll view
+      // pads itself by the keyboard inset instead.
+      resizeToAvoidBottomInset: false,
       body: Stack(
         fit: StackFit.expand,
         children: [
@@ -164,7 +169,8 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
                   child: current == null
                       ? _allClear()
                       : SingleChildScrollView(
-                          padding: const EdgeInsets.fromLTRB(22, 8, 22, 30),
+                          padding: EdgeInsets.fromLTRB(22, 8, 22,
+                              30 + MediaQuery.viewInsetsOf(context).bottom),
                           child: _body(current, due.length),
                         ),
                 ),
@@ -190,7 +196,8 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
                 border: Border.all(color: kGold.withValues(alpha: 0.35)),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: Text('← Sky', style: cinzel(11, weight: 500, color: kGold)),
+              child:
+                  Text('← Sky', style: cinzel(11, weight: 500, color: kGold)),
             ),
           ),
           const SizedBox(width: 14),
@@ -198,12 +205,14 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('THE REVIEW', style: cinzel(15, weight: 640, color: kGold, spacing: 3)),
+                Text('THE REVIEW',
+                    style: cinzel(15, weight: 640, color: kGold, spacing: 3)),
                 Text(
                   remaining == 0
                       ? 'The sky is unlocked'
                       : '$remaining ${remaining == 1 ? 'star demands' : 'stars demand'} review — the sky is locked',
-                  style: raleway(9.5, color: Colors.white.withValues(alpha: 0.5)),
+                  style:
+                      raleway(9.5, color: Colors.white.withValues(alpha: 0.5)),
                 ),
               ],
             ),
@@ -221,9 +230,12 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text('✦', style: TextStyle(fontSize: 42, color: kGold.withValues(alpha: 0.9))),
+          Text('✦',
+              style:
+                  TextStyle(fontSize: 42, color: kGold.withValues(alpha: 0.9))),
           const SizedBox(height: 14),
-          Text('EVERY STAR HOLDS ITS LIGHT', style: cinzel(15, weight: 640, spacing: 2)),
+          Text('EVERY STAR HOLDS ITS LIGHT',
+              style: cinzel(15, weight: 640, spacing: 2)),
           const SizedBox(height: 8),
           Text('The sky is unlocked. Return when the next review is due.',
               style: raleway(11.5, color: Colors.white.withValues(alpha: 0.5))),
@@ -232,11 +244,13 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
             style: FilledButton.styleFrom(
               backgroundColor: kGold.withValues(alpha: 0.9),
               foregroundColor: kSpaceBlack,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14)),
               padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
             ),
             onPressed: () => Navigator.of(context).pop(),
-            child: Text('RETURN TO THE SKY', style: cinzel(12, weight: 700, color: kSpaceBlack)),
+            child: Text('RETURN TO THE SKY',
+                style: cinzel(12, weight: 700, color: kSpaceBlack)),
           ),
         ],
       ),
@@ -268,8 +282,10 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
                   children: [
                     Text(r.node.label, style: cinzel(14, weight: 640)),
                     const SizedBox(height: 2),
-                    Text('${r.skill.label}  ·  ignited ${_ago(r.progress.completedAt)}',
-                        style: raleway(9.5, color: color.withValues(alpha: 0.8))),
+                    Text(
+                        '${r.skill.label}  ·  ignited ${_ago(r.progress.completedAt)}',
+                        style:
+                            raleway(9.5, color: color.withValues(alpha: 0.8))),
                   ],
                 ),
               ),
@@ -278,12 +294,14 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
         ),
         const SizedBox(height: 18),
         if (_error != null) ...[
-          _panel(const Color(0xFFFFC46B), 'THE EXAMINER COULD NOT BE REACHED', _error!),
+          _panel(const Color(0xFFFFC46B), 'THE EXAMINER COULD NOT BE REACHED',
+              _error!),
           const SizedBox(height: 14),
         ],
         ...switch (_phase) {
           _Phase.intro => _intro(r, api),
-          _Phase.loading => _waiting('The Examiner is preparing your questions…'),
+          _Phase.loading =>
+            _waiting('The Examiner is preparing your questions…'),
           _Phase.quiz => _quiz(r),
           _Phase.grading => _waiting('The Examiner is weighing your answers…'),
           _Phase.verdict => _verdict(r, remaining),
@@ -300,7 +318,8 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
                   'fail and it returns tomorrow after you restudy.'
               : 'The Examiner is offline. Restudy your summary sheet, then attest '
                   'on your honour that you reviewed this star.',
-          style: raleway(11.5, color: Colors.white.withValues(alpha: 0.6), height: 1.6),
+          style: raleway(11.5,
+              color: Colors.white.withValues(alpha: 0.6), height: 1.6),
         ),
         const SizedBox(height: 18),
         SizedBox(
@@ -308,7 +327,10 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
           child: FilledButton(
             style: _buttonStyle(r.stat.color),
             onPressed: () => api.configured ? _begin(r) : _selfAttest(r),
-            child: Text(api.configured ? '⚖  BEGIN THE REVIEW' : '✦  I HAVE REVIEWED THIS STAR',
+            child: Text(
+                api.configured
+                    ? '⚖  BEGIN THE REVIEW'
+                    : '✦  I HAVE REVIEWED THIS STAR',
                 style: cinzel(12.5, weight: 700, color: kSpaceBlack)),
           ),
         ),
@@ -320,14 +342,16 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
         const SizedBox(height: 14),
         Center(
             child: Text(message,
-                style: raleway(11, color: Colors.white.withValues(alpha: 0.5)))),
+                style:
+                    raleway(11, color: Colors.white.withValues(alpha: 0.5)))),
         const SizedBox(height: 30),
       ];
 
   List<Widget> _quiz(DueReview r) => [
         for (var i = 0; i < _questions.length; i++) ...[
           Text('QUESTION ${i + 1} OF ${_questions.length}',
-              style: raleway(8.5, color: r.stat.color.withValues(alpha: 0.7), spacing: 2)),
+              style: raleway(8.5,
+                  color: r.stat.color.withValues(alpha: 0.7), spacing: 2)),
           const SizedBox(height: 6),
           Text(_questions[i], style: raleway(13, weight: 600, height: 1.5)),
           const SizedBox(height: 8),
@@ -340,16 +364,19 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
             onChanged: (_) => setState(() {}),
             decoration: InputDecoration(
               hintText: 'Answer from memory…',
-              hintStyle: raleway(11.5, color: Colors.white.withValues(alpha: 0.25)),
+              hintStyle:
+                  raleway(11.5, color: Colors.white.withValues(alpha: 0.25)),
               filled: true,
               fillColor: Colors.white.withValues(alpha: 0.05),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+                borderSide:
+                    BorderSide(color: Colors.white.withValues(alpha: 0.1)),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: r.stat.color.withValues(alpha: 0.5)),
+                borderSide:
+                    BorderSide(color: r.stat.color.withValues(alpha: 0.5)),
               ),
             ),
           ),
@@ -362,7 +389,8 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
             onPressed: _answers.every((c) => c.text.trim().isNotEmpty)
                 ? () => _submit(r)
                 : null,
-            child: Text('SUBMIT ANSWERS', style: cinzel(12.5, weight: 700, color: kSpaceBlack)),
+            child: Text('SUBMIT ANSWERS',
+                style: cinzel(12.5, weight: 700, color: kSpaceBlack)),
           ),
         ),
       ];
@@ -382,7 +410,8 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 2),
             child: Text('Q${i + 1}: ${g.notes[i]}',
-                style: raleway(10.5, color: Colors.white.withValues(alpha: 0.55))),
+                style:
+                    raleway(10.5, color: Colors.white.withValues(alpha: 0.55))),
           ),
       ],
       const SizedBox(height: 8),
@@ -399,7 +428,9 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
           style: _buttonStyle(remaining > 0 ? r.stat.color : kGold),
           onPressed: remaining > 0 ? _next : () => Navigator.of(context).pop(),
           child: Text(
-            remaining > 0 ? 'NEXT STAR  ($remaining LEFT)' : 'RETURN TO THE UNLOCKED SKY',
+            remaining > 0
+                ? 'NEXT STAR  ($remaining LEFT)'
+                : 'RETURN TO THE UNLOCKED SKY',
             style: cinzel(12.5, weight: 700, color: kSpaceBlack),
           ),
         ),
@@ -426,10 +457,14 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(title,
-                style: raleway(8.5, weight: 700, color: color.withValues(alpha: 0.9), spacing: 2)),
+                style: raleway(8.5,
+                    weight: 700,
+                    color: color.withValues(alpha: 0.9),
+                    spacing: 2)),
             const SizedBox(height: 5),
             Text(body,
-                style: raleway(11.5, color: Colors.white.withValues(alpha: 0.85), height: 1.5)),
+                style: raleway(11.5,
+                    color: Colors.white.withValues(alpha: 0.85), height: 1.5)),
           ],
         ),
       );

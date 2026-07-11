@@ -86,7 +86,9 @@ void main() {
         .read(progressProvider.notifier)
         .ignite(maths, maths.nodeById('m1'));
     expect(
-        container.read(progressProvider)[progressKey('maths', 'm1')]?.complete ??
+        container
+                .read(progressProvider)[progressKey('maths', 'm1')]
+                ?.complete ??
             false,
         isFalse);
 
@@ -131,7 +133,9 @@ void main() {
         .read(progressProvider.notifier)
         .ignite(maths, maths.nodeById('m2'));
     expect(
-        container.read(progressProvider)[progressKey('maths', 'm2')]?.complete ??
+        container
+                .read(progressProvider)[progressKey('maths', 'm2')]
+                ?.complete ??
             false,
         isFalse);
 

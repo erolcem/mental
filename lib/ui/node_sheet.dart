@@ -19,9 +19,7 @@ const int kMinSummaryChars = 80;
 
 /// Returns true (via the popped future) if the user ignited the star.
 Future<bool?> showNodeSheet(BuildContext context, WidgetRef ref,
-    {required StatDomain stat,
-    required Skill skill,
-    required SkillNode node}) {
+    {required StatDomain stat, required Skill skill, required SkillNode node}) {
   return showModalBottomSheet<bool>(
     context: context,
     isScrollControlled: true,
@@ -52,8 +50,8 @@ class _NodeSheetState extends ConsumerState<_NodeSheet> {
   void initState() {
     super.initState();
     final saved = ref
-            .read(progressProvider)[
-                progressKey(widget.skill.id, widget.node.id)]
+            .read(
+                progressProvider)[progressKey(widget.skill.id, widget.node.id)]
             ?.summary ??
         '';
     _summary = TextEditingController(text: saved);
@@ -93,8 +91,7 @@ class _NodeSheetState extends ConsumerState<_NodeSheet> {
         node: widget.node.label,
         tier: widget.node.tier,
         prerequisites: [
-          for (final r in widget.node.requires)
-            widget.skill.nodeById(r).label
+          for (final r in widget.node.requires) widget.skill.nodeById(r).label
         ],
         summary: _summary.text,
         proof: widget.node.proof,
@@ -133,8 +130,7 @@ class _NodeSheetState extends ConsumerState<_NodeSheet> {
     final unlocked = nodeUnlocked(progress, widget.skill, widget.node);
 
     return Padding(
-      padding:
-          EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
+      padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
       child: Container(
         decoration: BoxDecoration(
           color: const Color(0xF20B0E22),
@@ -198,8 +194,8 @@ class _NodeSheetState extends ConsumerState<_NodeSheet> {
                   decoration: BoxDecoration(
                     color: Colors.white.withValues(alpha: 0.035),
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.10)),
+                    border:
+                        Border.all(color: Colors.white.withValues(alpha: 0.10)),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -294,8 +290,7 @@ class _NodeSheetState extends ConsumerState<_NodeSheet> {
                 Text(
                   _unlocksLabels().join('  ·  '),
                   style: raleway(10.5,
-                      color: Colors.white.withValues(alpha: 0.55),
-                      height: 1.6),
+                      color: Colors.white.withValues(alpha: 0.55), height: 1.6),
                 ),
               ],
               const SizedBox(height: 16),
@@ -310,8 +305,7 @@ class _NodeSheetState extends ConsumerState<_NodeSheet> {
                     Text(
                       '${_summary.text.trim().length} / $kMinSummaryChars',
                       style: raleway(8.5,
-                          color: _summary.text.trim().length >=
-                                  kMinSummaryChars
+                          color: _summary.text.trim().length >= kMinSummaryChars
                               ? color.withValues(alpha: 0.7)
                               : Colors.white.withValues(alpha: 0.3)),
                     ),
@@ -353,8 +347,7 @@ class _NodeSheetState extends ConsumerState<_NodeSheet> {
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide:
-                        BorderSide(color: color.withValues(alpha: 0.5)),
+                    borderSide: BorderSide(color: color.withValues(alpha: 0.5)),
                   ),
                 ),
                 enabled: (unlocked || complete) && !_submitting,
@@ -408,9 +401,8 @@ class _NodeSheetState extends ConsumerState<_NodeSheet> {
         onPressed: () {
           Navigator.of(context).pop(false);
           Navigator.of(context).push(MaterialPageRoute(
-              builder: (_) => reviewsBlock
-                  ? const ReviewScreen()
-                  : const JournalScreen()));
+              builder: (_) =>
+                  reviewsBlock ? const ReviewScreen() : const JournalScreen()));
         },
         child: Text(
             reviewsBlock
@@ -424,8 +416,7 @@ class _NodeSheetState extends ConsumerState<_NodeSheet> {
   Widget _actionButton(Color color, bool unlocked, MentalApi api) {
     final examined = api.configured;
     final longEnough = _summary.text.trim().length >= kMinSummaryChars;
-    final canSubmit =
-        unlocked && !_submitting && (!examined || longEnough);
+    final canSubmit = unlocked && !_submitting && (!examined || longEnough);
     final label = !unlocked
         ? '🔒  COMPLETE PREREQUISITES TO UNLOCK'
         : _submitting
@@ -557,8 +548,18 @@ class _NodeSheetState extends ConsumerState<_NodeSheet> {
   static String _fmtDate(DateTime? d) {
     if (d == null) return '';
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec'
     ];
     return '${d.day} ${months[d.month - 1]} ${d.year}';
   }

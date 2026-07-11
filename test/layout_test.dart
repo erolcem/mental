@@ -43,9 +43,9 @@ void main() {
         for (final tierNodes in byTier.values) {
           for (var i = 0; i < tierNodes.length; i++) {
             for (var j = i + 1; j < tierNodes.length; j++) {
-              final d = (layout.pos[tierNodes[i].id]! -
-                      layout.pos[tierNodes[j].id]!)
-                  .distance;
+              final d =
+                  (layout.pos[tierNodes[i].id]! - layout.pos[tierNodes[j].id]!)
+                      .distance;
               expect(d, greaterThanOrEqualTo(44),
                   reason:
                       '${skill.id}: ${tierNodes[i].id} vs ${tierNodes[j].id} too close ($d)');

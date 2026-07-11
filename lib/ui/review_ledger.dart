@@ -33,8 +33,7 @@ class _ReviewLedger extends ConsumerWidget {
       decoration: BoxDecoration(
         color: const Color(0xF20B0E22),
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        border:
-            Border(top: BorderSide(color: kGold.withValues(alpha: 0.35))),
+        border: Border(top: BorderSide(color: kGold.withValues(alpha: 0.35))),
       ),
       padding: const EdgeInsets.fromLTRB(22, 14, 22, 24),
       child: Column(
@@ -77,7 +76,8 @@ class _ReviewLedger extends ConsumerWidget {
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 24),
               child: Center(
-                child: Text('No stars are lit yet — ignite one and its\n'
+                child: Text(
+                    'No stars are lit yet — ignite one and its\n'
                     'first review comes ${kReviewIntervalDays.first} days later.',
                     textAlign: TextAlign.center,
                     style: raleway(11,
@@ -107,8 +107,8 @@ class _ReviewLedger extends ConsumerWidget {
                 ),
                 onPressed: () {
                   Navigator.of(context).pop();
-                  Navigator.of(context).push(MaterialPageRoute(
-                      builder: (_) => const ReviewScreen()));
+                  Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const ReviewScreen()));
                 },
                 child: Text('⚖  FACE THE DUE REVIEWS',
                     style: cinzel(12, weight: 700, color: kSpaceBlack)),
@@ -131,8 +131,7 @@ class _ReviewLedger extends ConsumerWidget {
         children: [
           Text(due ? '✦' : '○',
               style: TextStyle(
-                  fontSize: 13,
-                  color: color.withValues(alpha: due ? 1 : 0.5))),
+                  fontSize: 13, color: color.withValues(alpha: due ? 1 : 0.5))),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
@@ -143,8 +142,8 @@ class _ReviewLedger extends ConsumerWidget {
                     overflow: TextOverflow.ellipsis,
                     style: raleway(11.5,
                         weight: due ? 600 : 400,
-                        color: Colors.white
-                            .withValues(alpha: due ? 0.95 : 0.7))),
+                        color:
+                            Colors.white.withValues(alpha: due ? 0.95 : 0.7))),
                 Text(
                   '${r.skill.label}  ·  rung ${stage + 1}/${kReviewIntervalDays.length}'
                   '  ·  interval ${kReviewIntervalDays[stage]}d',

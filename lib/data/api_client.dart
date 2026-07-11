@@ -52,7 +52,8 @@ class MentalApi {
   final String token;
   final http.Client _client;
 
-  MentalApi({this.baseUrl = kBackendUrl, this.token = kAppToken, http.Client? client})
+  MentalApi(
+      {this.baseUrl = kBackendUrl, this.token = kAppToken, http.Client? client})
       : _client = client ?? http.Client();
 
   /// False when the app was built without a BACKEND_URL — the sky then runs
@@ -176,7 +177,8 @@ class MentalApi {
     );
   }
 
-  Future<Map<String, dynamic>> _post(String path, Map<String, dynamic> body) async {
+  Future<Map<String, dynamic>> _post(
+      String path, Map<String, dynamic> body) async {
     final http.Response r;
     try {
       r = await _client
@@ -195,7 +197,9 @@ class MentalApi {
     if (r.statusCode != 200) {
       String detail = r.body;
       try {
-        detail = (jsonDecode(r.body) as Map<String, dynamic>)['detail']?.toString() ?? r.body;
+        detail = (jsonDecode(r.body) as Map<String, dynamic>)['detail']
+                ?.toString() ??
+            r.body;
       } catch (_) {}
       throw ApiException(detail, r.statusCode);
     }

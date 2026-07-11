@@ -37,8 +37,7 @@ const List<(String, Offset)> _spine = [
   ('WIS', Offset(0.435, 0.875)),
 ];
 
-Offset _statCenter(String id) =>
-    _spine.firstWhere((e) => e.$1 == id).$2;
+Offset _statCenter(String id) => _spine.firstWhere((e) => e.$1 == id).$2;
 
 class GalaxyScreen extends ConsumerStatefulWidget {
   const GalaxyScreen({super.key});
@@ -56,8 +55,8 @@ class _GalaxyScreenState extends ConsumerState<GalaxyScreen> {
   void initState() {
     super.initState();
     // Reviews become due while the app idles here; re-check once a minute.
-    _dueTicker = Timer.periodic(const Duration(minutes: 1),
-        (_) => ref.invalidate(dueReviewsProvider));
+    _dueTicker = Timer.periodic(
+        const Duration(minutes: 1), (_) => ref.invalidate(dueReviewsProvider));
   }
 
   @override
@@ -75,6 +74,8 @@ class _GalaxyScreenState extends ConsumerState<GalaxyScreen> {
     final overall = overallMastery(progress);
 
     return Scaffold(
+      // No inputs live on this screen; never let insets resize the sky.
+      resizeToAvoidBottomInset: false,
       body: Stack(
         fit: StackFit.expand,
         children: [
@@ -121,7 +122,8 @@ class _GalaxyScreenState extends ConsumerState<GalaxyScreen> {
                     ),
                     _header(context, ref, level, overall),
                     if (ref.watch(dueReviewsProvider).isNotEmpty)
-                      _lockBanner(context, ref.watch(dueReviewsProvider).length),
+                      _lockBanner(
+                          context, ref.watch(dueReviewsProvider).length),
                     if (ref.watch(journalOverdueProvider))
                       _journalBanner(context,
                           top: ref.watch(dueReviewsProvider).isNotEmpty
@@ -183,8 +185,7 @@ class _GalaxyScreenState extends ConsumerState<GalaxyScreen> {
                         color: Colors.white.withValues(alpha: 0.28),
                         spacing: 1.5)),
                 // Raleway, not Cinzel: Cinzel's "1" reads as a Roman "I".
-                Text('$level',
-                    style: raleway(19, weight: 800, color: kGold)),
+                Text('$level', style: raleway(19, weight: 800, color: kGold)),
               ],
             ),
             const SizedBox(width: 10),
@@ -242,8 +243,8 @@ class _GalaxyScreenState extends ConsumerState<GalaxyScreen> {
       left: 20,
       right: 20,
       child: GestureDetector(
-        onTap: () => Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => const ReviewScreen())),
+        onTap: () => Navigator.of(context)
+            .push(MaterialPageRoute(builder: (_) => const ReviewScreen())),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           decoration: BoxDecoration(
@@ -283,15 +284,14 @@ class _GalaxyScreenState extends ConsumerState<GalaxyScreen> {
       left: 20,
       right: 20,
       child: GestureDetector(
-        onTap: () => Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => const JournalScreen())),
+        onTap: () => Navigator.of(context)
+            .push(MaterialPageRoute(builder: (_) => const JournalScreen())),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           decoration: BoxDecoration(
             color: const Color(0xF0161028),
             borderRadius: BorderRadius.circular(12),
-            border:
-                Border.all(color: kJournalViolet.withValues(alpha: 0.5)),
+            border: Border.all(color: kJournalViolet.withValues(alpha: 0.5)),
             boxShadow: [
               BoxShadow(
                   color: kJournalViolet.withValues(alpha: 0.15),
@@ -325,8 +325,7 @@ class _GalaxyScreenState extends ConsumerState<GalaxyScreen> {
   Widget _bottomBar(BuildContext context, WidgetRef ref) {
     final today = ref.watch(todayActionsProvider);
     final journaled = ref.watch(journaledTodayProvider);
-    final doneCount =
-        today?.actions.where((a) => a.done).length ?? 0;
+    final doneCount = today?.actions.where((a) => a.done).length ?? 0;
     return Positioned(
       left: 16,
       right: 16,
@@ -363,8 +362,8 @@ class _GalaxyScreenState extends ConsumerState<GalaxyScreen> {
                         overflow: TextOverflow.ellipsis,
                         style: raleway(9,
                             weight: today == null ? 400 : 700,
-                            color: Colors.white.withValues(
-                                alpha: today == null ? 0.35 : 0.8),
+                            color: Colors.white
+                                .withValues(alpha: today == null ? 0.35 : 0.8),
                             spacing: today == null ? 0.2 : 1.2),
                       ),
                     ),
@@ -375,18 +374,17 @@ class _GalaxyScreenState extends ConsumerState<GalaxyScreen> {
           ),
           const SizedBox(width: 8),
           GestureDetector(
-            onTap: () => Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const JournalScreen())),
+            onTap: () => Navigator.of(context)
+                .push(MaterialPageRoute(builder: (_) => const JournalScreen())),
             child: Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
               decoration: BoxDecoration(
                 color: journaled
                     ? kJournalViolet.withValues(alpha: 0.12)
                     : const Color(0xD0100D20),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                    color: kJournalViolet.withValues(alpha: 0.5)),
+                border:
+                    Border.all(color: kJournalViolet.withValues(alpha: 0.5)),
               ),
               child: Text(
                 journaled ? '✦ JOURNALED' : '🌙 JOURNAL',
@@ -410,11 +408,9 @@ class _GalaxyScreenState extends ConsumerState<GalaxyScreen> {
         return Container(
           decoration: BoxDecoration(
             color: const Color(0xF20B0E22),
-            borderRadius:
-                const BorderRadius.vertical(top: Radius.circular(24)),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
             border: Border(
-                top: BorderSide(
-                    color: kJournalViolet.withValues(alpha: 0.35))),
+                top: BorderSide(color: kJournalViolet.withValues(alpha: 0.35))),
           ),
           padding: const EdgeInsets.fromLTRB(22, 18, 22, 30),
           child: Column(
@@ -423,8 +419,7 @@ class _GalaxyScreenState extends ConsumerState<GalaxyScreen> {
             children: [
               Text('TODAY\'S ACTIONS — SET BY LAST NIGHT\'S JOURNAL',
                   style: raleway(8.5,
-                      color: Colors.white.withValues(alpha: 0.3),
-                      spacing: 2)),
+                      color: Colors.white.withValues(alpha: 0.3), spacing: 2)),
               const SizedBox(height: 10),
               for (var i = 0; i < entry.actions.length; i++)
                 InkWell(
@@ -476,8 +471,7 @@ class _GalaxyScreenState extends ConsumerState<GalaxyScreen> {
               const SizedBox(height: 6),
               Text(
                 'Tonight\'s journal will ask how these went.',
-                style: raleway(9.5,
-                    color: Colors.white.withValues(alpha: 0.3)),
+                style: raleway(9.5, color: Colors.white.withValues(alpha: 0.3)),
               ),
             ],
           ),
@@ -490,8 +484,8 @@ class _GalaxyScreenState extends ConsumerState<GalaxyScreen> {
   /// journal) as one JSON blob on the clipboard — message it to yourself,
   /// paste it on the other device.
   Future<void> _exportSky(BuildContext context, WidgetRef ref) async {
-    final blob = exportBlob(
-        ref.read(progressProvider), ref.read(journalProvider));
+    final blob =
+        exportBlob(ref.read(progressProvider), ref.read(journalProvider));
     await Clipboard.setData(ClipboardData(text: blob));
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -824,8 +818,7 @@ List<Offset> clusterSkillPositions(StatDomain stat, double w, double skyH) {
             math.pi / 2 +
             (_clusterRand(id, 1) - 0.5) * (math.pi / n) * 0.7;
         final r = 0.86 + _clusterRand(id, 2) * 0.26;
-        return Offset(
-            cx + math.cos(a) * rx * r, cy + math.sin(a) * ry * r);
+        return Offset(cx + math.cos(a) * rx * r, cy + math.sin(a) * ry * r);
       }()
   ];
 }

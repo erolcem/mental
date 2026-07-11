@@ -68,8 +68,7 @@ List<String> _laneOrder(Skill skill) {
   final branches = skill.branches;
   if (branches.isEmpty) return const [''];
   final crown = skill.tree.firstWhere((n) => n.tier == skill.maxTier);
-  final summit =
-      branches.contains(crown.branch) ? crown.branch : branches.last;
+  final summit = branches.contains(crown.branch) ? crown.branch : branches.last;
   final others = [
     for (final b in branches)
       if (b != summit) b
@@ -135,8 +134,7 @@ ConstellationLayout layoutConstellation(Skill skill, {double? width}) {
     }
 
     final order = List.generate(nodes.length, (i) => i)
-      ..sort(
-          (a, b) => desired(nodes[a], a).compareTo(desired(nodes[b], b)));
+      ..sort((a, b) => desired(nodes[a], a).compareTo(desired(nodes[b], b)));
 
     final xs = <double>[];
     for (var rank = 0; rank < order.length; rank++) {
@@ -147,20 +145,24 @@ ConstellationLayout layoutConstellation(Skill skill, {double? width}) {
       xs.add(x);
     }
 
-    // Resolve same-tier collisions with a left-to-right sweep, then pull
-    // back any overflow past the right margin.
+    // Resolve same-tier collisions. The row always fits — tier width is
+    // capped at 7 by braidSkill and the canvas adapts — so three bounded
+    // sweeps settle every case: push right to open gaps, pull back inside
+    // the right margin (opening gaps leftward), then push anything the
+    // pull-back drove past the left margin rightward again.
     for (var i = 1; i < xs.length; i++) {
       if (xs[i] - xs[i - 1] < kMinStarGap) xs[i] = xs[i - 1] + kMinStarGap;
     }
-    final overflow = xs.isEmpty ? 0.0 : xs.last - (w - kEdgeMargin);
-    if (overflow > 0) {
-      for (var i = 0; i < xs.length; i++) {
-        xs[i] = math.max(kEdgeMargin, xs[i] - overflow);
-      }
+    if (xs.isNotEmpty && xs.last > w - kEdgeMargin) {
+      xs[xs.length - 1] = w - kEdgeMargin;
       for (var i = xs.length - 2; i >= 0; i--) {
-        if (xs[i + 1] - xs[i] < kMinStarGap) {
-          xs[i] = math.max(kEdgeMargin, xs[i + 1] - kMinStarGap);
-        }
+        xs[i] = math.min(xs[i], xs[i + 1] - kMinStarGap);
+      }
+    }
+    if (xs.isNotEmpty && xs.first < kEdgeMargin) {
+      xs[0] = kEdgeMargin;
+      for (var i = 1; i < xs.length; i++) {
+        xs[i] = math.max(xs[i], xs[i - 1] + kMinStarGap);
       }
     }
 

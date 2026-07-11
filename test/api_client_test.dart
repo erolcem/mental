@@ -33,7 +33,11 @@ void main() {
     final a = api((req) async {
       seen = req;
       return http.Response(
-          jsonEncode({'verdict': 'pass', 'confidence': 0.9, 'feedback': 'Convincing.'}),
+          jsonEncode({
+            'verdict': 'pass',
+            'confidence': 0.9,
+            'feedback': 'Convincing.'
+          }),
           200,
           headers: {'content-type': 'application/json'});
     });
@@ -51,7 +55,8 @@ void main() {
 
   test('parses a fail verdict', () async {
     final a = api((_) async => http.Response(
-        jsonEncode({'verdict': 'fail', 'confidence': 0.8, 'feedback': 'Too vague.'}),
+        jsonEncode(
+            {'verdict': 'fail', 'confidence': 0.8, 'feedback': 'Too vague.'}),
         200,
         headers: {'content-type': 'application/json'}));
     final v = await callVerify(a);
@@ -113,7 +118,11 @@ void main() {
 
   test('journalClose tolerates a whys-less (older) backend', () async {
     final a = api((_) async => http.Response(
-        jsonEncode({'actions': ['A'], 'reflection': 'r'}), 200,
+        jsonEncode({
+          'actions': ['A'],
+          'reflection': 'r'
+        }),
+        200,
         headers: {'content-type': 'application/json'}));
     final res = await a.journalClose(
         day: '2026-07-02', transcript: const [], yesterdayActions: const []);

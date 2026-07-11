@@ -17,7 +17,8 @@ class PersistentProgressRepository implements ProgressRepository {
 
   static Future<PersistentProgressRepository> create() async {
     final prefs = await SharedPreferences.getInstance();
-    return PersistentProgressRepository._(prefs, _decode(prefs.getString(_key)));
+    return PersistentProgressRepository._(
+        prefs, _decode(prefs.getString(_key)));
   }
 
   @override
@@ -35,8 +36,7 @@ class PersistentProgressRepository implements ProgressRepository {
     _persist();
   }
 
-  void _persist() => unawaited(_prefs.setString(
-      _key,
+  void _persist() => unawaited(_prefs.setString(_key,
       jsonEncode({for (final e in _cache.entries) e.key: e.value.toJson()})));
 
   static Map<String, NodeProgress> _decode(String? raw) {
@@ -80,8 +80,7 @@ class PersistentJournalRepository implements JournalRepository {
     _persist();
   }
 
-  void _persist() => unawaited(_prefs.setString(
-      _key,
+  void _persist() => unawaited(_prefs.setString(_key,
       jsonEncode({for (final e in _cache.entries) e.key: e.value.toJson()})));
 
   static Map<String, JournalEntry> _decode(String? raw) {

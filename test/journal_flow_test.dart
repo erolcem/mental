@@ -60,8 +60,8 @@ void main() {
     // The Confidant greets first.
     expect(find.textContaining('Tell me about your day'), findsOneWidget);
 
-    await tester.enterText(find.byType(TextField),
-        'Did 40 mins of Rudin but skipped Anki again.');
+    await tester.enterText(
+        find.byType(TextField), 'Did 40 mins of Rudin but skipped Anki again.');
     await tester.pump();
     await tester.tap(find.byIcon(Icons.arrow_upward));
     await tester.pump();

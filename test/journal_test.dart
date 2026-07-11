@@ -35,8 +35,8 @@ void main() {
     });
 
     test('open (unclosed) entry does not count', () {
-      const draft = JournalEntry(
-          day: today, transcript: [JournalTurn('user', 'hi')]);
+      const draft =
+          JournalEntry(day: today, transcript: [JournalTurn('user', 'hi')]);
       expect(
           journalOverdue(
               {'2026-06-29': closed('2026-06-29'), today: draft}, now),
@@ -99,8 +99,7 @@ void main() {
         today: closed(today), // tonight — excluded
         '2026-06-30': closed('2026-06-30',
             actions: const [ActionItem('Do Anki', done: true, why: 'streak')]),
-        yesterday: closed(yesterday,
-            actions: const [ActionItem('Read Rudin')]),
+        yesterday: closed(yesterday, actions: const [ActionItem('Read Rudin')]),
         '2026-06-28': const JournalEntry(
             day: '2026-06-28',
             transcript: [JournalTurn('user', 'never closed')]),
@@ -139,8 +138,8 @@ void main() {
   test('extraLock blocks ignition when journal is overdue', () {
     final maths = skillById('maths');
     var locked = true;
-    final n = ProgressNotifier(InMemoryProgressRepository(),
-        extraLock: () => locked);
+    final n =
+        ProgressNotifier(InMemoryProgressRepository(), extraLock: () => locked);
     n.ignite(maths, maths.nodeById('m1'));
     expect(n.isComplete('maths', 'm1'), isFalse);
     locked = false;

@@ -74,7 +74,8 @@ class NodeProgress {
       };
 
   static NodeProgress fromJson(Map<String, dynamic> j) => NodeProgress(
-        completedAt: j['c'] == null ? null : DateTime.tryParse(j['c'] as String),
+        completedAt:
+            j['c'] == null ? null : DateTime.tryParse(j['c'] as String),
         summary: (j['s'] as String?) ?? '',
         verifiedAt: j['v'] == null ? null : DateTime.tryParse(j['v'] as String),
         examinerNote: (j['n'] as String?) ?? '',
@@ -112,10 +113,9 @@ class ActionItem {
   ActionItem toggled() => ActionItem(text, done: !done, why: why);
   Map<String, dynamic> toJson() =>
       {'t': text, if (done) 'd': true, if (why.isNotEmpty) 'w': why};
-  static ActionItem fromJson(Map<String, dynamic> j) => ActionItem(
-      (j['t'] as String?) ?? '',
-      done: j['d'] == true,
-      why: (j['w'] as String?) ?? '');
+  static ActionItem fromJson(Map<String, dynamic> j) =>
+      ActionItem((j['t'] as String?) ?? '',
+          done: j['d'] == true, why: (j['w'] as String?) ?? '');
 }
 
 /// One day's journal: the conversation, and the 1–3 actions it distilled for
