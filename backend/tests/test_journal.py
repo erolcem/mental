@@ -1,5 +1,7 @@
 """Confidant prompts, parsing, habit ledger, and /journal endpoints — Gemini
 faked."""
+import json
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -60,6 +62,18 @@ def test_parse_close_object_actions_with_why():
         '"reflection": "Mornings are yours."}')
     assert c.actions[0].text == "10 Anki reps after breakfast"
     assert "shrink" in c.actions[0].why
+
+
+def test_parse_close_caps_action_lengths():
+    # An over-long action would fail the wire validators when the app sends
+    # it back tomorrow (yesterday_actions / history cap texts at 300).
+    long_text = "x" * 500
+    long_why = "y" * 900
+    c = journal.parse_close(
+        json.dumps({"actions": [{"text": long_text, "why": long_why}],
+                    "reflection": "r"}))
+    assert len(c.actions[0].text) == 300
+    assert len(c.actions[0].why) == 400
 
 
 def test_parse_close_rejects_bad():

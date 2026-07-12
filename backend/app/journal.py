@@ -250,7 +250,11 @@ def parse_close(text: str) -> JournalClose:
         else:
             text_a, why_a = str(a).strip(), ""
         if text_a:
-            actions.append(JournalAction(text=text_a, why=why_a))
+            # Hard-cap lengths at the source: an over-long action would fail
+            # the wire validators when the app sends it back tomorrow as
+            # yesterday_actions / history (max 300), bricking the journal
+            # for a day. Never trust the model to stay short.
+            actions.append(JournalAction(text=text_a[:300], why=why_a[:400]))
     actions = actions[:MAX_ACTIONS]
     if not actions:
         raise ValueError("close reply contained no usable actions")

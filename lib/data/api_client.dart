@@ -47,6 +47,10 @@ class JournalCloseResult {
       {required this.actions, this.whys = const [], required this.reflection});
 }
 
+/// The backend rejects summaries over 8000 chars; clip at the wire so an
+/// over-enthusiastic sheet can never fail validation outright.
+String _capSummary(String s) => s.length > 8000 ? s.substring(0, 8000) : s;
+
 class MentalApi {
   final String baseUrl;
   final String token;
@@ -77,7 +81,7 @@ class MentalApi {
       'node': node,
       'tier': tier,
       'prerequisites': prerequisites,
-      'summary': summary,
+      'summary': _capSummary(summary),
       'proof': proof,
     });
     return ExaminerVerdict(
@@ -103,7 +107,7 @@ class MentalApi {
       'goal': goal,
       'node': node,
       'tier': tier,
-      'summary': summary,
+      'summary': _capSummary(summary),
       'proof': proof,
     });
     return [for (final q in (j['questions'] as List? ?? [])) q.toString()];
@@ -127,7 +131,7 @@ class MentalApi {
       'goal': goal,
       'node': node,
       'tier': tier,
-      'summary': summary,
+      'summary': _capSummary(summary),
       'proof': proof,
       'questions': questions,
       'answers': answers,

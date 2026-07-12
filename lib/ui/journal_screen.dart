@@ -110,18 +110,30 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
   JournalEntry get _entry =>
       ref.watch(journalProvider)[_today] ?? JournalEntry(day: _today);
 
+  // Wire shaping mirrors the backend validators exactly (turns ≤4000 chars,
+  // action texts ≤300, nothing empty): a single over-long or empty saved
+  // record must never be able to fail validation and jam the Confidant.
   List<Map<String, String>> get _wireTranscript => [
         for (final t in _entry.transcript.length > 16
             ? _entry.transcript.sublist(_entry.transcript.length - 16)
             : _entry.transcript)
-          {'role': t.role, 'text': t.text}
+          if (t.text.trim().isNotEmpty)
+            {
+              'role': t.role,
+              'text':
+                  t.text.length > 4000 ? t.text.substring(0, 4000) : t.text
+            }
       ];
 
   List<Map<String, dynamic>> get _wireYesterday {
     final y = ref.read(todayActionsProvider);
     return [
       for (final a in y?.actions ?? const <ActionItem>[])
-        {'text': a.text, 'done': a.done}
+        if (a.text.trim().isNotEmpty)
+          {
+            'text': a.text.length > 300 ? a.text.substring(0, 300) : a.text,
+            'done': a.done
+          }
     ];
   }
 

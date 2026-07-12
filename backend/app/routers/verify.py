@@ -17,7 +17,8 @@ class VerifyRequest(BaseModel):
     goal: str = Field(default="", max_length=160)
     node: str = Field(min_length=1, max_length=160)
     tier: int = Field(ge=1, le=30)
-    prerequisites: list[str] = Field(default_factory=list, max_length=12)
+    # Deep braid crowns gather many parents (today's max: 13) — leave room.
+    prerequisites: list[str] = Field(default_factory=list, max_length=20)
     summary: str = Field(min_length=1, max_length=8000)
     proof: str = Field(default="", max_length=300)  # the node's completion standard
 

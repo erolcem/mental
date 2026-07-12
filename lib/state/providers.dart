@@ -297,8 +297,17 @@ List<Map<String, dynamic>> advisorHistory(
     for (final e in recent)
       {
         'day': e.day,
+        // Shaped to the backend validators (≤4 actions, texts ≤300, nothing
+        // empty) so no stored day — however it was written — can fail
+        // validation and take the whole advisor call down with it.
         'actions': [
-          for (final a in e.actions) {'text': a.text, 'done': a.done}
+          for (final a in e.actions.take(4))
+            if (a.text.trim().isNotEmpty)
+              {
+                'text':
+                    a.text.length > 300 ? a.text.substring(0, 300) : a.text,
+                'done': a.done
+              }
         ],
         'reflection':
             e.reflection.length > 380 // wire cap (backend rejects >400)

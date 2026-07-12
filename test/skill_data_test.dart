@@ -212,4 +212,29 @@ void main() {
       }
     }
   });
+
+  test('every node fits the backend wire validators', () {
+    // Mirrors backend/app/routers/{verify,review}.py — a node that breaches
+    // these caps would 422 the Examiner/Reviewer for that star forever.
+    for (final stat in catalog) {
+      expect(stat.label.length, lessThanOrEqualTo(60));
+      for (final skill in stat.skills) {
+        expect(skill.label.length, lessThanOrEqualTo(80),
+            reason: '${skill.id} label exceeds the wire cap');
+        expect(skill.goal.length, lessThanOrEqualTo(160),
+            reason: '${skill.id} goal exceeds the wire cap');
+        for (final n in skill.tree) {
+          expect(n.label.length, lessThanOrEqualTo(160),
+              reason: '${skill.id}.${n.id} label exceeds the wire cap');
+          expect(n.proof.length, lessThanOrEqualTo(300),
+              reason: '${skill.id}.${n.id} proof exceeds the wire cap');
+          expect(n.requires.length, lessThanOrEqualTo(20),
+              reason: '${skill.id}.${n.id} has more prerequisites than '
+                  'the verify route accepts');
+          expect(n.tier, lessThanOrEqualTo(30),
+              reason: '${skill.id}.${n.id} tier exceeds the wire cap');
+        }
+      }
+    }
+  });
 }
