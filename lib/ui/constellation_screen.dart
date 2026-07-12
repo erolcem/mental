@@ -113,9 +113,6 @@ class _ConstellationScreenState extends ConsumerState<ConstellationScreen>
     final mastery = skillMastery(progress, skill);
 
     return Scaffold(
-      // The node sheet's keyboard must not resize (and per-frame re-bake)
-      // the starfield behind it; the sheet pads itself by the inset.
-      resizeToAvoidBottomInset: false,
       body: Stack(
         fit: StackFit.expand,
         children: [

@@ -3,17 +3,13 @@
 // Built like an astrophoto, not a texture:
 //  • ~1,600 stars on a power-law magnitude curve (multitudes of faint points,
 //    a handful of brilliant ones) with real stellar colour classes.
-//  • Nine hero stars — the brilliant few that anchor any dark-sky photograph —
-//    each with a coloured bloom and a faint four-point diffraction glint.
 //  • A textured Milky Way: a dense diagonal star-river with soft galactic
 //    glow, dark dust lanes, and a warm core.
 //  • Nebular haze in the given accent colours; faint airglow at the horizon.
 //  • The whole celestial layer ROTATES imperceptibly around a pole (one full
 //    turn every 2 hours) — stand still and the sky turns.
 //  • Atmosphere on top: twinkling stars, meteors every ~9 s, the occasional
-//    drifting satellite. All of it stands down under iOS Reduce Motion.
-//  • A photographic vignette: the frame's edges fall to black so the eye
-//    settles toward the centre, like a real long exposure.
+//    drifting satellite.
 //
 // Performance contract: everything static is rasterised ONCE into a cached
 // ui.Picture (drawn per-frame under a rotation transform, which is cheap);
@@ -31,10 +27,7 @@ class Starfield extends StatefulWidget {
   /// 0–1 dims everything (used behind sheets).
   final double dim;
   const Starfield(
-      {super.key,
-      this.nebulae = const [],
-      this.starCount = 2200,
-      this.dim = 0});
+      {super.key, this.nebulae = const [], this.starCount = 2200, this.dim = 0});
 
   @override
   State<Starfield> createState() => _StarfieldState();
@@ -65,8 +58,7 @@ class _StarfieldState extends State<Starfield>
     super.didChangeDependencies();
     // Honour iOS "Reduce Motion": freeze the celestial rotation entirely
     // (and stop burning cycles) when the user has asked for calm.
-    final reduceMotion =
-        MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    final reduceMotion = MediaQuery.maybeOf(context)?.disableAnimations ?? false;
     if (reduceMotion && _t.isAnimating) {
       _t.stop();
     } else if (!reduceMotion && !_t.isAnimating) {
@@ -76,8 +68,7 @@ class _StarfieldState extends State<Starfield>
 
   @override
   Widget build(BuildContext context) {
-    final reduceMotion =
-        MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    final reduceMotion = MediaQuery.maybeOf(context)?.disableAnimations ?? false;
     return RepaintBoundary(
       child: AnimatedBuilder(
         animation: _t,
@@ -107,14 +98,6 @@ class _Star {
   const _Star(this.p, this.r, this.a, this.color, this.phase, this.speed);
 }
 
-/// One baked sky: the static picture plus the stars deliberately left out of
-/// it so they can twinkle live.
-class _BakedSky {
-  final ui.Picture picture;
-  final List<_Star> twinklers;
-  const _BakedSky(this.picture, this.twinklers);
-}
-
 /// Real-ish stellar colour classes, weighted toward white/warm like a dark
 /// rural sky.
 Color _stellarColor(math.Random rnd) {
@@ -142,18 +125,11 @@ class _StarfieldPainter extends CustomPainter {
 
   double get _time => phase * 7200; // seconds within the rotation
 
-  // -------- baked sky cache --------
-  // Keyed by config (star count + nebula colours + integer size) and shared
-  // across instances. During a page transition BOTH routes paint — galaxy
-  // and journal starfields on alternating frames — and a single static slot
-  // made them evict each other and re-record the whole ~4,000-element sky
-  // EVERY FRAME (a CPU/GPU spike that could take the app down on device,
-  // seen as the journal-page crash on iPhone). A small keyed cache lets each
-  // live starfield keep its own baked picture. Evicted entries are simply
-  // dropped (never dispose()d — a route mid-paint may still hold one; the
-  // engine finaliser reclaims them safely).
-  static final Map<int, _BakedSky> _skyCache = <int, _BakedSky>{};
-  static const int _skyCacheMax = 4;
+  // -------- static sky cache (shared across instances) --------
+  static ui.Picture? _sky;
+  static Size? _skySize;
+  static int _skyConfig = 0;
+  static final List<_Star> _twinklers = [];
 
   /// The celestial pole the sky turns around — upper area of the screen.
   Offset _pole(Size s) => Offset(s.width * 0.70, s.height * 0.16);
@@ -174,21 +150,17 @@ class _StarfieldPainter extends CustomPainter {
     return r + 24;
   }
 
-  _BakedSky _buildSky(Size size) {
-    final cfg = Object.hash(starCount, Object.hashAll(nebulae),
-        size.width.round(), size.height.round());
-    final cached = _skyCache.remove(cfg);
-    if (cached != null) {
-      _skyCache[cfg] = cached; // re-insert: LRU freshness
-      return cached;
-    }
+  void _buildSky(Size size) {
+    final cfg = Object.hash(
+        starCount, Object.hashAll(nebulae), size.width.round(), size.height.round());
+    if (_sky != null && _skySize == size && _skyConfig == cfg) return;
 
     final rnd = math.Random(7);
     final pole = _pole(size);
     final fieldR = _fieldRadius(size);
     final rec = ui.PictureRecorder();
     final c = Canvas(rec);
-    final twinklers = <_Star>[];
+    _twinklers.clear();
 
     Offset randInField() {
       // Uniform over the field disc (rejection-free: sqrt for area uniformity).
@@ -242,15 +214,12 @@ class _StarfieldPainter extends CustomPainter {
     );
     // Dust lanes: dark blurred streaks hugging the band core.
     for (var i = 0; i < 7; i++) {
-      final along =
-          bandCenter + bandDir * ((rnd.nextDouble() * 2 - 1) * fieldR * 0.8);
+      final along = bandCenter + bandDir * ((rnd.nextDouble() * 2 - 1) * fieldR * 0.8);
       final off = bandNormal * (gauss() * bandHalfWidth * 0.16);
       final centerD = along + off;
       final len = size.shortestSide * (0.12 + rnd.nextDouble() * 0.22);
       final rect = Rect.fromCenter(
-          center: centerD,
-          width: len,
-          height: len * (0.22 + rnd.nextDouble() * 0.2));
+          center: centerD, width: len, height: len * (0.22 + rnd.nextDouble() * 0.2));
       c.save();
       c.translate(centerD.dx, centerD.dy);
       c.rotate(bandAngle + (rnd.nextDouble() - 0.5) * 0.5);
@@ -265,8 +234,7 @@ class _StarfieldPainter extends CustomPainter {
     // The river's own stars — dense, tiny, concentrated on the band.
     final riverCount = (starCount * 0.9).round();
     for (var i = 0; i < riverCount; i++) {
-      final along =
-          bandCenter + bandDir * ((rnd.nextDouble() * 2 - 1) * fieldR);
+      final along = bandCenter + bandDir * ((rnd.nextDouble() * 2 - 1) * fieldR);
       final p = along + bandNormal * (gauss() * bandHalfWidth * 0.5);
       final r = 0.25 + rnd.nextDouble() * 0.55;
       c.drawCircle(
@@ -285,15 +253,15 @@ class _StarfieldPainter extends CustomPainter {
           p,
           0.18 + rnd.nextDouble() * 0.25,
           Paint()
-            ..color =
-                Colors.white.withValues(alpha: 0.03 + rnd.nextDouble() * 0.09));
+            ..color = Colors.white
+                .withValues(alpha: 0.03 + rnd.nextDouble() * 0.09));
     }
 
     // ---- General field stars: power-law magnitudes.
     // Background stars stay SMALL — brightness reads through subtle bloom,
-    // never size — so the field can never upstage foreground content or sit
-    // heavily over text. The nine hero stars below are the one deliberate
-    // exception, as in any real dark-sky photograph.
+    // never size. Diffraction glints are reserved for meaningful objects
+    // (guide stars, ignited nodes), so the background can never upstage them
+    // or sit over text.
     for (var i = 0; i < starCount; i++) {
       final p = randInField();
       final m = math.pow(rnd.nextDouble(), 3.1).toDouble(); // most stars faint
@@ -301,10 +269,10 @@ class _StarfieldPainter extends CustomPainter {
       final alpha = 0.08 + m * 0.60;
       // Faint stars read white to the eye; colour only shows on brighter ones.
       final color = m > 0.45 ? _stellarColor(rnd) : Colors.white;
-      final star = _Star(p, r, alpha, color, rnd.nextDouble() * 2 * math.pi,
-          0.4 + rnd.nextDouble());
-      if (r > 0.9 && twinklers.length < 60 && rnd.nextDouble() < 0.22) {
-        twinklers.add(star); // drawn live, not baked
+      final star =
+          _Star(p, r, alpha, color, rnd.nextDouble() * 2 * math.pi, 0.4 + rnd.nextDouble());
+      if (r > 0.9 && _twinklers.length < 60 && rnd.nextDouble() < 0.22) {
+        _twinklers.add(star); // drawn live, not baked
         continue;
       }
       c.drawCircle(p, r, Paint()..color = color.withValues(alpha: alpha));
@@ -347,11 +315,7 @@ class _StarfieldPainter extends CustomPainter {
                 Colors.white.withValues(alpha: 0),
                 Colors.white.withValues(alpha: 0.55),
                 Colors.white.withValues(alpha: 0),
-              ], [
-                0.0,
-                0.5,
-                1.0
-              ]));
+              ], [0.0, 0.5, 1.0]));
       }
     }
 
@@ -360,8 +324,7 @@ class _StarfieldPainter extends CustomPainter {
       final base = randInField();
       for (var layer = 0; layer < 3; layer++) {
         final centerN = base +
-            Offset(
-                (rnd.nextDouble() - 0.5) * 90, (rnd.nextDouble() - 0.5) * 90);
+            Offset((rnd.nextDouble() - 0.5) * 90, (rnd.nextDouble() - 0.5) * 90);
         final radius = size.shortestSide * (0.30 + rnd.nextDouble() * 0.22);
         c.drawCircle(
           centerN,
@@ -376,17 +339,14 @@ class _StarfieldPainter extends CustomPainter {
       }
     }
 
-    final baked = _BakedSky(rec.endRecording(), twinklers);
-    _skyCache[cfg] = baked;
-    if (_skyCache.length > _skyCacheMax) {
-      _skyCache.remove(_skyCache.keys.first); // drop least-recently-used
-    }
-    return baked;
+    _sky = rec.endRecording();
+    _skySize = size;
+    _skyConfig = cfg;
   }
 
   @override
   void paint(Canvas canvas, Size size) {
-    final baked = _buildSky(size);
+    _buildSky(size);
     final pole = _pole(size);
     final theta = phase * 2 * math.pi;
 
@@ -397,11 +357,7 @@ class _StarfieldPainter extends CustomPainter {
         ..shader = ui.Gradient.radial(
           Offset(size.width * 0.3, size.height * 0.12),
           size.longestSide * 1.25,
-          [
-            const Color(0xFF0B1030),
-            const Color(0xFF060814),
-            const Color(0xFF030409)
-          ],
+          [const Color(0xFF0B1030), const Color(0xFF060814), const Color(0xFF030409)],
           [0.0, 0.45, 1.0],
         ),
     );
@@ -411,10 +367,9 @@ class _StarfieldPainter extends CustomPainter {
     canvas.translate(pole.dx, pole.dy);
     canvas.rotate(theta);
     canvas.translate(-pole.dx, -pole.dy);
-    canvas.drawPicture(baked.picture);
-    for (final s in baked.twinklers) {
-      final tw =
-          0.5 + 0.5 * math.sin(_time * s.speed * 2 * math.pi / 6 + s.phase);
+    canvas.drawPicture(_sky!);
+    for (final s in _twinklers) {
+      final tw = 0.5 + 0.5 * math.sin(_time * s.speed * 2 * math.pi / 6 + s.phase);
       final a = (s.a * (0.30 + 0.9 * tw)).clamp(0.0, 1.0);
       canvas.drawCircle(s.p, s.r * (0.85 + 0.3 * tw),
           Paint()..color = s.color.withValues(alpha: a));
@@ -442,8 +397,6 @@ class _StarfieldPainter extends CustomPainter {
 
     // Photographic vignette: the sky's edges fall gently to black so the
     // eye settles toward the centre — the depth of a real long exposure.
-    // This one touch does the most to move the frame from "graphic" to
-    // "night".
     canvas.drawRect(
       Offset.zero & size,
       Paint()
@@ -490,8 +443,8 @@ class _StarfieldPainter extends CustomPainter {
         ..strokeCap = StrokeCap.round,
     );
     // Hot head.
-    canvas.drawCircle(
-        head, 1.3, Paint()..color = Colors.white.withValues(alpha: fade));
+    canvas.drawCircle(head, 1.3,
+        Paint()..color = Colors.white.withValues(alpha: fade));
   }
 
   /// A satellite drifts across every ~50 s — slow, steady, mundane, real.

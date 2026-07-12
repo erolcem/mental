@@ -10,6 +10,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/api_client.dart';
 import '../data/repository.dart';
 import '../state/providers.dart';
+import 'habit_ledger_sheet.dart';
 import 'starfield.dart';
 import 'theme.dart';
 
@@ -51,8 +52,7 @@ class _HonourCloseDialogState extends State<_HonourCloseDialog> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
-                'The Confidant is offline — set 1–3 concrete actions yourself.',
+            Text('The Confidant is offline — set 1–3 concrete actions yourself.',
                 style: raleway(11, color: Colors.white54)),
             const SizedBox(height: 10),
             for (final c in _controllers)
@@ -101,7 +101,7 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
     final d = DateTime.now();
     const wk = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
     const mo = [
-      'JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', //
+      'JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN',
       'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'
     ];
     return '${wk[d.weekday - 1]} ${d.day} ${mo[d.month - 1]}';
@@ -227,6 +227,7 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
                   why: i < res.whys.length ? res.whys[i] : '')
           ],
           reflection: res.reflection,
+          rationale: _composeRationale(res.whys),
           closedAt: DateTime.now(),
         ));
       } else {
@@ -238,6 +239,18 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
     } finally {
       if (mounted) setState(() => _closing = false);
     }
+  }
+
+  /// The backend sends one `why` per action; the WHY THESE panel reads them
+  /// as a single block of the advisor's reasoning.
+  static String _composeRationale(List<String> whys) {
+    final w = [
+      for (final s in whys)
+        if (s.trim().isNotEmpty) s.trim()
+    ];
+    if (w.isEmpty) return '';
+    if (w.length == 1) return w.first;
+    return [for (var i = 0; i < w.length; i++) '${i + 1}. ${w[i]}'].join('\n');
   }
 
   /// Honour mode: write your own 1–3 actions for tomorrow.
@@ -270,108 +283,103 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
     final userSpoke = e.transcript.any((t) => t.role == 'user');
 
     return Scaffold(
-      // The sky must NOT resize with the keyboard: every resized frame would
-      // re-bake the starfield picture (the iPhone crash). The composer pads
-      // itself by the keyboard inset instead.
-      resizeToAvoidBottomInset: false,
       body: Stack(
         fit: StackFit.expand,
         children: [
           const Starfield(nebulae: [kJournalViolet], starCount: 1200),
           SafeArea(
-            child: Padding(
-              padding: EdgeInsets.only(
-                  bottom: MediaQuery.viewInsetsOf(context).bottom),
-              child: Column(
-                children: [
-                  _header(e),
-                  if (!api.configured)
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(18, 4, 18, 0),
-                      child: Text(
-                        '⚠ CONFIDANT OFFLINE — this build has no BACKEND_URL. '
-                        'In Codemagic, the variables must live in a group the '
-                        'workflow imports (see backend/DEPLOY.md).',
-                        style: raleway(8.5,
-                            color:
-                                const Color(0xFFFFC46B).withValues(alpha: 0.8),
-                            height: 1.5),
-                      ),
+            child: Column(
+              children: [
+                _header(e),
+                if (!api.configured)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(18, 4, 18, 0),
+                    child: Text(
+                      '⚠ CONFIDANT OFFLINE — this build has no BACKEND_URL. '
+                      'In Codemagic, the variables must live in a group the '
+                      'workflow imports (see backend/DEPLOY.md).',
+                      style: raleway(8.5,
+                          color: const Color(0xFFFFC46B).withValues(alpha: 0.8),
+                          height: 1.5),
                     ),
-                  Expanded(
-                    child: e.closed
-                        ? _closedView(e)
-                        : ListView(
-                            controller: _scroll,
-                            keyboardDismissBehavior:
-                                ScrollViewKeyboardDismissBehavior.onDrag,
-                            padding: const EdgeInsets.fromLTRB(18, 10, 18, 10),
-                            children: [
-                              for (final t in e.transcript) _bubble(t),
-                              if (_aiThinking)
-                                Padding(
-                                  padding: const EdgeInsets.all(12),
-                                  child: Row(children: [
-                                    const SizedBox(
-                                        width: 12,
-                                        height: 12,
-                                        child: CircularProgressIndicator(
-                                            strokeWidth: 1.5)),
-                                    const SizedBox(width: 10),
-                                    Text('The Confidant considers…',
-                                        style: raleway(10.5,
-                                            color: Colors.white38)),
-                                  ]),
-                                ),
-                              if (_error != null)
-                                Padding(
-                                  padding:
-                                      const EdgeInsets.symmetric(vertical: 8),
-                                  child: Row(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Expanded(
-                                        child: Text('⚠ $_error',
-                                            style: raleway(10.5,
-                                                height: 1.4,
-                                                color: const Color(
-                                                    0xFFFFC46B))),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      InkWell(
-                                        onTap: _aiThinking
-                                            ? null
-                                            : _requestReply,
-                                        borderRadius:
-                                            BorderRadius.circular(8),
-                                        child: Container(
-                                          padding: const EdgeInsets.symmetric(
-                                              horizontal: 10, vertical: 6),
-                                          decoration: BoxDecoration(
-                                            border: Border.all(
-                                                color: const Color(0xFFFFC46B)
-                                                    .withValues(alpha: 0.5)),
-                                            borderRadius:
-                                                BorderRadius.circular(8),
-                                          ),
-                                          child: Text('TRY AGAIN',
-                                              style: raleway(8.5,
-                                                  weight: 700,
-                                                  color: const Color(
-                                                      0xFFFFC46B),
-                                                  spacing: 1)),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                            ],
-                          ),
                   ),
-                  if (!e.closed) _composer(api, userSpoke),
-                ],
-              ),
+                Expanded(
+                  child: e.closed
+                      ? _closedView(e)
+                      : ListView(
+                          controller: _scroll,
+                          keyboardDismissBehavior:
+                              ScrollViewKeyboardDismissBehavior.onDrag,
+                          padding: const EdgeInsets.fromLTRB(18, 10, 18, 10),
+                          children: [
+                            for (final t in e.transcript) _bubble(t),
+                            if (_aiThinking)
+                              Padding(
+                                padding: const EdgeInsets.all(12),
+                                child: Row(children: [
+                                  const SizedBox(
+                                      width: 12,
+                                      height: 12,
+                                      child: CircularProgressIndicator(
+                                          strokeWidth: 1.5)),
+                                  const SizedBox(width: 10),
+                                  Text('The Confidant considers…',
+                                      style: raleway(10.5,
+                                          color: Colors.white38)),
+                                ]),
+                              ),
+                            if (_error != null)
+                              Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 8),
+                                child: Row(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.start,
+                                  children: [
+                                    Expanded(
+                                      child: Text('⚠ $_error',
+                                          style: raleway(10.5,
+                                              height: 1.4,
+                                              color: const Color(
+                                                  0xFFFFC46B))),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    InkWell(
+                                      onTap: _aiThinking
+                                          ? null
+                                          : _requestReply,
+                                      borderRadius:
+                                          BorderRadius.circular(8),
+                                      child: Container(
+                                        padding: const EdgeInsets
+                                            .symmetric(
+                                            horizontal: 10,
+                                            vertical: 6),
+                                        decoration: BoxDecoration(
+                                          border: Border.all(
+                                              color: const Color(
+                                                      0xFFFFC46B)
+                                                  .withValues(
+                                                      alpha: 0.5)),
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                        ),
+                                        child: Text('TRY AGAIN',
+                                            style: raleway(8.5,
+                                                weight: 700,
+                                                color: const Color(
+                                                    0xFFFFC46B),
+                                                spacing: 1)),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                          ],
+                        ),
+                ),
+                if (!e.closed) _composer(api, userSpoke),
+              ],
             ),
           ),
         ],
@@ -412,10 +420,30 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
                       : '${_prettyToday()} — your day, its lessons, tomorrow\'s actions',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style:
-                      raleway(9.5, color: Colors.white.withValues(alpha: 0.5)),
+                  style: raleway(9.5, color: Colors.white.withValues(alpha: 0.5)),
                 ),
               ],
+            ),
+          ),
+          InkWell(
+            onTap: () => showHabitLedger(context),
+            borderRadius: BorderRadius.circular(8),
+            child: Padding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+              child: Column(
+                children: [
+                  Icon(Icons.receipt_long,
+                      size: 16,
+                      color: kJournalViolet.withValues(alpha: 0.7)),
+                  const SizedBox(height: 1),
+                  Text('LEDGER',
+                      style: raleway(6.5,
+                          weight: 700,
+                          color: kJournalViolet.withValues(alpha: 0.7),
+                          spacing: 1)),
+                ],
+              ),
             ),
           ),
         ],
@@ -555,7 +583,8 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
                 backgroundColor: userSpoke && !_closing && !_aiThinking
                     ? kJournalViolet.withValues(alpha: 0.9)
                     : Colors.white.withValues(alpha: 0.06),
-                foregroundColor: userSpoke ? kSpaceBlack : Colors.white38,
+                foregroundColor:
+                    userSpoke ? kSpaceBlack : Colors.white38,
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12)),
               ),
@@ -637,8 +666,8 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
           Center(
             child: Text('"${e.reflection}"',
                 textAlign: TextAlign.center,
-                style: cinzel(13.5,
-                    weight: 500, color: Colors.white.withValues(alpha: 0.9))),
+                style: cinzel(13.5, weight: 500,
+                    color: Colors.white.withValues(alpha: 0.9))),
           ),
           const SizedBox(height: 6),
           Center(
@@ -657,12 +686,13 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
         for (var i = 0; i < e.actions.length; i++)
           Container(
             margin: const EdgeInsets.symmetric(vertical: 3.5),
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             decoration: BoxDecoration(
               color: kJournalViolet.withValues(alpha: 0.05),
               borderRadius: BorderRadius.circular(12),
-              border:
-                  Border.all(color: kJournalViolet.withValues(alpha: 0.22)),
+              border: Border.all(
+                  color: kJournalViolet.withValues(alpha: 0.22)),
             ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -685,26 +715,39 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
                 ),
                 const SizedBox(width: 10),
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(e.actions[i].text,
-                          style: raleway(12.5, height: 1.5)),
-                      if (e.actions[i].why.isNotEmpty)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 2),
-                          child: Text(e.actions[i].why,
-                              style: raleway(10,
-                                  height: 1.4,
-                                  color:
-                                      kJournalViolet.withValues(alpha: 0.65))),
-                        ),
-                    ],
-                  ),
-                ),
+                    child: Text(e.actions[i].text,
+                        style: raleway(12.5, height: 1.5))),
               ],
             ),
           ),
+        if (e.rationale.isNotEmpty) ...[
+          const SizedBox(height: 14),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: kJournalViolet.withValues(alpha: 0.06),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                  color: kJournalViolet.withValues(alpha: 0.25)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('WHY THESE — THE ADVISOR\'S REASONING',
+                    style: raleway(8,
+                        weight: 700,
+                        color: kJournalViolet.withValues(alpha: 0.8),
+                        spacing: 1.5)),
+                const SizedBox(height: 5),
+                Text(e.rationale,
+                    style: raleway(11,
+                        height: 1.5,
+                        color: Colors.white.withValues(alpha: 0.75))),
+              ],
+            ),
+          ),
+        ],
         const SizedBox(height: 24),
         Center(
           child: FilledButton(
@@ -713,7 +756,8 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
               foregroundColor: kSpaceBlack,
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14)),
-              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
             ),
             onPressed: () => Navigator.of(context).pop(),
             child: Text('RETURN TO THE SKY',

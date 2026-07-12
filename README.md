@@ -35,11 +35,11 @@ lib/
   state/
     providers.dart             Riverpod: progress notifier + mastery/XP/level derivations
   ui/
-    galaxy_screen.dart         home sky: pannable/pinchable tall galaxy, 4 stat clusters
+    galaxy_screen.dart         home sky: quadrant star map, overview + fly-and-zoom, stat rail
     constellation_screen.dart  one skill as a pan/zoom constellation (CustomPainter)
     constellation_layout.dart  branch-lane layout: each branch its own strand of sky
     node_sheet.dart            the quest sheet: guide, proof, prereqs, unlocks, examiner
-    starfield.dart             animated night sky (keyed baked-picture cache + twinkle)
+    starfield.dart             animated night sky (baked-picture cache + twinkle)
     theme.dart                 palette + Cinzel/Raleway variable fonts
 test/                          data integrity, progress rules, locks, layout, widget flows
 tool/analyze_catalog.dart      pure-Dart catalog verifier + analytics generator
@@ -124,7 +124,7 @@ migration path.)
 3. **Stage 3 (done)** — spaced-repetition reviews with AI quizzes; overdue reviews lock the sky.
 4. **Stage 4 (done)** — daily closed-loop AI journal → 1–3 next-day actions; skipping locks the sky.
 5. **Stage 5 (this)** — the Grand Braid: 1,058-star quest catalog, habit-ledger
-   advisor, pannable galaxy, cross-device transfer.
+   advisor, quadrant home sky, cross-device transfer.
 
 ## Build
 

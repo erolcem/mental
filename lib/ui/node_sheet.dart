@@ -17,14 +17,50 @@ import 'theme.dart';
 /// Matches the backend's MIN_SUMMARY_CHARS floor.
 const int kMinSummaryChars = 80;
 
+/// The generated quest briefing: where this star sits in its constellation,
+/// what it costs, and what its light means — computed from catalog
+/// structure, so every one of the 431 stars reads as a legible quest.
+String starBriefing(Skill skill, SkillNode node) {
+  final isCrown =
+      node.tier == skill.maxTier && skill.unlockedBy(node.id).isEmpty;
+  final b = StringBuffer();
+  if (isCrown) {
+    b.write('The crown of ${skill.label} — every branch of this '
+        'constellation converges here, and the endgame stands or falls on '
+        'this one star. ');
+  } else if (node.requires.isEmpty) {
+    b.write(node.branch.isNotEmpty && node.branch != 'Foundations'
+        ? 'A root star of the ${node.branch} branch — it begins here, with '
+            'no prerequisites. '
+        : 'A foundation star — this constellation begins here, with no '
+            'prerequisites. ');
+  } else {
+    b.write('Tier ${node.tier} of ${skill.maxTier}'
+        '${node.branch.isNotEmpty ? ' on the ${node.branch} branch' : ''}'
+        ' — ${node.tier <= 2 ? 'early climb' : node.tier >= skill.maxTier - 1 ? 'the high climb toward the crown' : 'deep in the braid'}. ');
+  }
+  if (node.hours > 0) {
+    final months = (node.hours / 60).round(); // two focused hours a day
+    b.write('Budget ≈${node.hours} hours of deliberate work'
+        '${months >= 2 ? ' — roughly $months months at two focused hours a day' : ''}. ');
+  }
+  return b.toString().trimRight();
+}
+
 /// Returns true (via the popped future) if the user ignited the star.
 Future<bool?> showNodeSheet(BuildContext context, WidgetRef ref,
-    {required StatDomain stat, required Skill skill, required SkillNode node}) {
+    {required StatDomain stat,
+    required Skill skill,
+    required SkillNode node}) {
   return showModalBottomSheet<bool>(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
     barrierColor: Colors.black54,
+    // Cap the ceiling below the phone's top so the grab handle is always
+    // reachable and there's a clear gap to drag the sheet down through.
+    constraints: BoxConstraints(
+        maxHeight: MediaQuery.sizeOf(context).height * 0.9),
     builder: (_) => _NodeSheet(stat: stat, skill: skill, node: node),
   );
 }
@@ -50,8 +86,8 @@ class _NodeSheetState extends ConsumerState<_NodeSheet> {
   void initState() {
     super.initState();
     final saved = ref
-            .read(
-                progressProvider)[progressKey(widget.skill.id, widget.node.id)]
+            .read(progressProvider)[
+                progressKey(widget.skill.id, widget.node.id)]
             ?.summary ??
         '';
     _summary = TextEditingController(text: saved);
@@ -67,66 +103,6 @@ class _NodeSheetState extends ConsumerState<_NodeSheet> {
   void _persistSummary() => ref
       .read(progressProvider.notifier)
       .saveSummary(widget.skill, widget.node, _summary.text);
-
-  /// The stars this one is a prerequisite of — the road ahead.
-  List<String> _unlocksLabels() => [
-        for (final n in widget.skill.tree)
-          if (n.requires.contains(widget.node.id)) n.label
-      ];
-
-  /// Render a guide as styled lines: numbered steps ("1. ...") get a
-  /// colour-ringed step badge; plain lines (intro, "Keep:") render quiet
-  /// prose. Single-paragraph guides fall through as one quiet block, so both
-  /// formats read well.
-  static final RegExp _stepRe = RegExp(r'^(\d+)\.\s+(.*)$');
-  List<Widget> _guideLines(String guide, Color color) {
-    final lines = guide.split('\n').where((l) => l.trim().isNotEmpty).toList();
-    return [
-      for (final line in lines)
-        () {
-          final m = _stepRe.firstMatch(line.trim());
-          if (m == null) {
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 4),
-              child: Text(line.trim(),
-                  style: raleway(11.5,
-                      color: Colors.white.withValues(alpha: 0.85),
-                      height: 1.55)),
-            );
-          }
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 5),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  width: 17,
-                  height: 17,
-                  margin: const EdgeInsets.only(top: 1),
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: color.withValues(alpha: 0.10),
-                    border: Border.all(color: color.withValues(alpha: 0.35)),
-                  ),
-                  child: Text(m.group(1)!,
-                      style: raleway(8.5,
-                          weight: 800,
-                          color: color.withValues(alpha: 0.95))),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(m.group(2)!,
-                      style: raleway(11.5,
-                          color: Colors.white.withValues(alpha: 0.85),
-                          height: 1.5)),
-                ),
-              ],
-            ),
-          );
-        }(),
-    ];
-  }
 
   Future<void> _submitToExaminer() async {
     final api = ref.read(apiProvider);
@@ -145,7 +121,8 @@ class _NodeSheetState extends ConsumerState<_NodeSheet> {
         node: widget.node.label,
         tier: widget.node.tier,
         prerequisites: [
-          for (final r in widget.node.requires) widget.skill.nodeById(r).label
+          for (final r in widget.node.requires)
+            widget.skill.nodeById(r).label
         ],
         summary: _summary.text,
         proof: widget.node.proof,
@@ -184,7 +161,8 @@ class _NodeSheetState extends ConsumerState<_NodeSheet> {
     final unlocked = nodeUnlocked(progress, widget.skill, widget.node);
 
     return Padding(
-      padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
+      padding:
+          EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
       child: Container(
         decoration: BoxDecoration(
           color: const Color(0xF20B0E22),
@@ -192,22 +170,28 @@ class _NodeSheetState extends ConsumerState<_NodeSheet> {
           border: Border(
               top: BorderSide(color: color.withValues(alpha: 0.35), width: 1)),
         ),
-        padding: const EdgeInsets.fromLTRB(22, 14, 22, 26),
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 36,
-                  height: 4,
-                  decoration: BoxDecoration(
-                      color: Colors.white24,
-                      borderRadius: BorderRadius.circular(2)),
-                ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Fixed grab handle — stays put as the body scrolls, and marks
+            // the reachable top edge for dragging the sheet down.
+            Padding(
+              padding: const EdgeInsets.only(top: 12, bottom: 4),
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                    color: Colors.white24,
+                    borderRadius: BorderRadius.circular(2)),
               ),
-              const SizedBox(height: 16),
+            ),
+            Flexible(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(22, 10, 22, 26),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -240,26 +224,40 @@ class _NodeSheetState extends ConsumerState<_NodeSheet> {
                   ),
                 ],
               ),
+              const SizedBox(height: 12),
+              Text(
+                'THE ROAD · ${widget.skill.goal.toUpperCase()}',
+                style: raleway(7.5,
+                    weight: 700,
+                    color: Colors.white.withValues(alpha: 0.3),
+                    spacing: 1.8),
+              ),
+              const SizedBox(height: 5),
+              Text(
+                starBriefing(widget.skill, widget.node),
+                style: raleway(10.5,
+                    color: Colors.white.withValues(alpha: 0.6), height: 1.55),
+              ),
               if (widget.node.guide.isNotEmpty) ...[
                 const SizedBox(height: 14),
                 Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.035),
+                    color: Colors.white.withValues(alpha: 0.04),
                     borderRadius: BorderRadius.circular(10),
-                    border:
-                        Border.all(color: Colors.white.withValues(alpha: 0.10)),
+                    border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.12)),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('THE QUEST — WHAT TO DO',
+                      Text('THE WORK — DO EXACTLY THIS',
                           style: raleway(7.5,
                               weight: 700,
-                              color: Colors.white.withValues(alpha: 0.45),
+                              color: Colors.white.withValues(alpha: 0.55),
                               spacing: 2)),
-                      const SizedBox(height: 6),
+                      const SizedBox(height: 5),
                       ..._guideLines(widget.node.guide, color),
                     ],
                   ),
@@ -269,7 +267,7 @@ class _NodeSheetState extends ConsumerState<_NodeSheet> {
                 const SizedBox(height: 10),
                 Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
                     color: color.withValues(alpha: 0.05),
                     borderRadius: BorderRadius.circular(10),
@@ -278,23 +276,23 @@ class _NodeSheetState extends ConsumerState<_NodeSheet> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('COMPLETION STANDARD — HOW IT IS CONFIRMED',
+                      Text('COMPLETION STANDARD — WHAT MUST BE TRUE',
                           style: raleway(7.5,
                               weight: 700,
                               color: color.withValues(alpha: 0.7),
                               spacing: 2)),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 3),
                       Text(widget.node.proof,
-                          style: raleway(11.5,
-                              color: Colors.white.withValues(alpha: 0.85),
-                              height: 1.5)),
+                          style: raleway(11,
+                              color: Colors.white.withValues(alpha: 0.8),
+                              height: 1.45)),
                     ],
                   ),
                 ),
               ],
               if (widget.node.requires.isNotEmpty) ...[
                 const SizedBox(height: 16),
-                Text('PREREQUISITE STARS',
+                Text('PREREQUISITE STARS — LIGHT THESE FIRST',
                     style: raleway(8.5,
                         color: Colors.white.withValues(alpha: 0.3),
                         spacing: 2)),
@@ -331,19 +329,6 @@ class _NodeSheetState extends ConsumerState<_NodeSheet> {
                     ),
                   ),
               ],
-              if (_unlocksLabels().isNotEmpty) ...[
-                const SizedBox(height: 12),
-                Text('THIS STAR HELPS OPEN',
-                    style: raleway(8.5,
-                        color: Colors.white.withValues(alpha: 0.3),
-                        spacing: 2)),
-                const SizedBox(height: 5),
-                Text(
-                  _unlocksLabels().join('  ·  '),
-                  style: raleway(10.5,
-                      color: Colors.white.withValues(alpha: 0.55), height: 1.6),
-                ),
-              ],
               const SizedBox(height: 16),
               Row(
                 children: [
@@ -356,7 +341,8 @@ class _NodeSheetState extends ConsumerState<_NodeSheet> {
                     Text(
                       '${_summary.text.trim().length} / $kMinSummaryChars',
                       style: raleway(8.5,
-                          color: _summary.text.trim().length >= kMinSummaryChars
+                          color: _summary.text.trim().length >=
+                                  kMinSummaryChars
                               ? color.withValues(alpha: 0.7)
                               : Colors.white.withValues(alpha: 0.3)),
                     ),
@@ -399,7 +385,8 @@ class _NodeSheetState extends ConsumerState<_NodeSheet> {
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: color.withValues(alpha: 0.5)),
+                    borderSide:
+                        BorderSide(color: color.withValues(alpha: 0.5)),
                   ),
                 ),
                 enabled: (unlocked || complete) && !_submitting,
@@ -427,9 +414,163 @@ class _NodeSheetState extends ConsumerState<_NodeSheet> {
                 _skyLockedButton(context)
               else
                 _actionButton(color, unlocked, api),
-            ],
-          ),
+              // Reference reading below the action: where this light leads,
+              // and the unchanging ritual.
+              ..._unlocksSection(color),
+              _riteSection(api, color),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ),
+      ),
+    );
+  }
+
+  /// Render a guide as styled lines: numbered steps ("1. ...") get a gold
+  /// step badge; plain lines (intro, "Keep:") render quiet. Single-line
+  /// guides fall through as one paragraph, so both formats read well.
+  static final RegExp _stepRe = RegExp(r'^(\d+)\.\s+(.*)$');
+  List<Widget> _guideLines(String guide, Color color) {
+    final lines = guide.split('\n').where((l) => l.trim().isNotEmpty).toList();
+    return [
+      for (final line in lines)
+        () {
+          final m = _stepRe.firstMatch(line.trim());
+          if (m == null) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 4),
+              child: Text(line.trim(),
+                  style: raleway(11,
+                      color: Colors.white.withValues(alpha: 0.72),
+                      height: 1.5)),
+            );
+          }
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 5),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 17,
+                  height: 17,
+                  margin: const EdgeInsets.only(top: 1),
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: color.withValues(alpha: 0.10),
+                    border:
+                        Border.all(color: color.withValues(alpha: 0.35)),
+                  ),
+                  child: Text(m.group(1)!,
+                      style: raleway(8.5,
+                          weight: 800,
+                          color: color.withValues(alpha: 0.95))),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(m.group(2)!,
+                      style: raleway(11,
+                          color: Colors.white.withValues(alpha: 0.85),
+                          height: 1.5)),
+                ),
+              ],
+            ),
+          );
+        }(),
+    ];
+  }
+
+  /// What this star's light opens — the quest's forward pull.
+  List<Widget> _unlocksSection(Color color) {
+    final unlocks = widget.skill.unlockedBy(widget.node.id);
+    final isCrown =
+        unlocks.isEmpty && widget.node.tier == widget.skill.maxTier;
+    if (unlocks.isEmpty && !isCrown) return const [];
+    return [
+      const SizedBox(height: 14),
+      Text('ITS LIGHT OPENS THE WAY TO',
+          style: raleway(8.5,
+              color: Colors.white.withValues(alpha: 0.3), spacing: 2)),
+      const SizedBox(height: 6),
+      if (isCrown)
+        Text(
+          'Nothing further — this is the endgame. Beyond this star there is '
+          'only keeping its light alive.',
+          style: raleway(11,
+              color: color.withValues(alpha: 0.75), height: 1.45),
+        )
+      else
+        for (final n in unlocks)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 2.5),
+            child: Row(
+              children: [
+                Text('✧',
+                    style: TextStyle(
+                        fontSize: 12,
+                        color: color.withValues(alpha: 0.55))),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    '${n.label}'
+                    '${n.branch.isNotEmpty && n.branch != widget.node.branch ? '  ·  ${n.branch.toUpperCase()}' : ''}',
+                    style: raleway(11.5,
+                        color: Colors.white.withValues(alpha: 0.55)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+    ];
+  }
+
+  /// The same five-step ritual on every star — the quest loop made explicit.
+  Widget _riteSection(MentalApi api, Color color) {
+    final steps = [
+      'Do the work until the completion standard is simply true.',
+      'Keep artifacts as you go — worked pages, recordings, builds, drafts.',
+      'Write the mastery sheet below: what you did, what you now understand.',
+      api.configured
+          ? 'Submit — the star ignites only when the Examiner is convinced.'
+          : 'Ignite on your honour (no Examiner in this build).',
+      'A lit star enters the review cycle — first recall test in '
+          '${kReviewIntervalDays.first} days; going dark on reviews or the '
+          'journal locks the whole sky.',
+    ];
+    return Padding(
+      padding: const EdgeInsets.only(top: 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('THE RITE OF IGNITION',
+              style: raleway(8.5,
+                  color: Colors.white.withValues(alpha: 0.3), spacing: 2)),
+          const SizedBox(height: 6),
+          for (var i = 0; i < steps.length; i++)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 2),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(
+                    width: 16,
+                    child: Text('${i + 1}.',
+                        style: raleway(9.5,
+                            weight: 700,
+                            color: color.withValues(alpha: 0.5))),
+                  ),
+                  Expanded(
+                    child: Text(steps[i],
+                        style: raleway(10,
+                            color: Colors.white.withValues(alpha: 0.5),
+                            height: 1.45)),
+                  ),
+                ],
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -453,8 +594,9 @@ class _NodeSheetState extends ConsumerState<_NodeSheet> {
         onPressed: () {
           Navigator.of(context).pop(false);
           Navigator.of(context).push(MaterialPageRoute(
-              builder: (_) =>
-                  reviewsBlock ? const ReviewScreen() : const JournalScreen()));
+              builder: (_) => reviewsBlock
+                  ? const ReviewScreen()
+                  : const JournalScreen()));
         },
         child: Text(
             reviewsBlock
@@ -468,7 +610,8 @@ class _NodeSheetState extends ConsumerState<_NodeSheet> {
   Widget _actionButton(Color color, bool unlocked, MentalApi api) {
     final examined = api.configured;
     final longEnough = _summary.text.trim().length >= kMinSummaryChars;
-    final canSubmit = unlocked && !_submitting && (!examined || longEnough);
+    final canSubmit =
+        unlocked && !_submitting && (!examined || longEnough);
     final label = !unlocked
         ? '🔒  COMPLETE PREREQUISITES TO UNLOCK'
         : _submitting
@@ -600,18 +743,8 @@ class _NodeSheetState extends ConsumerState<_NodeSheet> {
   static String _fmtDate(DateTime? d) {
     if (d == null) return '';
     const months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec'
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
     ];
     return '${d.day} ${months[d.month - 1]} ${d.year}';
   }

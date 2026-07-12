@@ -43,10 +43,15 @@ class PersistentProgressRepository implements ProgressRepository {
     if (raw == null) return {};
     try {
       final j = jsonDecode(raw) as Map<String, dynamic>;
-      return {
-        for (final e in j.entries)
-          e.key: NodeProgress.fromJson(e.value as Map<String, dynamic>)
-      };
+      final out = <String, NodeProgress>{};
+      for (final e in j.entries) {
+        // Per-entry tolerance: one corrupt record (say, written by an older
+        // or newer build) must never take the rest of the sky down with it.
+        try {
+          out[e.key] = NodeProgress.fromJson(e.value as Map<String, dynamic>);
+        } catch (_) {}
+      }
+      return out;
     } catch (_) {
       return {}; // an unreadable blob must never brick startup
     }
@@ -87,10 +92,14 @@ class PersistentJournalRepository implements JournalRepository {
     if (raw == null) return {};
     try {
       final j = jsonDecode(raw) as Map<String, dynamic>;
-      return {
-        for (final e in j.entries)
-          e.key: JournalEntry.fromJson(e.value as Map<String, dynamic>)
-      };
+      final out = <String, JournalEntry>{};
+      for (final e in j.entries) {
+        // One corrupt day must never cost the rest of the journal.
+        try {
+          out[e.key] = JournalEntry.fromJson(e.value as Map<String, dynamic>);
+        } catch (_) {}
+      }
+      return out;
     } catch (_) {
       return {};
     }
